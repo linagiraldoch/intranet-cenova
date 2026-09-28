@@ -146,17 +146,22 @@ async function login(req, env) {
 
 async function cambiarClave(req, env) {
   const s = await sesionDe(req, env, { contarActividad: true });
-  if (!s) return err(401, 'sesion', 'Tu sesión venció. Ingresa de nuevo.');
+  if (!s) {
+    const tieneCookie = !!leerCookie(req, COOKIE), tienePestana = !!req.headers.get('x-pestana');
+    await auditar(env, null, 'cambio_clave_fallido', null, null, 'sin sesión (cookie ' + (tieneCookie ? 'sí' : 'no') + ', pestaña ' + (tienePestana ? 'sí' : 'no') + ')', req);
+    return err(401, 'sesion', 'Tu sesión venció. Ingresa de nuevo.');
+  }
+  const fallo = async (codigo, mensaje) => { await auditar(env, s.usuario_id, 'cambio_clave_fallido', null, null, codigo, req); return err(400, codigo, mensaje); };
   let body; try { body = await req.json(); } catch (e) { return err(400, 'formato', 'Solicitud inválida.'); }
   const u = await env.DB.prepare('SELECT * FROM usuarios WHERE id = ?').bind(s.usuario_id).first();
   const actual = String(body.actual || ''), nueva = String(body.nueva || '');
   let ok;
   if (u.hash) ok = igualSeguro(await hashClave(env, actual, u.sal, u.iteraciones), u.hash);
   else { let ini = {}; try { ini = JSON.parse(env.CLAVES_INICIALES || '{}'); } catch (e) { /* */ } ok = !!ini[u.id] && igualSeguro(actual, String(ini[u.id])); }
-  if (!ok) return err(400, 'actual', 'La contraseña actual no es correcta.');
+  if (!ok) return fallo('actual', 'La contraseña actual no es correcta.');
   const problema = claveValida(nueva, u.id);
-  if (problema) return err(400, 'debil', problema);
-  if (nueva === actual) return err(400, 'igual', 'La nueva contraseña debe ser distinta de la actual.');
+  if (problema) return fallo('debil', problema);
+  if (nueva === actual) return fallo('igual', 'La nueva contraseña debe ser distinta de la actual.');
   const sal = b64(aleatorio(16)), iter = Number(env.ITERACIONES) || 10000;
   const hash = await hashClave(env, nueva, sal, iter);
   await env.DB.batch([
@@ -331,7 +336,7 @@ async function pagina(env, req, ruta) {
   const url = new URL(req.url); url.pathname = ruta;
   const r = await env.ASSETS.fetch(new Request(url.toString(), { headers: req.headers }));
   const h = seguridad(new Headers(r.headers));
-  if (ruta.endsWith('.html')) h.set('cache-control', 'no-store');
+  if (ruta.endsWith('.html') || ruta.endsWith('.js')) h.set('cache-control', 'no-store');
   return new Response(r.body, { status: r.status, headers: h });
 }
 const redir = (to) => new Response(null, { status: 302, headers: seguridad(new Headers({ location: to, 'cache-control': 'no-store' })) });
