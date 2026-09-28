@@ -1,0 +1,42 @@
+# Intranet Cenova — Cloudflare Worker (servidor + página)
+name = "intranet-cenova"
+main = "worker/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = false
+
+# La página (carpeta web/) la entrega el Worker, que primero revisa la sesión.
+[assets]
+directory = "./web"
+binding = "ASSETS"
+run_worker_first = true
+html_handling = "none"
+not_found_handling = "none"
+
+# Dominio propio
+routes = [
+  { pattern = "intranet.cenovasas.com", custom_domain = true }
+]
+
+# Base de datos. Reemplaza database_id por el que muestra Cloudflare al crear la base "intranet-cenova".
+[[d1_databases]]
+binding = "DB"
+database_name = "intranet-cenova"
+database_id = "9b4cf465-3ccb-4a6e-b0e0-c74425340bff"
+migrations_dir = "migrations"
+
+# Resumen diario: 11:45 UTC = 6:45 a. m. en Colombia
+[triggers]
+crons = ["45 11 * * *"]
+
+[vars]
+CORREO_REMITENTE = "Intranet Cenova <intranet@cenovasas.com>"
+INTRANET_URL = "https://intranet.cenovasas.com"
+MODELO_IA = "claude-sonnet-5"
+INACTIVIDAD_MIN = "15"
+ITERACIONES = "50000"
+
+# Secretos (NO van aquí; se ponen en Cloudflare → Worker → Settings → Variables and Secrets):
+#   PEPPER             texto largo aleatorio (clave extra con la que se cifran las contraseñas)
+#   CLAVES_INICIALES   {"lmgiraldo":"…","amberrocal":"…","jlcantillo":"…"}  (solo para el primer ingreso)
+#   RESEND_API_KEY     clave de resend.com para enviar correos
+#   ANTHROPIC_API_KEY  clave de console.anthropic.com para leer PDFs

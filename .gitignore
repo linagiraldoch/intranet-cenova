@@ -8,3 +8,5 @@ respaldo-*.json
 .build/
 test/
 *-debug.log
+.dev.vars
+.wrangler/

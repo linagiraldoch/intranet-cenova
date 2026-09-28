@@ -1,91 +1,86 @@
 # Intranet Cenova
 
-Panel de seguimiento gerencial de **Cenova S.A.S.**: cotizaciones, órdenes de compra, proyectos, clientes, agenda, cronograma y estadísticas. El acceso está restringido a los usuarios del equipo.
+Panel de seguimiento gerencial de **Cenova S.A.S.**: cotizaciones, órdenes de compra, proyectos, clientes, agenda, cronograma y estadísticas. Queda en **https://intranet.cenovasas.com** y solo entra el equipo.
 
-- **Página:** `web/`, publicada en GitHub Pages → `https://linagiraldoch.github.io/intranet-cenova/`
-- **Usuarios y base de datos:** Firebase Authentication + Cloud Firestore
-- **Servidor:** Cloud Functions (`functions/`). Envía los correos de apoyo y el resumen diario, y lee PDFs con IA.
+Todo corre en **Cloudflare**, con plan gratuito:
+
+| Pieza | Dónde |
+|---|---|
+| Servidor + página | Cloudflare Worker `intranet-cenova` (`worker/index.js` + carpeta `web/`) |
+| Base de datos | Cloudflare D1 `intranet-cenova` (esquema en `migrations/`) |
+| Correos (apoyo y resumen diario 6:45 a. m.) | Resend, desde `intranet@cenovasas.com` |
+| Lectura de PDFs con IA | API de Anthropic |
 
 ## Seguridad
 
 | Qué | Cómo se protege |
 |---|---|
-| Contraseñas | Firebase las guarda cifradas en su servidor y nunca están en el código. En el primer ingreso cada persona debe crear su propia clave (mínimo 10 caracteres, con letras y números, sin contener el usuario). |
-| Datos | Las reglas de `firestore.rules` solo dejan leer y escribir a los 3 correos del equipo con sesión iniciada. Cualquier otra persona recibe "acceso denegado", aunque tenga la página abierta o intente entrar directo a la base de datos. |
-| Números COT / OC | Las reglas impiden cambiarlos una vez asignados. Las órdenes de compra no se pueden borrar, solo anular. |
-| Claves de Anthropic y Gmail | Se guardan en Secret Manager de Google. Nunca llegan al navegador ni al repositorio. |
+| Acceso a la página | Sin sesión, el servidor solo entrega la pantalla de ingreso. El panel y sus datos nunca salen del servidor sin sesión válida. |
+| Contraseñas | Se guardan cifradas con PBKDF2-SHA256, con sal por usuario y una clave secreta del servidor (`PEPPER`). Ni siquiera con una copia de la base de datos se pueden descifrar sin esa clave. |
+| Primer ingreso | Las contraseñas iniciales viven en un secreto (`CLAVES_INICIALES`), nunca en el código. Al entrar, cada persona debe crear la suya: mínimo 10 caracteres, con letras y números, sin contener el usuario. |
+| Sesión | Cookie `HttpOnly`, `Secure` y `SameSite=Strict`, más una clave por pestaña. Una ventana o pestaña nueva pide ingresar otra vez. El servidor cierra la sesión tras 15 min sin actividad y a las 12 h como máximo. |
+| Intentos fallidos | Con 5 intentos seguidos la cuenta se bloquea 15 minutos. El mensaje nunca dice si el usuario existe. |
+| Reglas de datos | Los números COT y OC no se pueden cambiar. Las órdenes de compra no se borran (solo administración). Importar respaldos es solo para administración. Cada cambio queda en la tabla `auditoria`. |
 | Correo | Solo se puede enviar a correos del equipo, así que nadie puede usar la intranet para mandar spam. |
-| Sesión | Se cierra al cerrar la pestaña o tras 15 minutos sin actividad, con un aviso 1 minuto antes. |
-| Intentos fallidos | Firebase bloquea la cuenta unos minutos si hay muchos intentos seguidos. El mensaje de error nunca dice si el usuario existe. |
-| Conexión | Todo va por HTTPS. La página trae una política de contenido (CSP) que limita desde dónde se cargan scripts. |
-
-> Los valores de `web/config.js` (apiKey, projectId…) **no son secretos**. Firebase los diseñó para ir en la página. La protección real son las reglas y las funciones.
+| Navegador | Política de contenido (CSP), HSTS, bloqueo de marcos (anti-clickjacking) y protección CSRF. |
 
 ## Usuarios
 
-| Usuario | Correo en Firebase | Rol |
+| Usuario | Correo | Rol |
 |---|---|---|
-| `Lmgiraldo` | gerencia@cenovasas.com | Administración (puede importar respaldos) |
+| `Lmgiraldo` | gerencia@cenovasas.com | Administración |
 | `Amberrocal` | aberrocal@cenovasas.com | Equipo |
 | `Jlcantillo` | jcantillo@cenovasas.com | Equipo |
 
-El usuario no distingue mayúsculas y minúsculas. Para agregar a alguien hay que tocar 3 cosas: `web/config.js`, las dos listas de `firestore.rules` y la lista `EQUIPO` de `functions/index.js`. Luego se crea el usuario en Firebase.
+Para agregar a alguien:
+1. Cloudflare → D1 → `intranet-cenova` → Console, y ejecuta:
+   `INSERT INTO usuarios (id, nombre, email) VALUES ('usuario', 'Nombre', 'correo@cenovasas.com');`
+2. Agrega su contraseña inicial al secreto `CLAVES_INICIALES`.
+
+Para quitarle el acceso a alguien: `UPDATE usuarios SET activo = 0 WHERE id = 'usuario';`
 
 ---
 
-## Instalación paso a paso
+## Puesta en marcha (una sola vez)
 
-### 1. Crear el proyecto de Firebase
-1. Entra a https://console.firebase.google.com con la cuenta de Google de Cenova.
-2. **Agregar proyecto** → nombre `intranet-cenova` → desactiva Google Analytics → Crear.
+La base de datos D1 `intranet-cenova` ya está creada y tiene las tablas y los usuarios.
 
-### 2. Usuarios (Authentication)
-1. **Compilación → Authentication → Comenzar** → habilita **Correo electrónico/contraseña**.
-2. En la pestaña **Usuarios → Agregar usuario**, crea los 3 correos de la tabla con su contraseña inicial.
-3. En **Configuración → Acciones del usuario**, **desmarca "Habilitar la creación (registro)"**. Así nadie puede crearse una cuenta por su cuenta.
-4. En **Configuración → Dominios autorizados**, agrega `linagiraldoch.github.io`.
+### 1. Publicar el Worker desde GitHub
+1. Cloudflare → **Workers & Pages → Create → Import a repository**.
+2. Conecta GitHub y elige `linagiraldoch/intranet-cenova`.
+3. Nombre del proyecto: `intranet-cenova`. Deja el comando de despliegue en `npx wrangler deploy` → **Deploy**.
+4. El dominio `intranet.cenovasas.com` se configura solo (está en `wrangler.toml`). Desde ahí, cada cambio que se suba a GitHub se publica automáticamente.
 
-### 3. Base de datos (Firestore)
-**Compilación → Firestore Database → Crear base de datos** → ubicación `southamerica-east1 (São Paulo)` → **Modo de producción**.
+### 2. Secretos
+En el Worker: **Settings → Variables and Secrets → Add** (tipo **Secret**):
 
-### 4. Conectar la página
-**⚙ Configuración del proyecto → Tus apps → `</>` (Web)** → nombre `intranet` → copia el bloque `firebaseConfig` y pégalo en `web/config.js`.
+| Nombre | Valor |
+|---|---|
+| `PEPPER` | Un texto largo y aleatorio (40 caracteres o más), por ejemplo de un generador de contraseñas. **No lo cambies después**, porque invalidaría todas las contraseñas. |
+| `CLAVES_INICIALES` | `{"lmgiraldo":"...","amberrocal":"...","jlcantillo":"..."}` con la contraseña del primer ingreso de cada uno |
+| `RESEND_API_KEY` | Clave de https://resend.com (ver paso 3) |
+| `ANTHROPIC_API_KEY` | Clave de https://console.anthropic.com → API Keys |
 
-### 5. Plan Blaze (necesario para las funciones del servidor)
-**Actualizar → Blaze (pago por uso)**. Con el uso de 3 personas queda dentro de la capa gratuita. Aun así, crea una **alerta de presupuesto** de US$5 para que te avise si algo cambia.
+### 3. Correo con Resend
+1. Crea una cuenta en https://resend.com.
+2. **Domains → Add domain → `cenovasas.com`** y elige la opción de configurar los registros DNS automáticamente con Cloudflare. No toca los registros de Gmail.
+3. En **API Keys → Create**, copia la clave en el secreto `RESEND_API_KEY`.
 
-### 6. Claves secretas
-- **Anthropic** (lectura de PDFs): https://console.anthropic.com → API Keys → Create Key.
-- **Gmail** (correos desde gerencia@cenovasas.com): activa la verificación en dos pasos en esa cuenta. Luego entra a https://myaccount.google.com/apppasswords y crea una contraseña de aplicación llamada "Intranet".
-
-### 7. Publicar reglas y funciones (desde Google Cloud Shell, en el navegador)
-Abre https://shell.cloud.google.com y ejecuta:
-
-```bash
-git clone https://github.com/linagiraldoch/intranet-cenova.git
-cd intranet-cenova
-(cd functions && npm install)
-npx firebase-tools login --no-localhost
-npx firebase-tools use --add          # elige el proyecto intranet-cenova, alias: default
-npx firebase-tools functions:secrets:set ANTHROPIC_API_KEY    # pega la clave de Anthropic
-npx firebase-tools functions:secrets:set GMAIL_APP_PASSWORD   # pega la contraseña de aplicación de Gmail
-npx firebase-tools deploy --only firestore:rules,functions
-```
-
-### 8. Publicar la página
-En GitHub: **Settings → Pages → Source: GitHub Actions**. Cada cambio en `web/` se publica solo.
-
-### 9. Primer ingreso
-1. Entra a `https://linagiraldoch.github.io/intranet-cenova/` con `Lmgiraldo` y la contraseña inicial.
+### 4. Primer ingreso
+1. Entra a https://intranet.cenovasas.com con `Lmgiraldo` y la contraseña inicial.
 2. Crea tu contraseña nueva cuando te la pida.
-3. Menú lateral → **Importar respaldo de datos** → elige el archivo `respaldo-cenova-AAAA-MM-DD.json`. Ese archivo **no** va en el repositorio: guárdalo en un lugar privado.
+3. Menú lateral → **Importar respaldo de datos** → elige `respaldo-cenova-AAAA-MM-DD.json`. Ese archivo **no** va en el repositorio.
+
+### 5. (Recomendado) Límite de intentos por IP
+Cloudflare → `cenovasas.com` → **Security → WAF → Rate limiting rules** → crea una regla para la ruta `/api/login`: máximo 10 solicitudes por minuto por IP y bloquear 10 minutos.
 
 ---
 
-## Desarrollo local (opcional)
+## Desarrollo local
 
 ```bash
-(cd functions && npm install)
-npx firebase-tools emulators:start --project demo-cenova --only auth,firestore,functions
+npm install
+npx wrangler d1 migrations apply intranet-cenova --local
+printf 'PEPPER="local"\nCLAVES_INICIALES={"lmgiraldo":"Lmgiraldo"}\n' > .dev.vars
+npx wrangler dev
 ```
-En `web/config.js` agrega `emulador: {host:"127.0.0.1", auth:9099, firestore:8080, functions:5001}` y sirve la carpeta `web/` con cualquier servidor estático.
