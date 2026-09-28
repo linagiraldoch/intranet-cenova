@@ -1,0 +1,10 @@
+node_modules/
+functions/node_modules/
+.firebase/
+*.log
+.secret.local
+.runtimeconfig.json
+respaldo-*.json
+.build/
+test/
+*-debug.log
