@@ -8,7 +8,7 @@ Todo corre en **Cloudflare**, con plan gratuito:
 |---|---|
 | Servidor + página | Cloudflare Worker `intranet-cenova` (`worker/index.js` + carpeta `web/`) |
 | Base de datos | Cloudflare D1 `intranet-cenova` (esquema en `migrations/`) |
-| Correos (apoyo y resumen diario 6:45 a. m.) | Resend, desde `intranet@cenovasas.com` |
+| Correos (apoyo y resumen diario 6:45 a. m.) | Resend, desde `notificaciones@intranet.cenovasas.com` |
 | Lectura de PDFs con IA | API de Anthropic |
 
 ## Seguridad
@@ -63,7 +63,7 @@ En el Worker: **Settings → Variables and Secrets → Add** (tipo **Secret**):
 
 ### 3. Correo con Resend
 1. Crea una cuenta en https://resend.com.
-2. **Domains → Add domain → `cenovasas.com`** y elige la opción de configurar los registros DNS automáticamente con Cloudflare. No toca los registros de Gmail.
+2. **Domains → Add domain → `intranet.cenovasas.com`** y usa "Configuración automática" (Cloudflare). Si algún registro no se crea solo, agrégalo en Cloudflare → DNS con el proxy apagado (nube gris, "Solo DNS"). Los correos salen de `notificaciones@intranet.cenovasas.com` y no se tocan los registros de Gmail.
 3. En **API Keys → Create**, copia la clave en el secreto `RESEND_API_KEY`.
 
 ### 4. Primer ingreso

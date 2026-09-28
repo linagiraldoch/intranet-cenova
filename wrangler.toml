@@ -29,7 +29,7 @@ migrations_dir = "migrations"
 crons = ["45 11 * * *"]
 
 [vars]
-CORREO_REMITENTE = "Intranet Cenova <intranet@cenovasas.com>"
+CORREO_REMITENTE = "Intranet Cenova <notificaciones@intranet.cenovasas.com>"
 INTRANET_URL = "https://intranet.cenovasas.com"
 MODELO_IA = "claude-sonnet-5"
 INACTIVIDAD_MIN = "15"
