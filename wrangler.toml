@@ -33,7 +33,7 @@ CORREO_REMITENTE = "Intranet Cenova <notificaciones@intranet.cenovasas.com>"
 INTRANET_URL = "https://intranet.cenovasas.com"
 MODELO_IA = "claude-sonnet-5"
 INACTIVIDAD_MIN = "15"
-ITERACIONES = "50000"
+ITERACIONES = "10000"
 
 # Secretos (NO van aquí; se ponen en Cloudflare → Worker → Settings → Variables and Secrets):
 #   PEPPER             texto largo aleatorio (clave extra con la que se cifran las contraseñas)

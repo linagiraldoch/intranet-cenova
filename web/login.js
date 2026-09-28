@@ -8,7 +8,7 @@
     var h = {'content-type':'application/json', 'x-cenova':'1'};
     if(conPestana){ try{ h['x-pestana'] = sessionStorage.getItem('cenova.pestana') || ''; }catch(e){} h['x-actividad'] = '1'; }
     return fetch(ruta, {method:'POST', headers:h, credentials:'same-origin', body: JSON.stringify(datos||{})})
-      .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(d){ d._status = r.status; return d; }); });
+      .then(function(r){ return r.json().catch(function(){ return {mensaje: 'El servidor tuvo un problema (código ' + r.status + '). No se guardó nada; intenta de nuevo en un momento.'}; }).then(function(d){ d._status = r.status; return d; }); });
   }
   function msg(id, texto, info){ var e = $(id); e.textContent = texto || ''; e.classList.toggle('info', !!info); }
   function ocupado(btn, on, txt){ btn.disabled = on; btn.textContent = txt; }

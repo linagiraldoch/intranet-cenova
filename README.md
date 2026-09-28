@@ -16,7 +16,7 @@ Todo corre en **Cloudflare**, con plan gratuito:
 | Qué | Cómo se protege |
 |---|---|
 | Acceso a la página | Sin sesión, el servidor solo entrega la pantalla de ingreso. El panel y sus datos nunca salen del servidor sin sesión válida. |
-| Contraseñas | Se guardan cifradas con PBKDF2-SHA256, con sal por usuario y una clave secreta del servidor (`PEPPER`). Ni siquiera con una copia de la base de datos se pueden descifrar sin esa clave. |
+| Contraseñas | Se guardan cifradas con HMAC-SHA256 (clave secreta del servidor `PEPPER`) + PBKDF2-SHA256 con sal por usuario (10.000 iteraciones, ajustado al límite de CPU del plan gratuito; con Workers Paid se puede subir `ITERACIONES`). Ni siquiera con una copia de la base de datos se pueden descifrar sin esa clave. |
 | Primer ingreso | Las contraseñas iniciales viven en un secreto (`CLAVES_INICIALES`), nunca en el código. Al entrar, cada persona debe crear la suya: mínimo 10 caracteres, con letras y números, sin contener el usuario. |
 | Sesión | Cookie `HttpOnly`, `Secure` y `SameSite=Strict`, más una clave por pestaña. Una ventana o pestaña nueva pide ingresar otra vez. El servidor cierra la sesión tras 15 min sin actividad y a las 12 h como máximo. |
 | Intentos fallidos | Con 5 intentos seguidos la cuenta se bloquea 15 minutos. El mensaje nunca dice si el usuario existe. |

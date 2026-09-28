@@ -157,7 +157,7 @@ async function cambiarClave(req, env) {
   const problema = claveValida(nueva, u.id);
   if (problema) return err(400, 'debil', problema);
   if (nueva === actual) return err(400, 'igual', 'La nueva contraseña debe ser distinta de la actual.');
-  const sal = b64(aleatorio(16)), iter = Number(env.ITERACIONES) || 50000;
+  const sal = b64(aleatorio(16)), iter = Number(env.ITERACIONES) || 10000;
   const hash = await hashClave(env, nueva, sal, iter);
   await env.DB.batch([
     env.DB.prepare('UPDATE usuarios SET hash = ?, sal = ?, iteraciones = ?, debe_cambiar = 0, clave_cambiada = ? WHERE id = ?').bind(hash, sal, iter, Date.now(), u.id),
