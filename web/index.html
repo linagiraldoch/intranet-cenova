@@ -468,6 +468,9 @@
   .pill.tipo-mantenimiento{background:var(--warning-soft); color:var(--warning);}
   .pill.tipo-entrega{background:var(--accent-soft); color:var(--accent-2);}
   .pill.tipo-cotizacion, .pill.tipo-seguimiento{background:var(--neutral-soft); color:var(--neutral);}
+  .cal-evt.tipo-interno{background:var(--accent-soft); color:var(--accent-2); font-weight:700;}
+  .pill.tipo-interno{background:var(--accent-soft); color:var(--accent-2); font-weight:700;}
+  .evt-card.tipo-interno{border-left:3px solid var(--accent);}
 
   .day-panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:16px 18px; display:flex; flex-direction:column; gap:12px; max-height:640px; overflow-y:auto;}
   .day-panel-head{display:flex; align-items:center; justify-content:space-between; gap:10px;}
@@ -596,6 +599,7 @@
   :root[data-theme="lavanda"] .cal-evt.tipo-pago, :root[data-theme="lavanda"] .cal-evt.tipo-pago_aviso{background:#fde3ef; color:#a8386f; border-left-color:#e58ab3;}
   :root[data-theme="lavanda"] .cal-evt.tipo-mantenimiento{background:#fdeaf3; color:#a3456f; border-left-color:#f0a3c6;}
   :root[data-theme="lavanda"] .cal-evt.tipo-inspeccion, :root[data-theme="lavanda"] .cal-evt.tipo-visita, :root[data-theme="lavanda"] .cal-evt.tipo-tarea, :root[data-theme="lavanda"] .cal-evt.tipo-solicitud_personal{background:#e6f3fc; color:#2c6c9c; border-left-color:#8ec5ec;}
+  :root[data-theme="lavanda"] .cal-evt.tipo-interno{background:#efe8fc; color:#4f3591; border-left-color:#8b6fd6; font-weight:700;}
   :root[data-theme="lavanda"] .cal-evt.ev-vencido{outline:1.5px solid #e2708f;}
   :root[data-theme="lavanda"] .day-panel{background:linear-gradient(90deg,#f3a9c9,#b9a3ec,#9fd0f2) top/100% 4px no-repeat, var(--surface); padding-top:20px;}
   :root[data-theme="lavanda"] .crono-legend span:nth-child(1) i{background:#6fb2e3 !important;}
@@ -1321,7 +1325,7 @@
         <div class="field"><label>Fecha</label><input type="date" id="evtFecha"></div>
         <div class="field"><label>Hora</label><input type="time" id="evtHora"></div>
       </div>
-      <div class="field-row">
+      <div class="field-row" id="evtClienteRow">
         <div class="field"><label>Cliente</label><input type="text" id="evtCliente" list="clientesList"></div>
         <div class="field"><label>Proyecto vinculado</label><select id="evtProyecto"><option value="">Ninguno</option></select></div>
       </div>
@@ -1339,6 +1343,7 @@
       <div class="field" id="evtTipoField"><label>Tipo de evento</label>
         <select id="evtTipo">
           <option value="">General / reunión</option>
+          <option value="interno">Interno (Cenova)</option>
           <option value="inspeccion">Inspección</option>
           <option value="visita">Visita</option>
           <option value="tarea">Tarea</option>
@@ -1418,7 +1423,7 @@
   ];
   var PROY_ESTADOS = {pendiente:"Pendiente", propuesta_enviada:"Propuesta enviada", cotizado:"Cotizado", en_ejecucion:"En ejecución", finalizado:"Finalizado"};
   var MODO_LABELS = {presencial:"Presencial", visita_tecnica:"Visita técnica", videollamada:"Videollamada", llamada:"Llamada"};
-  var TIPO_LABELS = {inspeccion:"Inspección", visita:"Visita", tarea:"Tarea", solicitud_personal:"Solicitud de personal", mantenimiento:"Mantenimiento", seguimiento:"Seguimiento",
+  var TIPO_LABELS = {interno:"Interno", inspeccion:"Inspección", visita:"Visita", tarea:"Tarea", solicitud_personal:"Solicitud de personal", mantenimiento:"Mantenimiento", seguimiento:"Seguimiento",
     /* tipos antiguos (solo para mostrar eventos ya creados) */
     instalacion:"Instalación", entrega:"Entrega", cotizacion:"Cotización / propuesta",
     /* tipos automáticos */
@@ -3189,6 +3194,7 @@
       var opt = document.createElement('option'); opt.value = e.tipo; opt.textContent = TIPO_LABELS[e.tipo] || e.tipo; opt.setAttribute('data-legacy','1'); tipoSel.appendChild(opt);
     }
     tipoSel.value = e.tipo || '';
+    evtInternoToggle();
     var isAuto = !!e.auto;
     var banner = document.getElementById('evtAutoBanner');
     banner.style.display = isAuto ? 'block' : 'none';
@@ -3205,6 +3211,12 @@
     document.getElementById('evtDelete').style.display = (id && !isAuto) ? 'inline-flex' : 'none';
     document.getElementById('eventOverlay').classList.add('open');
   }
+  /* Eventos internos (firma de constitución, reunión interna…): no llevan cliente ni proyecto. */
+  function evtInternoToggle(){
+    var interno = document.getElementById('evtTipo').value === 'interno';
+    document.getElementById('evtClienteRow').style.display = interno ? 'none' : '';
+  }
+  document.getElementById('evtTipo').addEventListener('change', evtInternoToggle);
   function closeEvtModal(){ document.getElementById('eventOverlay').classList.remove('open'); state.editingEvtId = null; }
 
   document.getElementById('btnAddEvt').addEventListener('click', function(){ openEvtModal(null, state.selectedDate); });
@@ -4769,6 +4781,7 @@
       motivo: document.getElementById('evtMotivo').value.trim(),
       notas: document.getElementById('evtNotas').value.trim()
     };
+    if(data.tipo === 'interno'){ data.cliente = ''; data.proyectoId = ''; }
     var editing = state.editingEvtId ? state.eventos.get(state.editingEvtId) : null;
     if(editing && editing.auto){
       var autoId_ = state.editingEvtId;
