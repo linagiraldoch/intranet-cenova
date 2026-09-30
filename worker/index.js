@@ -8,7 +8,7 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas'];
 const COOKIE = 'cenova_sesion';
 const MAX_INTENTOS = 5;
 const BLOQUEO_MS = 15 * 60 * 1000;
@@ -196,6 +196,7 @@ async function escribir(req, env, s, col, id, metodo) {
 
   if (metodo === 'DELETE') {
     if (col === 'ordenesCompra' && !s.admin) return err(403, 'regla', 'Las órdenes de compra no se borran: cámbiala a "Anulada".');
+    if (col === 'prefacturas' && !s.admin) return err(403, 'regla', 'Las prefacturas no se borran: son un registro con número consecutivo.');
     await env.DB.batch([
       env.DB.prepare('DELETE FROM docs WHERE col = ? AND id = ?').bind(col, id),
       env.DB.prepare('INSERT OR REPLACE INTO borrados (col, id, ts, usuario) VALUES (?,?,?,?)').bind(col, id, ahora, s.usuario_id)
@@ -211,8 +212,8 @@ async function escribir(req, env, s, col, id, metodo) {
     if (!previo) return err(404, 'no_existe', 'El registro no existe.');
     data = Object.assign({}, previo, data);
   }
-  // Los números de registro (COT-xxxx, OC-xxxx) no se pueden cambiar una vez asignados.
-  if ((col === 'cotizaciones' || col === 'ordenesCompra') && previo && previo.numero && data.numero !== previo.numero) {
+  // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
+  if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero) {
     return err(403, 'regla', 'El número de registro ' + previo.numero + ' no se puede modificar.');
   }
   const txt = JSON.stringify(data);

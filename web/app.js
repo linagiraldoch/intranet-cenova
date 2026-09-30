@@ -177,7 +177,7 @@
         var file = f.files && f.files[0]; f.value = ''; if(!file) return;
         file.text().then(function(t){
           var data = JSON.parse(t), n = 0;
-          ['cotizaciones','proyectos','eventos','cotizacionesProveedor','clientes','ordenesCompra'].forEach(function(c){ n += Object.keys(data[c]||{}).length; });
+          ['cotizaciones','proyectos','eventos','cotizacionesProveedor','clientes','ordenesCompra','prefacturas'].forEach(function(c){ n += Object.keys(data[c]||{}).length; });
           if(!n) throw new Error('El archivo no trae datos de la intranet.');
           if(!window.confirm('Se importarán ' + n + ' registros de "' + file.name + '". Los que tengan el mismo identificador se reemplazan. ¿Continuar?')) return;
           return api('POST', '/api/importar', data).then(function(r){ return sincronizar().then(function(){ window.alert('Respaldo importado: ' + r.total + ' registros.'); }); });
