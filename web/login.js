@@ -26,18 +26,50 @@
 
   $('lgShow').addEventListener('click', function(){ var p = $('lgPass'); p.type = p.type === 'password' ? 'text' : 'password'; });
 
+  /* Desplegable "Cambiar mi contraseña": cerrado por defecto; al abrirlo, el mismo botón ingresa y cambia la clave. */
+  var cambiarAbierto = false;
+  function textoIngresar(){ return cambiarAbierto ? 'Ingresar y cambiar contraseña' : 'Ingresar'; }
+  function toggleCambiar(abrir){
+    cambiarAbierto = abrir;
+    var panel = $('lgCambiarPanel');
+    panel.classList.toggle('open', abrir);
+    if(abrir) panel.removeAttribute('inert'); else panel.setAttribute('inert', '');
+    $('lgCambiarToggle').setAttribute('aria-expanded', String(abrir));
+    if(!abrir){ $('lgNueva').value = ''; $('lgNueva2').value = ''; }
+    $('lgSubmit').textContent = textoIngresar();
+    msg('lgError', '');
+    if(abrir) setTimeout(function(){ ($('lgUser').value.trim() && $('lgPass').value ? $('lgNueva') : ($('lgUser').value.trim() ? $('lgPass') : $('lgUser'))).focus(); }, 60);
+  }
+  $('lgCambiarToggle').addEventListener('click', function(){ toggleCambiar(!cambiarAbierto); });
+
   $('lgForm').addEventListener('submit', function(ev){
     ev.preventDefault();
     var u = $('lgUser').value.trim(), c = $('lgPass').value;
-    if(!u || !c){ msg('lgError', 'Escribe tu usuario y contraseña.'); return; }
+    if(!u || !c){ msg('lgError', cambiarAbierto ? 'Escribe tu usuario y tu contraseña actual.' : 'Escribe tu usuario y contraseña.'); return; }
+    var n1 = $('lgNueva').value, n2 = $('lgNueva2').value;
+    if(cambiarAbierto){
+      if(!n1){ msg('lgError', 'Escribe la nueva contraseña.'); $('lgNueva').focus(); return; }
+      if(n1 !== n2){ msg('lgError', 'Las contraseñas nuevas no coinciden.'); $('lgNueva2').focus(); return; }
+      if(n1.length < 10){ msg('lgError', 'La nueva contraseña debe tener al menos 10 caracteres.'); $('lgNueva').focus(); return; }
+      if(n1 === c){ msg('lgError', 'La nueva contraseña debe ser distinta de la actual.'); $('lgNueva').focus(); return; }
+    }
+    var listo = function(){ ocupado($('lgSubmit'), false, textoIngresar()); };
     ocupado($('lgSubmit'), true, 'Verificando…'); msg('lgError', '');
     api('/api/login', {usuario:u, clave:c}).then(function(d){
-      if(!d.ok){ msg('lgError', d.mensaje || 'No se pudo ingresar.'); ocupado($('lgSubmit'), false, 'Ingresar'); return; }
+      if(!d.ok){ msg('lgError', d.mensaje || 'No se pudo ingresar.'); listo(); return; }
       try{ sessionStorage.setItem('cenova.pestana', d.pestana); }catch(e){}
       tema(d.tema);
-      if(d.debeCambiar){ claveIngresada = c; mostrarCambio(true, d.nombre); ocupado($('lgSubmit'), false, 'Ingresar'); return; }
+      if(cambiarAbierto){
+        ocupado($('lgSubmit'), true, 'Guardando contraseña…');
+        return api('/api/clave', {actual: c, nueva: n1}, true).then(function(r){
+          if(r.ok){ location.replace('/'); return; }
+          /* La sesión ya quedó abierta: si la clave nueva no sirve, se puede corregir aquí y reintentar. */
+          msg('lgError', r.mensaje || 'No se pudo cambiar la contraseña.'); listo();
+        });
+      }
+      if(d.debeCambiar){ claveIngresada = c; mostrarCambio(true, d.nombre); listo(); return; }
       location.replace('/');
-    }).catch(function(){ msg('lgError', 'Sin conexión con el servidor.'); ocupado($('lgSubmit'), false, 'Ingresar'); });
+    }).catch(function(){ msg('lgError', 'Sin conexión con el servidor.'); listo(); });
   });
 
   function mostrarCambio(obligatorio, nombre){
