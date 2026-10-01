@@ -246,6 +246,10 @@
   .pill.st-enviada, .pill.st-propuesta_enviada, .pill.st-cotizado{background:var(--accent-soft); color:var(--accent-2);}
   .pill.st-pendiente_armar, .pill.st-pendiente{background:var(--warning-soft); color:var(--warning);}
   .pill.st-en_pausa{background:var(--neutral-soft); color:var(--neutral);}
+  .pill.st-en_proceso{background:var(--accent-soft); color:var(--accent-2); box-shadow:inset 0 0 0 1px var(--accent-2);}
+  .pausa-line{font-size:11.5px; color:var(--text-muted); margin-top:3px;}
+  .pausa-line.due{color:var(--critical); font-weight:600;}
+  .pausa-acts{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
   .cot-tabs{flex-wrap:wrap; width:auto; max-width:100%;}
   .cot-tabs .subtab-btn .count{margin-left:6px; font-family:"IBM Plex Mono",monospace; font-size:11px; background:var(--surface-2); border-radius:99px; padding:1px 7px; color:var(--text-muted);}
   .cot-tabs .subtab-btn.active .count{background:var(--accent-soft); color:var(--accent-2);}
@@ -459,6 +463,8 @@
   .cal-evt.tipo-entrega{background:var(--accent-soft); color:var(--accent-2); font-weight:700;}
   .cal-evt.tipo-cotizacion{background:var(--neutral-soft); color:var(--neutral); font-weight:700;}
   .cal-evt.tipo-seguimiento_cot{background:var(--accent-soft); color:var(--accent-2); font-weight:700;}
+  .cal-evt.tipo-revision_pausa{background:var(--neutral-soft); color:var(--neutral); font-weight:700;}
+  .pill.tipo-revision_pausa{background:var(--neutral-soft); color:var(--neutral);}
   .cal-evt.tipo-confirmar_inicio{background:var(--warning-soft); color:var(--warning); font-weight:700;}
   .cal-evt.tipo-pago_aviso, .cal-evt.tipo-pago{background:var(--critical-soft); color:var(--critical); font-weight:700;}
   .cal-evt.tipo-inspeccion, .cal-evt.tipo-visita, .cal-evt.tipo-tarea, .cal-evt.tipo-solicitud_personal{background:var(--neutral-soft); color:var(--text); font-weight:600;}
@@ -991,7 +997,7 @@
         <h3 class="stats-h">Por cotización</h3>
         <div class="stats-note">Margen bruto = (venta sin IVA − costo) ÷ venta. Precio mínimo = el precio sin IVA que haría falta para llegar a la meta de margen.</div>
         <div class="filters" style="margin-bottom:10px;">
-          <select id="finRentCotEstado"><option value="">Todas menos rechazadas</option><option value="aprobada">Aprobadas</option><option value="enviada">Enviadas</option><option value="pendiente_armar">Por armar</option><option value="rechazada">Rechazadas</option></select>
+          <select id="finRentCotEstado"><option value="">Todas menos rechazadas</option><option value="aprobada">Aprobadas</option><option value="enviada">Enviadas</option><option value="pendiente_armar">Por armar</option><option value="en_proceso">En proceso</option><option value="en_pausa">En pausa</option><option value="rechazada">Rechazadas</option></select>
         </div>
         <div id="finRentCot"></div>
         <h3 class="stats-h">Margen por tipo de ítem</h3>
@@ -1103,11 +1109,13 @@
         <div class="field"><label>Estado</label>
           <select id="cotEstado">
             <option value="pendiente_armar">Por armar</option>
-            <option value="en_pausa">En pausa</option>
+            <option value="en_proceso">En proceso</option>
             <option value="enviada">Enviada</option>
             <option value="aprobada">Aprobada</option>
             <option value="rechazada">Rechazada</option>
+            <option value="en_pausa">En pausa (a futuro)</option>
           </select>
+          <span class="no-file" id="cotEstadoHint"></span>
         </div>
       </div>
       <div class="field-row three">
@@ -1685,11 +1693,18 @@
 
 <script>
 (function(){
-  var COT_ESTADOS = {enviada:"Enviada", pendiente_armar:"Por armar", en_pausa:"En pausa", aprobada:"Aprobada", rechazada:"Rechazada"};
+  /* "En proceso" = la estamos trabajando. "En pausa" = el cliente la pidió para más adelante, sin vigencia ni prisa:
+     cada semana sale un recordatorio para validar si sigue en pausa. */
+  var COT_ESTADOS = {enviada:"Enviada", pendiente_armar:"Por armar", en_proceso:"En proceso", en_pausa:"En pausa", aprobada:"Aprobada", rechazada:"Rechazada"};
+  var COT_ESTADO_HINT = {
+    pendiente_armar:'Pedida por el cliente; falta empezar a armarla.',
+    en_proceso:'La estamos trabajando (precios, visita, ajustes).',
+    en_pausa:'El cliente la quiere a futuro, sin prisa. Cada semana te recordamos validar si sigue en pausa.'
+  };
   /* Pestañas del listado de cotizaciones. "Cerradas" = aprobadas cuya orden ya está pagada completa. */
   var COT_TABS = [
-    {key:'pendiente_armar', label:'Por armar'}, {key:'en_pausa', label:'En pausa'}, {key:'enviada', label:'Enviadas'},
-    {key:'aprobada', label:'Aprobadas en curso'}, {key:'cerrada', label:'Cerradas'}, {key:'rechazada', label:'Rechazadas'}, {key:'todas', label:'Todas'}
+    {key:'pendiente_armar', label:'Por armar'}, {key:'en_proceso', label:'En proceso'}, {key:'enviada', label:'Enviadas'},
+    {key:'aprobada', label:'Aprobadas en curso'}, {key:'cerrada', label:'Cerradas'}, {key:'en_pausa', label:'En pausa'}, {key:'rechazada', label:'Rechazadas'}, {key:'todas', label:'Todas'}
   ];
   var PROY_ESTADOS = {pendiente:"Pendiente", propuesta_enviada:"Propuesta enviada", cotizado:"Cotizado", en_ejecucion:"En ejecución", finalizado:"Finalizado"};
   var MODO_LABELS = {presencial:"Presencial", visita_tecnica:"Visita técnica", videollamada:"Videollamada", llamada:"Llamada"};
@@ -1697,7 +1712,7 @@
     /* tipos antiguos (solo para mostrar eventos ya creados) */
     instalacion:"Instalación", entrega:"Entrega", cotizacion:"Cotización / propuesta",
     /* tipos automáticos */
-    seguimiento_cot:"Seguimiento de cotización", confirmar_inicio:"Confirmar inicio", pago_aviso:"Aviso de pago", pago:"Vencimiento de pago"};
+    seguimiento_cot:"Seguimiento de cotización", revision_pausa:"Revisión de cotización en pausa", confirmar_inicio:"Confirmar inicio", pago_aviso:"Aviso de pago", pago:"Vencimiento de pago"};
   var OC_ESTADOS = {recibida:"Recibida", programada:"Programada", en_ejecucion:"En ejecución", finalizada:"Instalación finalizada", facturada:"Facturada", pagada:"Pagada", anulada:"Anulada"};
   var EV_ESTADOS = {pendiente:"Pendiente", cumplido:"Cumplido", cancelado:"Cerrado", vencido:"Vencido"};
   var EMISOR_INFO = {
@@ -2012,7 +2027,7 @@
       html += '<tr data-id="'+id+'">'+
         '<td class="num">'+escapeHtml(c.numero||'—')+'</td>'+
         '<td>'+escapeHtml(c.cliente||'—')+'</td>'+
-        '<td class="desc-cell"><div class="d-title">'+escapeHtml(c.descripcion||'—')+'</div>'+(c.items&&c.items.length?'<div class="d-notes">'+c.items.length+' ítem(s)</div>':'')+'</td>'+
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml(c.descripcion||'—')+'</div>'+(c.items&&c.items.length?'<div class="d-notes">'+c.items.length+' ítem(s)</div>':'')+(c.estado==='en_pausa'?pausaInfoHtml(id, c):'')+'</td>'+
         '<td>'+escapeHtml(c.responsable||'—')+'</td>'+
         '<td class="num">'+fmtDate(c.fecha)+'</td>'+
         '<td class="num">'+(total?fmtMoney.format(total):'—')+'</td>'+
@@ -2027,6 +2042,7 @@
     container.innerHTML = html;
     container.querySelectorAll('.edit-cot').forEach(function(btn){ btn.addEventListener('click', function(){ openCotModal(btn.closest('tr').dataset.id); }); });
     container.querySelectorAll('.view-cot').forEach(function(btn){ btn.addEventListener('click', function(){ openPreview(btn.closest('tr').dataset.id); }); });
+    bindPausaBtns(container);
   }
 
   function emptyState(title, sub, btnId){
@@ -2745,6 +2761,46 @@
   }
 
   /* ---------- Modals: Cotización ---------- */
+  function cotEstadoHintRefresh(){
+    var v = document.getElementById('cotEstado').value;
+    var c = state.editingCotId ? (state.cotizaciones.get(state.editingCotId) || {}) : {};
+    var t = COT_ESTADO_HINT[v] || '';
+    if(v === 'en_pausa' && c.estado === 'en_pausa') t += ' Próxima revisión: '+fmtDate(pausaProxima(c))+'.';
+    document.getElementById('cotEstadoHint').textContent = t;
+  }
+  document.getElementById('cotEstado').addEventListener('change', cotEstadoHintRefresh);
+
+  /* Acciones rápidas de la revisión semanal de una cotización en pausa. */
+  function pausaValidar(id){
+    var db = requireDb(); var c = state.cotizaciones.get(id); if(!db || !c) return;
+    var upd = {pausaRevisada: todayIso()};
+    db.collection('cotizaciones').doc(id).update(upd).then(function(){
+      Object.assign(c, upd); syncAutoEventsFor('cotizacion', id);
+      toast((c.numero||'Cotización')+' sigue en pausa · próxima revisión el '+fmtDate(pausaProxima(c)));
+      renderAll();
+    }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  }
+  function pausaReactivar(id){
+    var db = requireDb(); var c = state.cotizaciones.get(id); if(!db || !c) return;
+    var upd = {estado:'en_proceso', pausaDesde:null, pausaRevisada:null};
+    db.collection('cotizaciones').doc(id).update(upd).then(function(){
+      Object.assign(c, upd); syncAutoEventsFor('cotizacion', id);
+      toast((c.numero||'Cotización')+' pasó a "En proceso"');
+      renderAll();
+    }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  }
+  function pausaInfoHtml(id, c){
+    var prox = pausaProxima(c), d = daysUntil(prox, 0);
+    var cuando = d < 0 ? 'revisión atrasada '+Math.abs(d)+' d' : (d === 0 ? 'revisar hoy' : 'próxima revisión '+fmtShort(prox));
+    return '<div class="pausa-line'+(d <= 0 ? ' due' : '')+'">⏸ En pausa desde '+fmtShort(c.pausaDesde||c.fecha||todayIso())+' · '+cuando+'</div>'+
+      '<div class="pausa-acts"><button class="btn sm pausa-ok" data-cid="'+id+'" title="Validé con el cliente: sigue para más adelante">✓ Sigue en pausa</button>'+
+      '<button class="btn sm pausa-go" data-cid="'+id+'" title="El cliente la activó: pasarla a En proceso">▶ Pasar a en proceso</button></div>';
+  }
+  function bindPausaBtns(root){
+    root.querySelectorAll('.pausa-ok').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); b.disabled = true; pausaValidar(b.dataset.cid); }); });
+    root.querySelectorAll('.pausa-go').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); b.disabled = true; pausaReactivar(b.dataset.cid); }); });
+  }
+
   function openCotModal(id, presetProyectoId){
     if(id && !state.cotizaciones.get(id)){ toast('No se pudo cargar esa cotización — vuelve a intentar.'); return; }
     state.editingCotId = id || null;
@@ -2772,7 +2828,8 @@
     if(clienteActual) autofillClienteEnCot(clienteActual, true);
     document.getElementById('cotDescripcion').value = c.descripcion || '';
     document.getElementById('cotResponsable').value = c.responsable || '';
-    document.getElementById('cotEstado').value = c.estado || 'pendiente_armar';
+    document.getElementById('cotEstado').value = COT_ESTADOS[c.estado] ? c.estado : 'pendiente_armar';
+    cotEstadoHintRefresh();
     document.getElementById('cotFecha').value = c.fecha || '';
     document.getElementById('cotCostingMode').value = c.costingMode || 'simple';
     document.getElementById('cotIva').value = (c.ivaPct != null ? c.ivaPct : 19);
@@ -3427,6 +3484,11 @@
             (pend.length?' <button class="btn sm resend-apoyo">Enviar solicitud</button>':'')+'</div>';
         })() : '')+
         projHtml + cotsHtml +
+        (function(){
+          if(e.tipo !== 'revision_pausa' || !e.origenId) return '';
+          var pc = state.cotizaciones.get(e.origenId);
+          return (pc && pc.estado === 'en_pausa') ? pausaInfoHtml(e.origenId, pc) : '';
+        })()+
         '<div style="display:flex; gap:8px;"><button class="btn sm edit-evt">Editar</button></div>'+
       '</div>';
     }).join('');
@@ -3437,6 +3499,7 @@
 
     var addBtn = document.getElementById('dayAddEvt');
     if(addBtn) addBtn.addEventListener('click', function(){ openEvtModal(null, iso); });
+    bindPausaBtns(document.getElementById('dayPanel'));
     document.querySelectorAll('#dayPanel .resend-apoyo').forEach(function(btn){
       btn.addEventListener('click', function(){ var id = btn.closest('.evt-card').dataset.id; var ev = state.eventos.get(id); if(ev){ btn.disabled = true; notifyApoyoWithToast(id, ev); } });
     });
@@ -3540,9 +3603,24 @@
      ===================================================================== */
   function autoId(origenId, clave){ return 'auto-' + String(origenId).replace(/[^A-Za-z0-9_\-]/g,'_') + '-' + clave; }
 
+  /* Cotizaciones en pausa: la revisión toca 7 días después de la última validación (o de cuando se pausó). */
+  function pausaProxima(c){
+    var base = c.pausaRevisada || c.pausaDesde || c.fecha || todayIso();
+    return isoAdd(base, 7);
+  }
   function desiredForCot(id, c){
     var out = [];
-    if(!c || !c.fecha || c.estado === 'pendiente_armar') return out;
+    if(c && c.estado === 'en_pausa'){
+      var nP = c.numero || 'Cotización';
+      out.push({auto:true, origen:'cotizacion', origenId:id, clave:'revision-pausa', tipo:'revision_pausa',
+        cliente:c.cliente||'', proyectoId:c.proyectoId||'', creadoPorId:c.creadoPorId||null,
+        fecha:pausaProxima(c), estado:'pendiente', fechaCumplido:null, etiqueta:'Validar '+nP+' (pausa)',
+        titulo:'Validar estado de '+nP+' · '+(c.cliente||'')+' — sigue en pausa?',
+        motivo:'La cotización está en pausa desde el '+fmtDate(c.pausaDesde||c.fecha||todayIso())+(c.pausaRevisada?' (última validación: '+fmtDate(c.pausaRevisada)+')':'')+
+          '. Confirmar con el cliente si sigue para más adelante o si ya hay que trabajarla. Si sigue igual, marca "Sigue en pausa"; si ya salió, pásala a "En proceso".'});
+      return out;
+    }
+    if(!c || !c.fecha || c.estado === 'pendiente_armar' || c.estado === 'en_proceso') return out;
     var vig = Number(c.vigenciaDias)||15;
     var fin = isoAdd(c.fecha, vig);
     var seg = isoMax(c.fecha, isoAdd(fin, -5));
@@ -5255,7 +5333,7 @@
       if(an.sinMargen.length){
         add('warning', '<strong>'+escapeHtml(c.numero||'')+'</strong>: '+an.sinMargen.length+' ítem(s) se venden al mismo precio de costo ('+an.sinMargen.slice(0,2).map(function(x){ return '"'+escapeHtml(x.desc||'')+'"'; }).join(', ')+(an.sinMargen.length>2?'…':'')+'). No dejan nada para cubrir gastos de la empresa. <button class="linkish" data-open-cot="'+escapeHtml(id)+'">Abrir</button>', 60);
       }
-      if(['enviada','pendiente_armar','en_pausa'].indexOf(c.estado) !== -1 && an.margen != null && an.completo && an.margen < a.margenMinimo/100){
+      if(['enviada','pendiente_armar','en_proceso','en_pausa'].indexOf(c.estado) !== -1 && an.margen != null && an.completo && an.margen < a.margenMinimo/100){
         add('critical', '<strong>'+escapeHtml(c.numero||'')+'</strong> ('+escapeHtml(c.cliente||'')+') deja solo el <strong>'+pct(an.margen)+'</strong> de margen. Para llegar al '+a.metaMargen+' % el precio sin IVA debería ser '+finMoney(an.precioMin)+' (+'+finMoney(an.precioMin - an.venta)+'). <button class="linkish" data-open-cot="'+escapeHtml(id)+'">Abrir</button>', 85);
       }
       if(['enviada','aprobada'].indexOf(c.estado) !== -1 && !an.completo && an.faltan){
@@ -5983,6 +6061,11 @@
       margenPct: catMargin('Materiales')
     };
     data.valor = cotTotal(data);
+    /* En pausa: guarda desde cuándo y la última validación semanal (al salir de la pausa se borran). */
+    if(data.estado === 'en_pausa'){
+      data.pausaDesde = prev.estado === 'en_pausa' ? (prev.pausaDesde || todayIso()) : todayIso();
+      data.pausaRevisada = prev.estado === 'en_pausa' ? (prev.pausaRevisada || null) : null;
+    } else { data.pausaDesde = null; data.pausaRevisada = null; }
     var col = db.collection('cotizaciones');
     var eraEdicion = !!state.editingCotId;
     var p = state.editingCotId ? col.doc(state.editingCotId).set(data).then(function(){ return state.editingCotId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
