@@ -3804,6 +3804,16 @@
     box.innerHTML = '<strong>'+escapeHtml(c.numero||'')+'</strong> · '+escapeHtml(c.cliente||'—')+' · '+escapeHtml(c.descripcion||'')+
       '<br><span class="muted">Valor cotizado: '+fmtMoney.format(cotTotal(c))+(proj?' · Proyecto: '+escapeHtml(proj.nombre||''):'')+
       ' · Días de instalación cotizados: '+(c.diasInstalacion!=null?c.diasInstalacion:'sin definir')+' · Estado actual: '+(COT_ESTADOS[c.estado]||c.estado)+'</span>';
+    var totCot = Math.round(cotTotal(c)), valOc = document.getElementById('ocValor').value;
+    if(!fillDefaults && valOc !== '' && Math.round(Number(valOc)) !== totCot && totCot > 0){
+      box.innerHTML += '<div style="margin-top:8px;">⚠️ El valor de esta orden ('+fmtMoney.format(Number(valOc))+') no coincide con el de la cotización ('+fmtMoney.format(totCot)+'). '+
+        '<button type="button" class="btn" id="ocUsarValorCot" style="margin-left:4px;">Usar '+fmtMoney.format(totCot)+'</button></div>';
+      document.getElementById('ocUsarValorCot').addEventListener('click', function(){
+        document.getElementById('ocValor').value = totCot;
+        renderOcCalc(); renderOcPagosSummary(); renderOcCotInfo(false);
+        toast('Valor actualizado. Guarda la orden para aplicarlo.');
+      });
+    }
     if(fillDefaults){
       document.getElementById('ocValor').value = Math.round(cotTotal(c)) || '';
       if(c.diasInstalacion != null) document.getElementById('ocDiasInst').value = c.diasInstalacion;
@@ -5852,6 +5862,80 @@
   /* ---------- DB wiring ---------- */
   function requireDb(){ if(!state.db){ toast('Sin conexión con el almacenamiento todavía — intenta de nuevo en unos segundos.'); return null; } return state.db; }
 
+  /* Al editar una cotización, lleva los cambios a su orden de compra y a su prefactura.
+     - Orden: si su valor era el de la cotización (no se cambió a mano), se actualiza solo; si era distinto, se pregunta.
+       También cliente, proyecto, número y días de instalación (si no se habían cambiado en la orden).
+     - Prefactura: guarda una copia de la cotización; si sus valores cambiaron, se pregunta si se actualiza (conserva su número).
+     Los costos, márgenes y Finanzas ya leen la cotización en vivo, así que no hay nada más que copiar. */
+  function propagarCambiosCotizacion(cotId, prev, nueva){
+    var db = requireDb(); if(!db) return Promise.resolve();
+    var oldTot = Math.round(cotTotal(prev)), newTot = Math.round(cotTotal(nueva));
+    var ordenes = [];
+    state.ordenes.forEach(function(o, oid){ if(o.cotizacionId === cotId && o.estado !== 'anulada') ordenes.push({id: oid, o: o}); });
+    var hechos = [];
+    var cadena = Promise.resolve();
+    ordenes.forEach(function(it){
+      cadena = cadena.then(function(){
+        var o = it.o, upd = {};
+        if((o.cliente||'') !== (nueva.cliente||'')) upd.cliente = nueva.cliente || '';
+        if((o.cotizacionNumero||'') !== (nueva.numero||'')) upd.cotizacionNumero = nueva.numero || '';
+        if((o.proyectoId||'') !== (nueva.proyectoId||'')) upd.proyectoId = nueva.proyectoId || '';
+        if(nueva.diasInstalacion != null && nueva.diasInstalacion !== prev.diasInstalacion &&
+           (o.diasInstalacion == null || o.diasInstalacion === '' || Number(o.diasInstalacion) === Number(prev.diasInstalacion))) upd.diasInstalacion = nueva.diasInstalacion;
+        var pasoValor = Promise.resolve(false);
+        var valorOrden = (o.valor == null || o.valor === '') ? null : Math.round(Number(o.valor));
+        if(newTot !== oldTot && valorOrden !== newTot){
+          if(valorOrden == null || valorOrden === oldTot) pasoValor = Promise.resolve(true);
+          else pasoValor = confirmDialog('La orden '+(o.numero||'')+' tiene un valor de '+fmtMoney.format(valorOrden)+
+            ', distinto al que tenía la cotización ('+fmtMoney.format(oldTot)+'). La cotización '+(nueva.numero||'')+' ahora suma '+fmtMoney.format(newTot)+
+            '. ¿Cambiar el valor de la orden a '+fmtMoney.format(newTot)+'?', 'Actualizar orden');
+        }
+        return pasoValor.then(function(cambiarValor){
+          if(cambiarValor){
+            upd.valor = newTot;
+            /* El estado de pago depende del valor: si con el nuevo valor queda saldada o deja de estarlo, se ajusta */
+            var pagos = o.pagos || [], recibido = ocRecibido(o);
+            if(pagos.length && recibido >= newTot && newTot > 0 && o.estado !== 'pagada'){
+              upd.estado = 'pagada'; upd.fechaPago = pagos.map(function(x){ return x.fecha; }).sort().pop() || todayIso();
+            } else if(pagos.length && o.estado === 'pagada' && recibido < newTot){
+              upd.estado = o.fechaInicio ? 'finalizada' : 'recibida'; upd.fechaPago = null;
+            }
+          }
+          if(!Object.keys(upd).length) return;
+          var data = Object.assign({}, o, upd);
+          return db.collection('ordenesCompra').doc(it.id).set(data).then(function(){
+            state.ordenes.set(it.id, data);
+            if(upd.valor != null) hechos.push('orden '+(o.numero||'')+' a '+fmtMoney.format(newTot));
+            else hechos.push('orden '+(o.numero||''));
+            return syncAutoEventsFor('orden', it.id);
+          });
+        });
+      });
+    });
+    cadena = cadena.then(function(){
+      var pf = prefacturaDeCot(cotId); if(!pf) return;
+      var nuevoPf = Math.round(cotTablaTotales(nueva).totalVal);
+      var firma = function(c){ return JSON.stringify([c.items||[], c.costingMode||'', Number(c.ivaPct)||0, Number(c.aiuAdministracionPct)||0, Number(c.aiuImprevistosPct)||0, Number(c.aiuUtilidadPct)||0, c.ivaBase||'',
+        c.cliente||'', c.clienteNit||'', c.clienteContacto||'', c.clienteDireccion||'', c.clienteCiudad||'', c.clienteTelefono||'', c.clienteEmail||'', c.descripcion||'', c.condiciones||'']); };
+      if(firma(pf.data.cot || {}) === firma(nueva)) return;
+      var actual = JSON.stringify(nueva);
+      var cambiaValor = nuevoPf !== Math.round(Number(pf.data.valor)||0);
+      return confirmDialog('La prefactura '+(pf.data.numero||'')+' se generó con los datos anteriores de la cotización'+
+        (cambiaValor ? ' (valor '+fmtMoney.format(Number(pf.data.valor)||0)+'; ahora sería '+fmtMoney.format(nuevoPf)+')' : '')+
+        '. ¿Actualizarla con los cambios? Conserva su número '+(pf.data.numero||'')+'.', 'Actualizar prefactura').then(function(ok){
+        if(!ok) return;
+        var data = Object.assign({}, pf.data, {cot: JSON.parse(actual), valor: nuevoPf, cotizacionNumero: nueva.numero || pf.data.cotizacionNumero || '', actualizadaEn: new Date().toISOString()});
+        return db.collection('prefacturas').doc(pf.id).set(data).then(function(){
+          state.prefacturas.set(pf.id, data);
+          hechos.push('prefactura '+(pf.data.numero||''));
+        });
+      });
+    });
+    return cadena.then(function(){
+      if(hechos.length) toast('También se actualizó: '+hechos.join(' · '), 5000);
+    }).catch(function(err){ toast('La cotización se guardó, pero no se pudo actualizar su orden o prefactura: '+(err && err.message ? err.message : 'error'), 6000); });
+  }
+
   document.getElementById('cotSave').addEventListener('click', function(){
     var db = requireDb(); if(!db) return;
     var mode = document.getElementById('cotCostingMode').value;
@@ -5900,11 +5984,13 @@
     };
     data.valor = cotTotal(data);
     var col = db.collection('cotizaciones');
+    var eraEdicion = !!state.editingCotId;
     var p = state.editingCotId ? col.doc(state.editingCotId).set(data).then(function(){ return state.editingCotId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
     p.then(function(newId){
       if(newId){ state.cotizaciones.set(newId, data); syncAutoEventsFor('cotizacion', newId); }
       var dest = (COT_TABS.filter(function(t){ return t.key === cotTabKey(newId || '', data); })[0]||{}).label;
       toast('Cotización '+data.numero+' guardada'+(dest && prev.estado !== data.estado ? ' · pasó a "'+dest+'"' : '')); closeCotModal();
+      if(eraEdicion && newId) return propagarCambiosCotizacion(newId, prev, data);
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
 
