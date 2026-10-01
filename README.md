@@ -1,6 +1,6 @@
 # Intranet Cenova
 
-Panel de seguimiento gerencial de **Cenova S.A.S.**: cotizaciones, órdenes de compra, proyectos, clientes, agenda, cronograma y estadísticas. Queda en **https://intranet.cenovasas.com** y solo entra el equipo.
+Panel de seguimiento gerencial de **Cenova S.A.S.**: cotizaciones, órdenes de compra, proyectos, clientes, agenda, cronograma, estadísticas y finanzas (solo administración). Queda en **https://intranet.cenovasas.com** y solo entra el equipo.
 
 Todo corre en **Cloudflare**, con plan gratuito:
 
@@ -23,6 +23,18 @@ Todo corre en **Cloudflare**, con plan gratuito:
 | Reglas de datos | Los números COT y OC no se pueden cambiar. Las órdenes de compra no se borran (solo administración). Importar respaldos es solo para administración. Cada cambio queda en la tabla `auditoria`. |
 | Correo | Solo se puede enviar a correos del equipo, así que nadie puede usar la intranet para mandar spam. |
 | Navegador | Política de contenido (CSP), HSTS, bloqueo de marcos (anti-clickjacking) y protección CSRF. |
+
+## Finanzas (solo administración)
+
+Sección del menú visible solo para usuarios con `admin = 1`. El servidor no envía las colecciones financieras a nadie más (ni siquiera en `/api/sync`) y rechaza cualquier escritura o borrado que no venga de administración.
+
+| Colección | Qué guarda |
+|---|---|
+| `finMovimientos` | Entradas, salidas y transferencias de dinero (pagadas o pendientes). Una salida ligada a un proyecto es costo directo de ese proyecto; sin proyecto es gasto operativo. |
+| `finGastosFijos` | Gastos recurrentes (Google Workspace, dominio, contador…) con frecuencia y día de pago. Cada pago se registra como movimiento con `gastoFijoId` y `periodo`. |
+| `finAjustes` (doc `general`) | Cuentas con saldo inicial y fecha, meta de margen y margen mínimo. |
+
+Los pagos de clientes **no** se registran en Finanzas: se leen de la sección Pagos de cada orden de compra para no duplicarlos. Pestañas: Resumen (saldo, indicadores, puntos de mejora), Movimientos (con exportación a CSV), Gastos fijos, Rentabilidad (estado de resultados, por proyecto estimado vs. real, por cotización con precio mínimo para la meta, por tipo de ítem), Proyección a 6 meses y Cuentas y metas.
 
 ## Usuarios
 

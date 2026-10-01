@@ -8,7 +8,10 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes'];
+// Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
+const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes'];
+const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
 const COOKIE = 'cenova_sesion';
 const MAX_INTENTOS = 5;
 const BLOQUEO_MS = 15 * 60 * 1000;
@@ -182,13 +185,14 @@ async function sync(req, env, s) {
   const borr = desde ? await env.DB.prepare('SELECT col, id, ts FROM borrados WHERE ts > ?').bind(desde).all() : { results: [] };
   return json({
     ahora,
-    docs: docs.results.map((d) => ({ col: d.col, id: d.id, act: d.actualizado, data: JSON.parse(d.data) })),
-    borrados: borr.results.map((b) => ({ col: b.col, id: b.id }))
+    docs: docs.results.filter((d) => s.admin || !soloAdmin(d.col)).map((d) => ({ col: d.col, id: d.id, act: d.actualizado, data: JSON.parse(d.data) })),
+    borrados: borr.results.filter((b) => s.admin || !soloAdmin(b.col)).map((b) => ({ col: b.col, id: b.id }))
   });
 }
 function idValido(id) { return typeof id === 'string' && /^[A-Za-z0-9_\-.:@+~]{1,200}$/.test(id); }
 async function escribir(req, env, s, col, id, metodo) {
   if (COLECCIONES.indexOf(col) === -1) return err(404, 'coleccion', 'Colección no permitida.');
+  if (soloAdmin(col) && !s.admin) return err(403, 'regla', 'Las finanzas son solo para administración.');
   if (id && !idValido(id)) return err(400, 'id', 'Identificador inválido.');
   const actual = id ? await env.DB.prepare('SELECT data FROM docs WHERE col = ? AND id = ?').bind(col, id).first() : null;
   const previo = actual ? JSON.parse(actual.data) : null;
@@ -222,7 +226,7 @@ async function escribir(req, env, s, col, id, metodo) {
   await env.DB.prepare('INSERT INTO docs (col, id, data, actualizado, actualizado_por) VALUES (?,?,?,?,?) ON CONFLICT(col, id) DO UPDATE SET data = excluded.data, actualizado = excluded.actualizado, actualizado_por = excluded.actualizado_por')
     .bind(col, id, txt, ahora, s.usuario_id).run();
   await env.DB.prepare('DELETE FROM borrados WHERE col = ? AND id = ?').bind(col, id).run();
-  if (col !== 'eventos' || !data.auto) await auditar(env, s.usuario_id, previo ? 'editar' : 'crear', col, id, data.numero || data.titulo || data.nombre || data.proveedor, req);
+  if (col !== 'eventos' || !data.auto) await auditar(env, s.usuario_id, previo ? 'editar' : 'crear', col, id, data.numero || data.titulo || data.nombre || data.proveedor || data.descripcion, req);
   return json({ ok: true, id, act: ahora });
 }
 
