@@ -182,6 +182,18 @@
   .panel-empty{padding:22px 18px; color:var(--text-muted); font-size:13px;}
 
   .list-row{display:flex; align-items:center; gap:10px; padding:10px 10px; border-radius:8px;}
+  .proy-tot{font-weight:600; white-space:nowrap;}
+  .proy-tot-sub{font-size:11.5px; color:var(--text-muted); white-space:nowrap; margin-top:2px;}
+  .proy-tot-cell{text-align:right;}
+  .proy-suma{display:flex; align-items:center; justify-content:center; width:22px; flex:none; color:var(--text-muted);}
+  .proy-suma input{width:16px; height:16px; margin:0; cursor:pointer;}
+  .proy-cot-fuera .main-txt{opacity:.55;}
+  .proy-resumen{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px; margin-bottom:6px;}
+  .proy-resumen > div{background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .proy-resumen span{font-size:11px; color:var(--text-muted);}
+  .proy-resumen b{font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .proy-resumen-nota{font-size:11.5px; color:var(--text-muted); margin-bottom:12px;}
+  @media (max-width:700px){ .proy-resumen{grid-template-columns:repeat(2, minmax(0,1fr));} }
   .list-row:hover{background:var(--surface-2);}
   .list-row .main-txt{flex:1; min-width:0;}
   .list-row .title{font-size:13.3px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
@@ -2142,6 +2154,30 @@
       return needleCliente && (c.cliente||'').trim().toLowerCase() === needleCliente;
     }).sort(function(a,b){ return (b[1].fecha||'').localeCompare(a[1].fecha||''); });
   }
+  /* Totales de un proyecto: suma de sus cotizaciones (sin las rechazadas ni las que se marcaron "no sumar") */
+  function proyTotales(proyId, p){
+    var fuera = (p && p.fueraDelTotal) || [];
+    var r = {total:0, venta:0, costo:0, utilidad:0, margen:null, incluidas:0, cuentan:[], faltanCosto:0, todas:0};
+    cotizacionesDeProyecto(proyId, p && p.cliente).forEach(function(e){
+      var id = e[0], c = e[1];
+      r.todas++;
+      if(c.estado === 'rechazada' || fuera.indexOf(id) !== -1) return;
+      var an = finCotAnalisis(c);
+      r.incluidas++; r.cuentan.push(id);
+      r.total += cotTotal(c); r.venta += an.venta; r.costo += an.costo;
+      if(!an.completo) r.faltanCosto++;
+    });
+    r.utilidad = r.venta - r.costo;
+    r.margen = r.venta > 0 ? r.utilidad / r.venta : null;
+    return r;
+  }
+  function proyToggleSuma(proyId, cotId, sumar){
+    var db = requireDb(); var p = state.proyectos.get(proyId); if(!db || !p) return;
+    var fuera = (p.fueraDelTotal || []).filter(function(x){ return x !== cotId; });
+    if(!sumar) fuera.push(cotId);
+    p.fueraDelTotal = fuera; renderProyectos();
+    db.collection('proyectos').doc(proyId).update({fueraDelTotal: fuera}).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  }
   function renderProyectos(){
     var q = document.getElementById('proySearch').value.trim().toLowerCase();
     var estadoF = document.getElementById('proyEstadoFilter').value;
@@ -2165,30 +2201,55 @@
     }
     if(rows.length === 0){ container.innerHTML = '<div class="table-wrap"><div class="empty-state">Ningún proyecto coincide con el filtro.</div></div>'; return; }
 
-    var html = '<div class="table-wrap"><table><thead><tr><th></th><th>Cliente</th><th>Proyecto</th><th>Responsable</th><th>Estado</th><th>Notas</th><th></th></tr></thead><tbody>';
+    var html = '<div class="table-wrap"><table><thead><tr><th></th><th>Cliente</th><th>Proyecto</th><th>Responsable</th><th>Estado</th><th style="text-align:right">Total cotizado</th><th>Notas</th><th></th></tr></thead><tbody>';
     rows.forEach(function(e){
       var id = e[0], p = e[1];
       var expanded = state.expandedProyId === id;
       var cots = cotizacionesDeProyecto(id, p.cliente);
+      var tot = proyTotales(id, p);
+      var semP = (tot.faltanCosto || tot.margen == null) ? '' : finSemaforo(tot.margen);
+      var totCell = tot.incluidas ? '<div class="proy-tot">'+fmtMoney.format(tot.total)+'</div>'+
+        '<div class="proy-tot-sub">'+tot.incluidas+' cot. · costo '+fmtMoney.format(tot.costo)+
+        (tot.margen != null ? ' · <span class="fin-badge '+(semP||'')+'">'+Math.round(tot.margen*100)+' %</span>' : '')+'</div>' : '<span style="color:var(--text-muted)">—</span>';
       html += '<tr class="proy-row" data-id="'+id+'" style="cursor:pointer;">'+
         '<td style="width:24px; color:var(--text-muted);"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate('+(expanded?'90':'0')+'deg); transition:transform .15s;"><path d="M9 18l6-6-6-6"/></svg></td>'+
         '<td>'+escapeHtml(p.cliente||'—')+'</td>'+
         '<td class="desc-cell"><div class="d-title">'+escapeHtml(p.nombre||'—')+'</div></td>'+
         '<td>'+escapeHtml(p.responsable||'—')+'</td>'+
         '<td><span class="pill st-'+p.estado+'">'+(PROY_ESTADOS[p.estado]||p.estado)+'</span></td>'+
+        '<td class="num proy-tot-cell">'+totCell+'</td>'+
         '<td class="desc-cell"><div class="d-notes">'+escapeHtml((p.notas||'').slice(0,110))+((p.notas||'').length>110?'…':'')+'</div></td>'+
         '<td><div class="row-actions"><button class="icon-btn edit-proy" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/></svg></button></div></td>'+
         '</tr>';
       if(expanded){
         var cotsHtml = cots.length ? cots.map(function(ce){
           var cid = ce[0], c = ce[1]; var total = cotTotal(c);
-          return '<div class="list-row proy-cot-row" data-cid="'+cid+'" style="cursor:pointer;">'+
+          var an = finCotAnalisis(c), rech = c.estado === 'rechazada', suma = tot.cuentan.indexOf(cid) !== -1;
+          var sem = (an.completo && an.margen != null) ? finSemaforo(an.margen) : '';
+          return '<div class="list-row proy-cot-row'+(suma?'':' proy-cot-fuera')+'" data-cid="'+cid+'" style="cursor:pointer;">'+
+            (rech ? '<span class="proy-suma" title="Las rechazadas no suman">—</span>'
+                  : '<label class="proy-suma" title="Sumar esta cotización al total del proyecto"><input type="checkbox" class="proy-suma-chk" data-proy="'+id+'" data-cid="'+cid+'"'+(suma?' checked':'')+'></label>')+
             '<div class="main-txt"><div class="title">'+escapeHtml(c.numero||'Sin N°')+' · '+escapeHtml(c.descripcion||'Cotización')+'</div>'+
-            '<div class="meta">'+fmtDate(c.fecha)+(total?' · '+fmtMoney.format(total):'')+'</div></div>'+
+            '<div class="meta">'+fmtDate(c.fecha)+(total?' · '+fmtMoney.format(total):'')+
+              (an.costo ? ' · costo '+fmtMoney.format(an.costo) : '')+
+              (an.margen != null && an.costo ? ' · <span class="fin-badge '+sem+'">'+Math.round(an.margen*100)+' %</span>' : '')+
+              (!an.completo && (c.items||[]).length ? ' · <span style="color:var(--warning)">'+an.faltan+' ítem(s) sin costo</span>' : '')+
+            '</div></div>'+
             '<span class="pill st-'+c.estado+'">'+(COT_ESTADOS[c.estado]||c.estado)+'</span>'+
             '</div>';
         }).join('') : '<div class="panel-empty" style="padding:10px 4px;">Este proyecto todavía no tiene cotizaciones vinculadas.</div>';
-        html += '<tr class="proy-detail-row"><td></td><td colspan="6" style="background:var(--surface-2); padding:12px 16px;">'+
+        var semT = (tot.faltanCosto || tot.margen == null) ? '' : finSemaforo(tot.margen);
+        var resumenHtml = tot.incluidas ? '<div class="proy-resumen">'+
+            '<div><span>Total con IVA</span><b>'+fmtMoney.format(tot.total)+'</b></div>'+
+            '<div><span>Venta sin IVA</span><b>'+fmtMoney.format(tot.venta)+'</b></div>'+
+            '<div><span>Costo</span><b>'+fmtMoney.format(tot.costo)+'</b></div>'+
+            '<div><span>Utilidad</span><b>'+fmtMoney.format(tot.utilidad)+'</b></div>'+
+            '<div><span>Margen</span><b>'+(tot.margen != null ? '<span class="fin-badge '+semT+'">'+Math.round(tot.margen*100)+' %</span>' : '—')+'</b></div>'+
+          '</div>'+
+          '<div class="proy-resumen-nota">Suma '+tot.incluidas+' de '+tot.todas+' cotizaciones. Desmarca las que sean otra opción o una versión repetida para que no se sumen dos veces. Las rechazadas no suman.'+
+            (tot.faltanCosto ? ' <span style="color:var(--warning)">Ojo: '+tot.faltanCosto+' cotización(es) tienen ítems sin costo, así que el costo real es mayor.</span>' : '')+'</div>' : '';
+        html += '<tr class="proy-detail-row"><td></td><td colspan="7" style="background:var(--surface-2); padding:12px 16px;">'+
+          resumenHtml+
           '<div style="font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin-bottom:6px;">Cotizaciones de este proyecto</div>'+
           cotsHtml+
           '<button class="btn sm proy-add-cot" data-proyid="'+id+'" style="margin-top:8px;">+ Nueva cotización para este proyecto</button>'+
@@ -2207,6 +2268,10 @@
     });
     container.querySelectorAll('.proy-cot-row').forEach(function(row){
       row.addEventListener('click', function(e){ e.stopPropagation(); openCotModal(row.dataset.cid); });
+    });
+    container.querySelectorAll('.proy-suma').forEach(function(l){ l.addEventListener('click', function(e){ e.stopPropagation(); }); });
+    container.querySelectorAll('.proy-suma-chk').forEach(function(chk){
+      chk.addEventListener('change', function(){ proyToggleSuma(chk.dataset.proy, chk.dataset.cid, chk.checked); });
     });
     container.querySelectorAll('.proy-add-cot').forEach(function(btn){
       btn.addEventListener('click', function(e){ e.stopPropagation(); openCotModal(null, btn.dataset.proyid); });
@@ -6174,6 +6239,8 @@
       estado: document.getElementById('proyEstado').value,
       notas: document.getElementById('proyNotas').value.trim()
     };
+    var prev = state.editingProyId && state.proyectos.get(state.editingProyId);
+    if(prev && prev.fueraDelTotal) data.fueraDelTotal = prev.fueraDelTotal;
     if(!data.nombre){ toast('Ponle un nombre al proyecto.'); return; }
     var col = db.collection('proyectos');
     var p = state.editingProyId ? col.doc(state.editingProyId).set(data).then(function(){ return state.editingProyId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
