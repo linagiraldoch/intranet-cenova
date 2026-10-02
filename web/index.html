@@ -676,6 +676,29 @@
   .fin-totales .pos{color:var(--success);}
   .fin-totales .neg{color:var(--critical);}
   td.pos, td.pos strong{color:var(--success);}
+  .prec-panel{margin-bottom:16px;}
+  .prec-panel .table-wrap{box-shadow:none; border:none; border-radius:0; border-top:1px solid var(--border);}
+  .prec-table td.num, .prec-table th.num{text-align:right; white-space:nowrap;}
+  #view-precios .filters{margin-bottom:12px;}
+  .pick-list{display:flex; flex-direction:column; gap:6px;}
+  .pick-row{display:flex; align-items:center; gap:10px; padding:8px 10px; border:1px solid var(--border); border-radius:8px; background:var(--surface);}
+  .pick-main{flex:1; min-width:0;}
+  .pick-main strong{display:block; font-size:13px;}
+  .pick-main span{display:block; font-size:11.5px; color:var(--text-muted);}
+  .pick-price{font-family:"IBM Plex Mono",monospace; font-size:13px; white-space:nowrap;}
+  .pick-price small{color:var(--text-muted); font-family:inherit;}
+  .pick-cant{width:64px !important;}
+  @media (max-width:560px){ .pick-row{flex-wrap:wrap;} .pick-main{flex-basis:100%;} }
+  .inst-chk{display:flex; align-items:center; gap:5px; font-size:12.5px; white-space:nowrap; font-family:"IBM Plex Mono",monospace;}
+  .inst-chk input{width:auto !important;}
+  .it-fijado{font-size:10.5px; margin-top:3px; white-space:nowrap; color:var(--text-muted); text-align:center;}
+  .it-fijado.crit{color:var(--critical); font-weight:600;}
+  .it-fijado.warn{color:var(--warning); font-weight:600;}
+  .it-origen{font-size:10.5px; color:var(--accent-2, var(--accent)); margin-top:2px; display:flex; gap:8px; align-items:center;}
+  .it-origen button{border:none; background:none; color:inherit; text-decoration:underline; cursor:pointer; font-size:inherit; padding:0;}
+  .items-table input[readonly]{background:transparent; border-style:dashed; color:var(--text-muted);}
+  details.cot-pers-old[open]{display:flex; flex-direction:column; gap:13px;}
+  details.cot-pers-old > summary{cursor:pointer; font-size:12px; font-weight:600; color:var(--text-muted); padding:4px 0;}
   .fin-badge{display:inline-block; font-size:10.5px; font-weight:600; padding:1px 7px; border-radius:20px; background:var(--neutral-soft); color:var(--neutral); white-space:nowrap;}
   .fin-badge.ok{background:var(--success-soft); color:var(--success);}
   .fin-badge.warn{background:var(--warning-soft); color:var(--warning);}
@@ -741,6 +764,10 @@
       <button class="nav-btn" data-view="estadisticas">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
         Estadísticas
+      </button>
+      <button class="nav-btn" data-view="precios">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
+        Precios
       </button>
       <button class="nav-btn fin-admin" data-view="finanzas" hidden title="Solo administración">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><path d="M16 15h2.5"/><path d="M6 6V4.5h12V6"/></svg>
@@ -928,6 +955,26 @@
     </section>
 
     <!-- FINANZAS (solo administración) -->
+    <section class="view" id="view-precios">
+      <div class="subtabs fin-tabs" id="precTabs">
+        <button class="subtab-btn active" data-prec="instalacion">Servicios de instalación</button>
+        <button class="subtab-btn" data-prec="personal">Personal y logística</button>
+        <button class="subtab-btn" data-prec="materiales">Materiales y kits</button>
+        <button class="subtab-btn" data-prec="servicios">Otros servicios</button>
+        <button class="subtab-btn" data-prec="equipos">Equipos</button>
+      </div>
+      <div class="filters">
+        <input type="search" id="precSearch" placeholder="Buscar en precios…">
+        <button class="btn" id="precExportar">Exportar a Excel (CSV)</button>
+        <button class="btn primary" id="precNuevo" hidden>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+          Nuevo ítem
+        </button>
+      </div>
+      <div class="info-box" id="precInfo" style="margin-bottom:14px;"></div>
+      <div id="precContainer"></div>
+    </section>
+
     <section class="view" id="view-finanzas">
       <div class="subtabs fin-tabs" id="finSubtabs">
         <button class="subtab-btn active" data-fin="resumen">Resumen</button>
@@ -1173,16 +1220,22 @@
         <div class="field"><label>Rentabilidad Instalación (%)</label><input type="number" id="cotMargenInst" class="cot-margen-cat" data-cat="Instalación" min="0" step="1" placeholder="Ej. 20"></div>
         <div class="field"><label>Rentabilidad Equipos (%)</label><input type="number" id="cotMargenEq" class="cot-margen-cat" data-cat="Equipos" min="0" step="1" placeholder="Ej. 20"></div>
       </div>
-      <div class="no-file" style="margin-top:-6px;">Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual: ese ítem deja de seguir el de su categoría (queda resaltado). Bórralo para que vuelva al de la categoría. Los ítems sin costo mantienen su precio manual.</div>
+      <div class="no-file" id="itMargenHelp" style="margin-top:-6px;">Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual: ese ítem deja de seguir el de su categoría (queda resaltado). Bórralo para que vuelva al de la categoría. Los ítems sin costo mantienen su precio manual.</div>
       <div class="items-table-wrap">
       <table class="items-table" id="itemsTable">
-        <thead><tr><th class="col-idx">#</th><th class="col-cat">Categoría</th><th class="col-desc">Descripción</th><th class="col-unit">Unidad</th><th class="col-num">Cant.</th><th class="col-num">Costo</th><th class="col-pct">% Rent.</th><th class="col-num">Vlr. unit.</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead>
+        <thead><tr><th class="col-idx">#</th><th class="col-cat">Categoría</th><th class="col-desc">Descripción</th><th class="col-unit">Unidad</th><th class="col-num">Cant.</th><th class="col-num">Costo</th><th class="col-pct" id="itMargenTh">% Rent.</th><th class="col-num">Vlr. unit.</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead>
         <tbody id="itemsBody"></tbody>
       </table>
       </div>
-      <button class="btn sm" id="btnAddItem" style="align-self:flex-start;">+ Agregar ítem</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn sm primary" id="btnAddFromPrecios" type="button">+ Desde Precios</button>
+        <button class="btn sm" id="btnAddItem" type="button">+ Agregar ítem manual</button>
+      </div>
+      <div class="info-box" id="cotMargenResumen" style="display:none;"></div>
       <div id="cotCostosAdic"></div>
 
+      <details class="cot-pers-old" id="cotPersOld">
+      <summary>Personal y día técnico (método anterior — para cotizaciones nuevas usa "+ Desde Precios" → servicio de instalación)</summary>
       <div class="fieldset-label">Personal de la instalación (interno — el cliente no lo ve)</div>
       <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
         <div class="field" style="flex:1; min-width:260px;"><label>Su costo se suma al ítem (día técnico)</label><select id="cotPersonalTarget"></select></div>
@@ -1191,6 +1244,7 @@
       <div class="items-table-wrap"><table class="items-table"><thead><tr><th class="col-idx">#</th><th style="width:22%;">Persona / rol</th><th style="width:13%;">Tipo</th><th style="width:7%;">Días</th><th>Pago por día</th><th>Almuerzo por día</th><th>Transporte por día</th><th>Otros (total)</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody id="cotPersonalBody"></tbody></table></div>
       <button type="button" class="btn sm" id="cotPersonalAdd" style="align-self:flex-start;">+ Agregar persona</button>
       <div class="info-box" id="cotPersonalSummary"></div>
+      </details>
 
       <div class="costing-toggle">
         <label style="font-size:12px; font-weight:600; color:var(--text-muted);">Modo de costeo</label>
@@ -1294,6 +1348,49 @@
       <div style="display:flex; gap:8px; margin-left:auto;">
         <button class="btn" id="provCancel">Cancelar</button>
         <button class="btn primary" id="provSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: ítem de Precios -->
+<div class="overlay" id="precOverlay">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="precTitle">Precio</h3><button class="modal-close" id="precClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="precBody"></div>
+    <div class="modal-foot">
+      <button class="btn" id="precDelete" style="color:var(--critical); display:none;">Borrar</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="precCancel">Cerrar</button>
+        <button class="btn primary" id="precSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: agregar a la cotización desde Precios -->
+<div class="overlay" id="pickOverlay">
+  <div class="modal wide">
+    <div class="modal-head"><h3>Agregar desde Precios</h3><button class="modal-close" id="pickClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body">
+      <input type="search" id="pickSearch" placeholder="Buscar servicio, kit, material o equipo…">
+      <div class="no-file">Cada ítem llega con el costo y el margen fijados en Precios, ya calculado. Si hace falta, el margen se ajusta en la cotización; el costo y el precio no se escriben a mano.</div>
+      <div id="pickList"></div>
+    </div>
+    <div class="modal-foot"><span></span><button class="btn primary" id="pickDone">Listo</button></div>
+  </div>
+</div>
+
+<!-- Modal: calculadora del servicio de instalación -->
+<div class="overlay roomy" id="instOverlay">
+  <div class="modal wide xwide">
+    <div class="modal-head"><h3 id="instTitle">Servicio de instalación</h3><button class="modal-close" id="instClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="instBody"></div>
+    <div class="modal-foot">
+      <span></span>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="instCancel">Cancelar</button>
+        <button class="btn primary" id="instSave">Usar en la cotización</button>
       </div>
     </div>
   </div>
@@ -1882,11 +1979,12 @@
   document.getElementById('confirmOverlay').addEventListener('click', function(e){ if(e.target===this) _closeConfirm(false); });
 
   /* ---------- Navigation ---------- */
-  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','finanzas'];
+  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas'];
   var titles = {
     resumen:['Resumen','Cotizaciones, proyectos y agenda de Cenova en un solo lugar.'],
     cotizaciones:['Cotizaciones','Arma, edita y da seguimiento a cada cotización.'],
     estadisticas:['Estadísticas','Cuánto deja cada proyecto, qué se dejó de cobrar y cómo va la operación.'],
+    precios:['Precios','Precios estándar de servicios, personal, materiales, kits y equipos para cotizar sin volver a calcular.'],
     finanzas:['Finanzas','Flujo de caja, gastos de la empresa y rentabilidad real. Solo administración.'],
     ordenes:['Órdenes de compra','Órdenes recibidas, su cotización, plazos de pago e instalación.'],
     proyectos:['Proyectos y trabajos','Estado de cada proyecto en curso o por iniciar.'],
@@ -1902,6 +2000,7 @@
     if(v==='agenda'){ renderCalendar(); renderDayPanel(); renderCronograma(); }
     if(v==='estadisticas') renderEstadisticas();
     if(v==='finanzas') renderFinanzas();
+    if(v==='precios') renderPrecios();
   }
   document.getElementById('primaryNav').addEventListener('click', function(e){
     var btn = e.target.closest('.nav-btn'); if(btn) showView(btn.dataset.view);
@@ -2695,6 +2794,7 @@
   /* ---------- Item builder ---------- */
   function renderItemsTable(){
     var body = document.getElementById('itemsBody');
+    document.getElementById('itMargenTh').textContent = state.cotMargenVenta ? '% Margen' : '% Rent.';
     body.innerHTML = state.items.map(function(it, i){
       var total = (Number(it.cantidad)||0) * (Number(it.precioUnit)||0);
       var catVal = it.categoria || 'Materiales';
@@ -2702,15 +2802,17 @@
         return '<option value="'+escapeHtml(cat)+'"'+(cat===catVal ? ' selected' : '')+'>'+escapeHtml(cat)+'</option>';
       }).join('');
       var costoVal = (it.costoUnit!=null && it.costoUnit!=='') ? it.costoUnit : '';
+      var bloq = !!(it.catalogoId && costoVal !== '') ? ' readonly title="Viene de Precios: se ajusta con el margen"' : '';
+      var origen = it.inst ? '<div class="it-origen">Servicio calculado · <button type="button" class="it-inst">Ver / editar cálculo</button></div>' : (it.catalogoId ? '<div class="it-origen">Desde Precios</div>' : '');
       return '<tr data-i="'+i+'">'+
         '<td class="col-idx">'+(i+1)+'</td>'+
         '<td class="col-cat"><select class="it-cat">'+catOptions+'</select></td>'+
-        '<td class="col-desc"><textarea class="it-desc" rows="1" placeholder="Descripción">'+escapeHtml(it.descripcion)+'</textarea></td>'+
+        '<td class="col-desc"><textarea class="it-desc" rows="1" placeholder="Descripción">'+escapeHtml(it.descripcion)+'</textarea>'+origen+'</td>'+
         '<td class="col-unit"><input type="text" class="it-unidad" value="'+escapeHtml(it.unidad||'')+'" placeholder="UND"></td>'+
         '<td class="col-num"><input type="number" class="it-cant" value="'+(it.cantidad||1)+'" min="0" step="1"></td>'+
-        '<td class="col-num"><input type="number" class="it-costo" value="'+costoVal+'" min="0" step="100" placeholder="—" title="Se llena solo al cargar una cotización de proveedor, o escríbelo aquí manualmente"></td>'+
-        '<td class="col-pct"><input type="number" class="it-margen'+(hasOverride(it)?' override':'')+'" value="'+(hasOverride(it)?it.margenPct:'')+'" min="0" step="1" placeholder="'+escapeHtml(catMarginPlaceholder(catVal))+'" title="Rentabilidad solo para este ítem. Vacío = usa el % de su categoría."></td>'+
-        '<td class="col-num"><input type="number" class="it-precio" value="'+(it.precioUnit||0)+'" min="0" step="1000"></td>'+
+        '<td class="col-num"><input type="number" class="it-costo" value="'+costoVal+'" min="0" step="100" placeholder="—"'+(bloq || ' title="Se llena solo al cargar una cotización de proveedor, o escríbelo aquí manualmente"')+'></td>'+
+        '<td class="col-pct"><input type="number" class="it-margen'+(hasOverride(it)?' override':'')+'" value="'+(hasOverride(it)?it.margenPct:'')+'" min="0" step="1" placeholder="'+escapeHtml(catMarginPlaceholder(catVal))+'" title="'+(it.catalogoId ? 'Margen de este ítem (viene de Precios)' : 'Rentabilidad solo para este ítem. Vacío = usa el % de su categoría.')+'">'+fijadoBadge(it)+'</td>'+
+        '<td class="col-num"><input type="number" class="it-precio" value="'+(it.precioUnit||0)+'" min="0" step="1000"'+bloq+'></td>'+
         '<td class="col-total">'+fmtMoney.format(total)+'</td>'+
         '<td class="col-rm"><button type="button" class="icon-btn it-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td>'+
         '</tr>';
@@ -2729,6 +2831,7 @@
         state.items[i].margenPct = inp.value.trim() === '' ? null : Number(inp.value);
         inp.classList.toggle('override', hasOverride(state.items[i]));
         applyItemMargin(i); refreshPersonalRecargo();
+        var fj = inp.parentNode.querySelector('.it-fijado'); if(fj) fj.outerHTML = fijadoBadge(state.items[i]);
       });
     });
     body.querySelectorAll('.it-desc').forEach(function(inp){
@@ -2746,6 +2849,7 @@
       });
     });
     body.querySelectorAll('.it-precio').forEach(function(inp){ inp.addEventListener('input', function(){ var i=+inp.closest('tr').dataset.i; state.items[i].precioUnit = Number(inp.value); updateItemRowTotal(i); recalcTotals(); }); });
+    body.querySelectorAll('.it-inst').forEach(function(btn){ btn.addEventListener('click', function(){ openInstCalc(+btn.closest('tr').dataset.i); }); });
     body.querySelectorAll('.it-rm').forEach(function(btn){ btn.addEventListener('click', function(){ state.items.splice(+btn.closest('tr').dataset.i, 1); renderItemsTable(); refreshPersonalRecargo(); }); });
     if(document.getElementById('cotPersonalTarget')){ renderPersonalTarget(); renderPersonalSummary(); }
   }
@@ -2785,6 +2889,7 @@
       document.getElementById('cotIvaOut').textContent = fmtMoney.format(iva2);
       document.getElementById('cotTotalOut').textContent = fmtMoney.format(sub+iva2);
     }
+    renderMargenResumen();
   }
   document.getElementById('btnAddItem').addEventListener('click', function(){
     state.items.push({categoria:'Materiales', descripcion:'', unidad:'', cantidad:1, precioUnit:0});
@@ -2824,7 +2929,7 @@
     var it = state.items[i]; if(!it) return;
     var m = effectiveMargin(it);
     if(it.costoUnit!=null && it.costoUnit!=='' && m!=null){
-      it.precioUnit = Math.round(Number(it.costoUnit) * (1 + m/100)) + (Number(it.recargoPersonal)||0);
+      it.precioUnit = precioDesdeMargen(it.costoUnit, m, it.margenVenta || state.cotMargenVenta) + (Number(it.recargoPersonal)||0);
       var row = document.querySelector('#itemsBody tr[data-i="'+i+'"]');
       var priceInput = row && row.querySelector('.it-precio');
       if(priceInput) priceInput.value = it.precioUnit;
@@ -2835,7 +2940,7 @@
     state.items.forEach(function(it, i){
       var m = effectiveMargin(it);
       if(it.costoUnit!=null && it.costoUnit!=='' && m!=null){
-        it.precioUnit = Math.round(Number(it.costoUnit) * (1 + m/100)) + (Number(it.recargoPersonal)||0);
+        it.precioUnit = precioDesdeMargen(it.costoUnit, m, it.margenVenta || state.cotMargenVenta) + (Number(it.recargoPersonal)||0);
       }
     });
     renderItemsTable(); recalcTotals(); refreshPersonalRecargo();
@@ -2991,6 +3096,12 @@
         document.getElementById(MARGEN_INPUT_IDS[cat]).value = (v != null ? v : '');
       });
     })();
+    state.cotMargenVenta = id ? !!c.margenSobreVenta : true;
+    document.getElementById('itMargenHelp').innerHTML = state.cotMargenVenta
+      ? 'Margen sobre el precio de venta, igual que en Finanzas: con costo $100.000 y 30 % el precio es $142.857. Cada % de categoría se aplica a sus ítems manuales que tengan costo; en "% Margen" puedes poner uno propio para un ítem. Los ítems "Desde Precios" ya traen su margen fijado y solo se ajusta ese %.'
+      : 'Cotización anterior: el % se suma sobre el costo (costo + %). Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual. Los ítems "Desde Precios" sí usan margen sobre la venta.';
+    Object.keys(MARGEN_INPUT_IDS).forEach(function(cat){ var lb = document.getElementById(MARGEN_INPUT_IDS[cat]).previousElementSibling; if(lb) lb.textContent = (state.cotMargenVenta ? 'Margen ' : 'Rentabilidad ') + cat + ' (%)'; });
+    document.getElementById('cotPersOld').open = !!((c.personal||[]).length || (c.items||[]).some(function(it){ return it.diaTecnico; }));
     state.items = (c.items && c.items.length) ? JSON.parse(JSON.stringify(c.items)) : [];
     state.costosAdicionales = (c.costosAdicionales||[]).map(function(x){ return Object.assign({}, x); });
     renderCostosAdicionales();
@@ -4538,10 +4649,11 @@
     (c.items||[]).forEach(function(it){
       var q = Number(it.cantidad)||0;
       personalPlan += q*(Number(it.costoPersonal)||0);
+      if(it.inst){ var ip = q*(Number(it.instPersonal)||0); personalPlan += ip; costo += q*(Number(it.costoUnit)||0) - ip; return; }
       if(it.costoUnit!=null && it.costoUnit!=='' ) costo += q*(Number(it.costoUnit)||0);
       else if((Number(it.precioUnit)||0) > 0 && !it.diaTecnico) faltan++;
     });
-    if(!personalPlan && (c.personal||[]).length) personalPlan = personalTotal(c.personal);
+    if(!(c.items||[]).some(function(it){ return Number(it.costoPersonal) > 0; }) && (c.personal||[]).length) personalPlan += personalTotal(c.personal);
     costo += personalPlan;
     costo += (c.costosAdicionales||[]).reduce(function(s,x){ return s + (Number(x.monto)||0); }, 0);
     return {costo: costo, completo: faltan === 0 && (c.items||[]).length > 0, faltan: faltan, personalPlan: personalPlan};
@@ -4937,7 +5049,7 @@
       return db.collection('cotizacionesProveedor').doc(m.opts.provId).update(upd).catch(function(){});
     };
     if(m.opts.mode === 'open'){
-      if(recalc) items.forEach(function(ci){ var mg = effectiveMargin(ci); if(ci.costoUnit!=null && mg!=null) ci.precioUnit = Math.round(ci.costoUnit*(1+mg/100)) + (Number(ci.recargoPersonal)||0); });
+      if(recalc) items.forEach(function(ci){ var mg = effectiveMargin(ci); if(ci.costoUnit!=null && mg!=null) ci.precioUnit = precioDesdeMargen(ci.costoUnit, mg, ci.margenVenta || state.cotMargenVenta) + (Number(ci.recargoPersonal)||0); });
       state.costosAdicionales = (state.costosAdicionales||[]).filter(function(c){ return !(m.opts.provId && c.provId === m.opts.provId); }).concat(extrasNew);
       renderItemsTable(); recalcTotals(); renderCostosAdicionales();
       saveAsign();
@@ -4951,7 +5063,7 @@
       var mc = cot.margenCat || {};
       items.forEach(function(ci){
         var mg = (ci.margenPct!=null && ci.margenPct!=='') ? Number(ci.margenPct) : (mc[ci.categoria||'Materiales']!=null ? Number(mc[ci.categoria||'Materiales']) : (cot.margenPct!=null ? Number(cot.margenPct) : null));
-        if(ci.costoUnit!=null && mg!=null) ci.precioUnit = Math.round(ci.costoUnit*(1+mg/100)) + (Number(ci.recargoPersonal)||0);
+        if(ci.costoUnit!=null && mg!=null) ci.precioUnit = precioDesdeMargen(ci.costoUnit, mg, ci.margenVenta || cot.margenSobreVenta) + (Number(ci.recargoPersonal)||0);
       });
     }
     var adic = (cot.costosAdicionales||[]).filter(function(c){ return !(m.opts.provId && c.provId === m.opts.provId); }).concat(extrasNew);
@@ -5026,7 +5138,7 @@
         var q = Number(it.cantidad)||0;
         cpu = q ? total / q : 0;
         var m = effectiveMargin(it); if(m == null) m = 0;
-        rec = Math.round(cpu * (1 + m/100));
+        rec = precioDesdeMargen(cpu, m, it.margenVenta || state.cotMargenVenta);
       }
       if(rec !== old || (Number(it.costoPersonal)||0) !== cpu){
         it.precioUnit = Math.max(0, (Number(it.precioUnit)||0) - old + rec);
@@ -5081,7 +5193,7 @@
     var o = state.editingOcId ? state.ordenes.get(state.editingOcId) : null;
     var cid = document.getElementById('ocCotizacion').value;
     var c = cid ? state.cotizaciones.get(cid) : null;
-    var plan = c ? personalTotal(c.personal) : 0;
+    var plan = c ? personalTotal(c.personal) + (c.items||[]).reduce(function(s, it){ return s + (it.inst ? (Number(it.cantidad)||0)*(Number(it.instPersonal)||0) : 0); }, 0) : 0;
     var real = personalTotal(state.ocPersonal);
     var box = document.getElementById('ocPersonalSummary');
     if(!state.ocPersonal.length){ box.innerHTML = plan ? 'En la cotización se planeó <strong>'+fmtMoney.format(plan)+'</strong> de personal. Registra aquí lo que realmente se pagó (o cópialo y ajústalo).' : 'Registra aquí lo que se le pagó al personal que trabajó: día, almuerzo, transporte y otros.'; box.className='info-box'; return; }
@@ -6064,6 +6176,7 @@
       if(!esAdmin) return;
       fin.admin = true;
       document.querySelectorAll('.fin-admin').forEach(function(el){ el.hidden = false; });
+      renderPrecios(); precSembrar();
       db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
       db.collection('finGastosFijos').onSnapshot(function(snap){ fin.fijos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
       db.collection('finAjustes').onSnapshot(function(snap){ var g = snap.docs.filter(function(d){ return d.id === 'general'; })[0]; fin.ajustes = g ? g.data() : null; renderFinanzas(); });
@@ -6202,7 +6315,8 @@
       margenCat: readMargenCat(),
       personal: (state.personal||[]).filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0}; }),
       costosAdicionales: (state.costosAdicionales||[]).map(function(x){ return {descripcion:x.descripcion||'', monto:Number(x.monto)||0, proveedor:x.proveedor||'', provId:x.provId||null}; }),
-      margenPct: catMargin('Materiales')
+      margenPct: catMargin('Materiales'),
+      margenSobreVenta: !!state.cotMargenVenta
     };
     data.valor = cotTotal(data);
     /* En pausa: guarda desde cuándo y la última validación semanal (al salir de la pausa se borran). */
@@ -6359,11 +6473,578 @@
         refreshPrefacturaBtn();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
+      db.collection('precios').onSnapshot(function(snap){
+        state.precios = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        state.loaded.precios = true;
+        renderPrecios(); precSembrar();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
       db.collection('clientes').onSnapshot(function(snap){
         state.clientes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         renderAll();
       }, function(err){ setSync(false, 'Error de sincronización'); });
     }).catch(function(){ setSync(false, 'Sin acceso a almacenamiento'); });
+  }
+
+
+  /* =====================================================================
+     PRECIOS — lista de precios estándar de Cenova (colección "precios").
+     Todos la ven; costos, márgenes y precios solo los cambia administración.
+     El equipo puede actualizar el stock y el contenido de los kits.
+     El margen es sobre el precio de venta (igual que Finanzas):
+       precio = costo ÷ (1 − margen). 100.000 al 30 % → 142.857.
+     ===================================================================== */
+  state.precios = new Map();
+  var prec = {tab: 'instalacion', editId: null, editTipo: null, edit: null, sembrado: false};
+  var PREC_TIPOS = {
+    instalacion: {lbl: 'Servicio de instalación', tab: 'instalacion'},
+    personal:    {lbl: 'Personal', tab: 'personal'},
+    logistica:   {lbl: 'Logística y herramientas', tab: 'personal'},
+    servicio:    {lbl: 'Servicio', tab: 'servicios'},
+    material:    {lbl: 'Material', tab: 'materiales'},
+    kit:         {lbl: 'Kit de instalación', tab: 'materiales'},
+    equipo:      {lbl: 'Equipo', tab: 'equipos'}
+  };
+  var PREC_BASES = {dia: 'por día de trabajo', persona_dia: 'por persona por día', global: 'una vez por proyecto'};
+  var PREC_CAT_COT = {instalacion: 'Instalación', servicio: 'Instalación', material: 'Materiales', kit: 'Materiales', equipo: 'Equipos'};
+
+  function precAdmin(){ return !!fin.admin; }
+  function precNum(v){ return (v === null || v === undefined || v === '' || isNaN(Number(v))) ? null : Number(v); }
+  /* Precio de venta a partir del costo y el margen sobre la venta */
+  function precioMargenVenta(costo, m){
+    costo = precNum(costo); m = precNum(m);
+    if(costo == null || m == null) return null;
+    if(m >= 100) m = 99;
+    return Math.round(costo / (1 - m/100));
+  }
+  /* Precio de un ítem de cotización: margen sobre la venta (Precios y cotizaciones nuevas) o recargo sobre el costo (cotizaciones viejas) */
+  function precioDesdeMargen(costo, m, sobreVenta){
+    if(sobreVenta) return precioMargenVenta(costo, m);
+    return Math.round(Number(costo) * (1 + Number(m)/100));
+  }
+  function precKitCosto(p){
+    var falta = 0;
+    var total = (p.componentes || []).reduce(function(s, c){
+      var mat = state.precios.get(c.id); var k = mat ? precNum(mat.costo) : null;
+      if(k == null){ falta++; return s; }
+      return s + k * (Number(c.cantidad) || 0);
+    }, 0);
+    return {costo: (p.componentes || []).length ? total : null, falta: falta};
+  }
+  function precCosto(p){
+    if(!p) return null;
+    if(p.tipo === 'kit') return precKitCosto(p).costo;
+    if(p.tipo === 'personal') return (precNum(p.dia)||0) + (precNum(p.comida)||0) + (precNum(p.transporte)||0);
+    return precNum(p.costo);
+  }
+  function precPrecio(p){ return precioMargenVenta(precCosto(p), p.margen); }
+  function precMoney(v){ return v == null ? '<span class="muted">—</span>' : fmtMoney.format(v); }
+  function precLista(tipo){
+    var l = [];
+    state.precios.forEach(function(p, id){ if(p.tipo === tipo) l.push(Object.assign({}, p, {_id: id})); });
+    l.sort(function(a, b){ return (a.orden||0) - (b.orden||0) || String(a.nombre||'').localeCompare(String(b.nombre||''), 'es'); });
+    return l;
+  }
+  function precMetaMargen(){ var a = fin.ajustes; return a && a.metaMargen ? Number(a.metaMargen) : 30; }
+
+  /* Lista base: se crea una sola vez (ids fijos, así nunca se duplica). Todo sin costo: Lina lo llena. */
+  var PREC_BASE = [
+    ['inst-alturas', {tipo:'instalacion', orden:1, nombre:'Instalación con trabajo en alturas', descripcion:'Servicio de instalación, implementación y materiales. Incluye trabajo en alturas con personal certificado, EPP y línea de vida.', alturas:true, adminPct:5, imprevistosPct:3, margen:30, unidad:'GLB'}],
+    ['inst-piso', {tipo:'instalacion', orden:2, nombre:'Instalación en piso', descripcion:'Servicio de instalación, implementación y materiales.', alturas:false, adminPct:5, imprevistosPct:3, margen:30, unidad:'GLB'}],
+    ['pers-tecnico', {tipo:'personal', orden:1, nombre:'Técnico', dia:null, comida:null, transporte:null}],
+    ['pers-tecnico-alturas', {tipo:'personal', orden:2, nombre:'Técnico certificado en alturas', dia:null, comida:null, transporte:null, soloAlturas:true}],
+    ['pers-auxiliar', {tipo:'personal', orden:3, nombre:'Auxiliar', dia:null, comida:null, transporte:null}],
+    ['pers-soldador', {tipo:'personal', orden:4, nombre:'Soldador', dia:null, comida:null, transporte:null}],
+    ['log-camioneta', {tipo:'logistica', orden:1, nombre:'Camioneta de la empresa', base:'dia', costo:null, notas:'Combustible, peajes y desgaste por día de uso'}],
+    ['log-herramientas', {tipo:'logistica', orden:2, nombre:'Herramientas', base:'dia', costo:null, notas:'Desgaste y reposición por día de trabajo'}],
+    ['log-epp-linea-vida', {tipo:'logistica', orden:3, nombre:'EPP y línea de vida', base:'persona_dia', costo:null, soloAlturas:true}],
+    ['mat-conectores', {tipo:'material', orden:1, nombre:'Conectores', unidad:'UND', costo:null, margen:30, stock:null, stockNota:'Confirmar cantidades y tipos con el equipo'}],
+    ['mat-cable-utp', {tipo:'material', orden:2, nombre:'Cable UTP', unidad:'MT', costo:null, margen:30, stock:null, stockNota:'Sobrante de la instalación de IKONICA'}],
+    ['mat-cable-sonido', {tipo:'material', orden:3, nombre:'Cable de sonido', unidad:'MT', costo:null, margen:30, stock:null}],
+    ['kit-camaras', {tipo:'kit', orden:1, nombre:'Kit de instalación — cámaras', unidad:'UND', margen:30, componentes:[], notas:'El equipo define qué lleva'}],
+    ['kit-control-acceso', {tipo:'kit', orden:2, nombre:'Kit de instalación — control de acceso', unidad:'UND', margen:30, componentes:[], notas:'El equipo define qué lleva'}]
+  ];
+  function precSembrar(){
+    if(prec.sembrado || !precAdmin() || !state.db || !state.loaded.precios || state.precios.size) return;
+    prec.sembrado = true;
+    var hoy = todayIso();
+    Promise.all(PREC_BASE.map(function(b){ return state.db.collection('precios').doc(b[0]).set(Object.assign({actualizado: hoy}, b[1])); }))
+      .then(function(){ toast('Lista base de Precios creada: solo falta poner los costos.', 4000); })
+      .catch(function(err){ prec.sembrado = false; toast('No se pudo crear la lista base: ' + (err && err.message ? err.message : 'error')); });
+  }
+
+  /* ---------- Vista ---------- */
+  function precFiltro(p){
+    var q = (document.getElementById('precSearch').value || '').trim().toLowerCase();
+    return !q || [p.nombre, p.descripcion, p.proveedor, p.notas, p.unidad].join(' ').toLowerCase().indexOf(q) !== -1;
+  }
+  function precRow(p, cols){
+    return '<tr data-prec="'+escapeHtml(p._id)+'" style="cursor:pointer;">' + cols.join('') + '</tr>';
+  }
+  function precDesc(p, extra){
+    var notas = [p.proveedor ? 'Proveedor: ' + p.proveedor : '', p.notas, extra].filter(Boolean).join(' · ');
+    return '<td class="desc-cell"><div class="d-title">'+escapeHtml(p.nombre || '—')+(p.soloAlturas ? ' <span class="fin-badge acc">Alturas</span>' : '')+'</div>'+(notas ? '<div class="d-notes">'+escapeHtml(notas)+'</div>' : '')+'</td>';
+  }
+  function precMargenCell(p){ return '<td class="num">'+(precNum(p.margen) != null ? p.margen + ' %' : '—')+'</td>'; }
+  function precTabla(titulo, sub, head, rows, vacio){
+    return '<div class="panel prec-panel"><div class="panel-head"><h3>'+titulo+'</h3><span>'+sub+'</span></div>' +
+      (rows.length ? '<div class="table-wrap prec-table"><table><thead><tr>'+head.map(function(h){ return '<th'+(h.charAt(0)==='#'?' class="num"':'')+'>'+h.replace(/^#/,'')+'</th>'; }).join('')+'</tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'
+        : '<div class="empty-state" style="padding:22px;">'+vacio+'</div>') + '</div>';
+  }
+  function renderPrecios(){
+    var cont = document.getElementById('precContainer'); if(!cont) return;
+    var admin = precAdmin();
+    document.getElementById('precNuevo').hidden = !admin;
+    document.querySelectorAll('#precTabs .subtab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.prec === prec.tab); });
+    var info = document.getElementById('precInfo');
+    var sinCosto = 0; state.precios.forEach(function(p){ if(p.tipo !== 'instalacion' && precCosto(p) == null) sinCosto++; });
+    info.innerHTML = (admin ? 'Toca cualquier fila para editar su costo y su margen; el precio se calcula solo.' : 'Estos son los precios estándar. Los costos y márgenes los fija administración; tú puedes actualizar el stock y el contenido de los kits.') +
+      ' El margen es sobre el precio de venta, igual que en Finanzas: con costo $100.000 y 30 % el precio es $142.857.' +
+      (sinCosto ? ' <strong>'+sinCosto+' ítem(s) aún sin costo.</strong>' : '');
+    info.className = 'info-box' + (sinCosto ? ' warn' : '');
+    if(!state.precios.size){ cont.innerHTML = '<div class="table-wrap"><div class="empty-state">'+(admin ? 'Creando la lista base…' : 'Administración aún no ha cargado la lista de precios.')+'</div></div>'; return; }
+    var h = '';
+    if(prec.tab === 'instalacion'){
+      var rows = precLista('instalacion').filter(precFiltro).map(function(p){
+        return precRow(p, [precDesc(p), '<td class="desc-cell"><div class="d-notes" style="max-width:420px;">'+escapeHtml(p.descripcion||'')+'</div></td>',
+          '<td class="num">'+(p.adminPct||0)+' %</td><td class="num">'+(p.imprevistosPct||0)+' %</td>', precMargenCell(p)]);
+      });
+      h += precTabla('Servicios de instalación', 'una sola línea para el cliente', ['Servicio','Texto que ve el cliente','#Administración','#Imprevistos','#Margen'], rows, 'Sin servicios de instalación.');
+      h += '<div class="info-box" style="margin-top:12px;">Al agregar uno de estos servicios a una cotización se abre una calculadora: eliges el personal por tipo y sus días (con día técnico, comida y transporte), la logística, los kits y materiales. El costo se suma solo con la administración y los imprevistos, y encima va el margen. El cliente ve una sola línea con el texto de arriba. Si la cotización está en modo AIU, la administración, los imprevistos y la utilidad salen en la línea del AIU y no dentro del servicio. El EPP, la línea de vida y el personal certificado en alturas solo se ofrecen en el servicio con alturas.</div>';
+    } else if(prec.tab === 'personal'){
+      var pr = precLista('personal').filter(precFiltro).map(function(p){
+        return precRow(p, [precDesc(p), '<td class="num">'+precMoney(precNum(p.dia))+'</td><td class="num">'+precMoney(precNum(p.comida))+'</td><td class="num">'+precMoney(precNum(p.transporte))+'</td><td class="num"><strong>'+precMoney(precCosto(p) || null)+'</strong></td>']);
+      });
+      h += precTabla('Personal de apoyo por tipo', 'costo por persona por día', ['Tipo','#Día técnico','#Comida','#Transporte','#Día completo'], pr, 'Sin tipos de personal.');
+      var lr = precLista('logistica').filter(precFiltro).map(function(p){
+        return precRow(p, [precDesc(p), '<td>'+escapeHtml(PREC_BASES[p.base] || '—')+'</td><td class="num"><strong>'+precMoney(precNum(p.costo))+'</strong></td>']);
+      });
+      h += precTabla('Logística y herramientas', 'se cargan como costo dentro del servicio de instalación', ['Ítem','Se cobra','#Costo'], lr, 'Sin ítems de logística.');
+    } else if(prec.tab === 'servicios'){
+      var sr = precLista('servicio').filter(precFiltro).map(function(p){
+        return precRow(p, [precDesc(p), '<td>'+escapeHtml(p.unidad||'')+'</td><td class="num">'+precMoney(precNum(p.costo))+'</td>', precMargenCell(p), '<td class="num"><strong>'+precMoney(precPrecio(p))+'</strong></td>']);
+      });
+      h += precTabla('Otros servicios', 'configuración, mantenimiento, visitas…', ['Servicio','Unidad','#Costo','#Margen','#Precio sin IVA'], sr, 'Aún no hay otros servicios.'+(admin?' Agrégalos con "+ Nuevo ítem".':''));
+    } else if(prec.tab === 'materiales' || prec.tab === 'equipos'){
+      var tipo = prec.tab === 'materiales' ? 'material' : 'equipo';
+      var mr = precLista(tipo).filter(precFiltro).map(function(p){
+        var st = precNum(p.stock);
+        return precRow(p, [precDesc(p, p.stockNota), '<td>'+escapeHtml(p.unidad||'')+'</td><td class="num">'+(st == null ? '<span class="muted">—</span>' : st.toLocaleString('es-CO'))+'</td><td class="num">'+precMoney(precNum(p.costo))+'</td>', precMargenCell(p), '<td class="num"><strong>'+precMoney(precPrecio(p))+'</strong></td>']);
+      });
+      h += precTabla(tipo === 'material' ? 'Materiales' : 'Equipos', 'stock = lo que tenemos guardado', [tipo === 'material' ? 'Material' : 'Equipo','Unidad','#Stock','#Costo','#Margen','#Precio sin IVA'], mr,
+        tipo === 'material' ? 'Aún no hay materiales.' : 'Todavía no hay equipos propios. Cuando Cenova compre equipos para tener en bodega, se registran aquí con su costo, margen y stock.');
+      if(tipo === 'material'){
+        var kr = precLista('kit').filter(precFiltro).map(function(p){
+          var k = precKitCosto(p), n = (p.componentes||[]).length;
+          var cont2 = n ? (p.componentes||[]).map(function(c){ var m = state.precios.get(c.id); return (Number(c.cantidad)||0) + ' × ' + (m ? m.nombre : '(borrado)'); }).join(', ') : 'Sin contenido aún';
+          return precRow(p, [precDesc(p, cont2 + (k.falta ? ' · ' + k.falta + ' sin costo' : '')), '<td class="num">'+precMoney(k.costo)+'</td>', precMargenCell(p), '<td class="num"><strong>'+precMoney(precPrecio(p))+'</strong></td>']);
+        });
+        h += precTabla('Kits de instalación', 'su costo es la suma de lo que llevan', ['Kit','#Costo','#Margen','#Precio sin IVA'], kr, 'Sin kits.');
+      }
+    }
+    cont.innerHTML = h || '<div class="table-wrap"><div class="empty-state">Nada coincide con la búsqueda.</div></div>';
+    cont.querySelectorAll('tr[data-prec]').forEach(function(tr){ tr.addEventListener('click', function(){ openPrecioModal(tr.dataset.prec); }); });
+  }
+  document.getElementById('precTabs').addEventListener('click', function(e){
+    var b = e.target.closest('.subtab-btn'); if(!b) return;
+    prec.tab = b.dataset.prec; renderPrecios();
+  });
+  document.getElementById('precSearch').addEventListener('input', renderPrecios);
+  document.getElementById('precNuevo').addEventListener('click', function(){
+    var t = {instalacion:'instalacion', personal:'personal', servicios:'servicio', materiales:'material', equipos:'equipo'}[prec.tab] || 'material';
+    openPrecioModal(null, t);
+  });
+  document.getElementById('precExportar').addEventListener('click', function(){
+    var q = function(v){ v = String(v==null?'':v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; };
+    var rows = [['Tipo','Nombre','Unidad','Proveedor','Costo','Margen %','Precio sin IVA','Día técnico','Comida','Transporte','Se cobra','Stock','Contenido del kit','Notas','Actualizado']];
+    ['instalacion','personal','logistica','servicio','material','kit','equipo'].forEach(function(t){
+      precLista(t).forEach(function(p){
+        var cont = p.tipo === 'kit' ? (p.componentes||[]).map(function(c){ var m = state.precios.get(c.id); return (Number(c.cantidad)||0)+' x '+(m?m.nombre:'?'); }).join(' + ') : '';
+        var c = precCosto(p);
+        rows.push([PREC_TIPOS[t].lbl, p.nombre, p.unidad||'', p.proveedor||'', c == null ? '' : Math.round(c), precNum(p.margen) == null ? '' : p.margen, precPrecio(p) == null ? '' : precPrecio(p),
+          p.tipo==='personal' ? (precNum(p.dia)||'') : '', p.tipo==='personal' ? (precNum(p.comida)||'') : '', p.tipo==='personal' ? (precNum(p.transporte)||'') : '',
+          p.tipo==='logistica' ? (PREC_BASES[p.base]||'') : '', precNum(p.stock) == null ? '' : p.stock, cont, [p.notas, p.stockNota].filter(Boolean).join(' · '), p.actualizado || '']);
+      });
+    });
+    var csv = '﻿' + rows.map(function(r){ return r.map(q).join(';'); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    var link = document.createElement('a'); link.href = URL.createObjectURL(blob);
+    link.download = 'cenova-precios-' + todayIso() + '.csv';
+    document.body.appendChild(link); link.click(); setTimeout(function(){ URL.revokeObjectURL(link.href); link.remove(); }, 1500);
+  });
+
+  /* ---------- Modal de un ítem de Precios ---------- */
+  function precCampo(lbl, html, hint){ return '<div class="field"><label>'+lbl+'</label>'+html+(hint?'<div class="no-file" style="margin-top:3px;">'+hint+'</div>':'')+'</div>'; }
+  function precInput(id, v, opts){
+    opts = opts || {};
+    var dis = opts.ro ? ' disabled' : '';
+    if(opts.money) return '<input type="number" id="'+id+'" class="input-miles" min="0" step="100" value="'+(precNum(v)==null?'':v)+'"'+dis+' placeholder="'+(opts.ph||'Sin costo')+'">';
+    if(opts.num) return '<input type="number" id="'+id+'" min="0" max="'+(opts.max||'')+'" step="'+(opts.step||'1')+'" value="'+(precNum(v)==null?'':v)+'"'+dis+'>';
+    return '<input type="text" id="'+id+'" value="'+escapeHtml(v==null?'':v)+'"'+dis+' placeholder="'+escapeHtml(opts.ph||'')+'">';
+  }
+  function openPrecioModal(id, tipoNuevo){
+    var p = id ? (state.precios.get(id) || {}) : {tipo: tipoNuevo, margen: precMetaMargen(), unidad: tipoNuevo === 'instalacion' ? 'GLB' : 'UND'};
+    var admin = precAdmin(), ro = !admin;
+    prec.editId = id || null; prec.edit = JSON.parse(JSON.stringify(p)); prec.edit.componentes = prec.edit.componentes || [];
+    var t = p.tipo;
+    document.getElementById('precTitle').textContent = (id ? (admin ? 'Editar · ' : '') : 'Nuevo · ') + PREC_TIPOS[t].lbl;
+    var h = '';
+    if(!id){
+      h += precCampo('Tipo de ítem', '<select id="precTipo">'+Object.keys(PREC_TIPOS).map(function(k){ return '<option value="'+k+'"'+(k===t?' selected':'')+'>'+PREC_TIPOS[k].lbl+'</option>'; }).join('')+'</select>');
+    }
+    h += '<div class="field-row">' + precCampo(t === 'personal' ? 'Tipo de personal' : 'Nombre', precInput('precNombre', p.nombre, {ro: ro, ph: t==='personal' ? 'Ej. Técnico, Auxiliar, Soldador' : ''})) +
+      (t === 'personal' || t === 'logistica' || t === 'instalacion' ? precCampo('Proveedor / quién lo presta', precInput('precProveedor', p.proveedor, {ro: ro})) :
+        '<div class="field-row" style="gap:10px;">' + precCampo('Unidad', precInput('precUnidad', p.unidad, {ro: ro, ph:'UND, MT, DÍA…'})) + precCampo('Proveedor', precInput('precProveedor', p.proveedor, {ro: ro})) + '</div>') + '</div>';
+    if(t === 'instalacion'){
+      h += precCampo('Texto que ve el cliente', '<textarea id="precDescripcion" rows="3"'+(ro?' disabled':'')+'>'+escapeHtml(p.descripcion||'')+'</textarea>');
+      h += '<label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="precAlturas"'+(p.alturas?' checked':'')+(ro?' disabled':'')+'> Incluye trabajo en alturas (ofrece personal certificado, EPP y línea de vida)</label>';
+      h += '<div class="field-row three">' + precCampo('Administración (%)', precInput('precAdmin', p.adminPct, {num:1, ro: ro, step:'0.5', max:'100'})) + precCampo('Imprevistos (%)', precInput('precImprev', p.imprevistosPct, {num:1, ro: ro, step:'0.5', max:'100'})) + precCampo('Margen (%)', precInput('precMargen', p.margen, {num:1, ro: ro, step:'0.5', max:'95'})) + '</div>';
+      h += '<div class="no-file">La administración y los imprevistos se suman al costo directo (personal, logística, kits y materiales). Encima va el margen sobre la venta.</div>';
+    } else if(t === 'personal'){
+      h += '<div class="field-row three">' + precCampo('Día técnico', precInput('precDia', p.dia, {money:1, ro: ro})) + precCampo('Comida por día', precInput('precComida', p.comida, {money:1, ro: ro})) + precCampo('Transporte por día', precInput('precTransporte', p.transporte, {money:1, ro: ro})) + '</div>';
+      h += '<label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="precSoloAlturas"'+(p.soloAlturas?' checked':'')+(ro?' disabled':'')+'> Solo para trabajos en alturas</label>';
+      h += '<div class="no-file">Es lo que se le paga a esa persona. En la cotización se marca qué se le reconoce (día técnico, comida y/o transporte) y el margen se aplica sobre el servicio de instalación completo, no aquí.</div>';
+    } else if(t === 'logistica'){
+      h += '<div class="field-row">' + precCampo('Costo', precInput('precCosto', p.costo, {money:1, ro: ro})) + precCampo('Se cobra', '<select id="precBase"'+(ro?' disabled':'')+'>'+Object.keys(PREC_BASES).map(function(k){ return '<option value="'+k+'"'+((p.base||'dia')===k?' selected':'')+'>'+PREC_BASES[k]+'</option>'; }).join('')+'</select>') + '</div>';
+      h += '<label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="precSoloAlturas"'+(p.soloAlturas?' checked':'')+(ro?' disabled':'')+'> Solo para trabajos en alturas</label>';
+    } else if(t === 'kit'){
+      h += '<div class="fieldset-label">Qué lleva el kit</div><div id="precKitBody"></div>';
+      h += '<div class="field-row" style="align-items:flex-end;">' + precCampo('Agregar material', '<select id="precKitAdd"><option value="">Elige un material…</option>'+precLista('material').map(function(m){ return '<option value="'+escapeHtml(m._id)+'">'+escapeHtml(m.nombre)+(m.unidad?' ('+escapeHtml(m.unidad)+')':'')+'</option>'; }).join('')+'</select>', 'Si falta un material, administración lo crea en Materiales.') + '</div>';
+      h += '<div class="field-row">' + precCampo('Costo del kit', '<input type="text" id="precKitCosto" disabled>') + precCampo('Margen (%)', precInput('precMargen', p.margen, {num:1, ro: ro, step:'0.5', max:'95'})) + '</div>';
+    } else {
+      h += '<div class="field-row">' + precCampo('Costo (sin IVA)', precInput('precCosto', p.costo, {money:1, ro: ro})) + precCampo('Margen (%)', precInput('precMargen', p.margen, {num:1, ro: ro, step:'0.5', max:'95'})) + '</div>';
+      if(t === 'material' || t === 'equipo'){
+        h += '<div class="field-row">' + precCampo('Stock (lo que tenemos)', '<input type="number" id="precStock" min="0" step="1" value="'+(precNum(p.stock)==null?'':p.stock)+'" placeholder="Sin contar">') + precCampo('Nota del stock', '<input type="text" id="precStockNota" value="'+escapeHtml(p.stockNota||'')+'" placeholder="Dónde está, de qué obra sobró…">') + '</div>';
+      }
+    }
+    if(t !== 'instalacion' && t !== 'personal' && t !== 'logistica'){
+      h += '<div class="field-row">' + precCampo('Precio de venta (sin IVA)', '<input type="number" id="precPrecio" class="input-miles" min="0" step="100"'+(ro?' disabled':'')+'>', admin ? 'Si escribes el precio, el margen se calcula solo.' : '') + '<div class="field"><label>&nbsp;</label><div class="info-box" id="precCalc" style="margin:0;"></div></div></div>';
+    }
+    h += precCampo('Notas', precInput('precNotas', p.notas, {ro: ro, ph:'Referencia, marca, condiciones…'}));
+    if(p.actualizado) h += '<div class="no-file">Precio actualizado el '+escapeHtml(fmtShort(p.actualizado))+(p.editadoEn ? ' · stock/contenido editado el '+escapeHtml(fmtShort(p.editadoEn)) : '')+'</div>';
+    document.getElementById('precBody').innerHTML = h;
+    document.getElementById('precDelete').style.display = (id && admin) ? 'inline-flex' : 'none';
+    var puedeGuardar = admin || (id && (t === 'material' || t === 'equipo' || t === 'kit'));
+    document.getElementById('precSave').style.display = puedeGuardar ? 'inline-flex' : 'none';
+    if(!id){ document.getElementById('precTipo').addEventListener('change', function(){ openPrecioModal(null, this.value); }); }
+    if(t === 'kit'){
+      precKitRender();
+      document.getElementById('precKitAdd').addEventListener('change', function(){
+        if(!this.value) return;
+        var ex = prec.edit.componentes.filter(function(c){ return c.id === this.value; }, this)[0];
+        if(ex) ex.cantidad = (Number(ex.cantidad)||0) + 1; else prec.edit.componentes.push({id: this.value, cantidad: 1});
+        this.value = ''; precKitRender();
+      });
+    }
+    ['precCosto','precMargen'].forEach(function(fid){ var el = document.getElementById(fid); if(el) el.addEventListener('input', precCalcRefresh); });
+    var pp = document.getElementById('precPrecio');
+    if(pp) pp.addEventListener('input', function(){
+      var precio = precNum(pp.value), costo = t === 'kit' ? precKitCosto(prec.edit).costo : precNum((document.getElementById('precCosto')||{}).value);
+      if(precio && costo != null && precio > 0){ var m = Math.round((1 - costo/precio) * 1000) / 10; document.getElementById('precMargen').value = m; }
+      precCalcRefresh(true);
+    });
+    precCalcRefresh();
+    document.getElementById('precOverlay').classList.add('open');
+  }
+  function precKitRender(){
+    var body = document.getElementById('precKitBody'); if(!body) return;
+    var l = prec.edit.componentes;
+    body.innerHTML = l.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Material</th><th style="width:90px;">Cant.</th><th style="width:120px;">Costo unit.</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody>' +
+      l.map(function(c, i){
+        var m = state.precios.get(c.id) || {}, k = precNum(m.costo);
+        return '<tr data-i="'+i+'"><td>'+escapeHtml(m.nombre || '(material borrado)')+'</td><td><input type="number" class="kit-cant" min="0" step="1" value="'+(Number(c.cantidad)||0)+'"></td><td class="num">'+precMoney(k)+'</td><td class="col-total">'+precMoney(k == null ? null : k*(Number(c.cantidad)||0))+'</td><td class="col-rm"><button type="button" class="icon-btn kit-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="no-file">Aún no lleva nada. Agrega los materiales abajo (bolsa de cintas, paquete de tornillos, chazos…).</div>';
+    body.querySelectorAll('.kit-cant').forEach(function(inp){ inp.addEventListener('input', function(){ l[+inp.closest('tr').dataset.i].cantidad = Number(inp.value)||0; precCalcRefresh(); var tr = inp.closest('tr'), m = state.precios.get(l[+tr.dataset.i].id)||{}, k = precNum(m.costo); tr.querySelector('.col-total').innerHTML = precMoney(k == null ? null : k*(Number(inp.value)||0)); }); });
+    body.querySelectorAll('.kit-rm').forEach(function(b){ b.addEventListener('click', function(){ l.splice(+b.closest('tr').dataset.i, 1); precKitRender(); }); });
+    precCalcRefresh();
+  }
+  function precCalcRefresh(desdePrecio){
+    var t = prec.edit && prec.edit.tipo; if(!t) return;
+    var box = document.getElementById('precCalc');
+    var m = precNum((document.getElementById('precMargen')||{}).value);
+    var costo;
+    if(t === 'kit'){
+      var k = precKitCosto(prec.edit); costo = k.costo;
+      var kc = document.getElementById('precKitCosto'); if(kc) kc.value = costo == null ? 'Sin contenido' : fmtMoney.format(costo) + (k.falta ? ' (+ '+k.falta+' sin costo)' : '');
+    } else costo = precNum((document.getElementById('precCosto')||{}).value);
+    if(!box) return;
+    var precio = precioMargenVenta(costo, m);
+    if(desdePrecio !== true){ var pp = document.getElementById('precPrecio'); if(pp) pp.value = precio == null ? '' : precio; }
+    box.innerHTML = precio == null ? '<span class="muted">Escribe el costo y el margen.</span>' : 'Ganancia por unidad: <strong>'+fmtMoney.format(precio - costo)+'</strong>' + (m != null && m < precMinimo() ? '<br><span style="color:var(--critical);">Por debajo del margen mínimo ('+precMinimo()+' %).</span>' : '');
+  }
+  function precMinimo(){ var a = fin.ajustes; return a && a.margenMinimo != null ? Number(a.margenMinimo) : 15; }
+  function closePrecioModal(){ document.getElementById('precOverlay').classList.remove('open'); prec.editId = null; prec.edit = null; }
+  document.getElementById('precClose').addEventListener('click', closePrecioModal);
+  document.getElementById('precCancel').addEventListener('click', closePrecioModal);
+  document.getElementById('precSave').addEventListener('click', function(){
+    var db = requireDb(); if(!db || !prec.edit) return;
+    var t = prec.edit.tipo, admin = precAdmin(), v = function(id){ var el = document.getElementById(id); return el ? el.value : undefined; };
+    var hoy = todayIso();
+    if(!admin){
+      var upd = {editadoEn: hoy, editadoPor: state.userId || null};
+      if(t === 'kit') upd.componentes = prec.edit.componentes;
+      else { upd.stock = precNum(v('precStock')); upd.stockNota = (v('precStockNota')||'').trim(); }
+      db.collection('precios').doc(prec.editId).update(upd).then(function(){ toast('Guardado'); closePrecioModal(); })
+        .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+      return;
+    }
+    var nombre = (v('precNombre')||'').trim();
+    if(!nombre){ toast('Ponle un nombre.'); return; }
+    var data = Object.assign({}, state.precios.get(prec.editId) || {}, {tipo: t, nombre: nombre, proveedor: (v('precProveedor')||'').trim(), notas: (v('precNotas')||'').trim(), actualizado: hoy});
+    if(v('precUnidad') !== undefined) data.unidad = (v('precUnidad')||'').trim().toUpperCase();
+    if(t === 'instalacion'){
+      data.descripcion = (v('precDescripcion')||'').trim(); data.alturas = document.getElementById('precAlturas').checked;
+      data.adminPct = precNum(v('precAdmin')) || 0; data.imprevistosPct = precNum(v('precImprev')) || 0; data.margen = precNum(v('precMargen'));
+      data.unidad = data.unidad || 'GLB';
+    } else if(t === 'personal'){
+      data.dia = precNum(v('precDia')); data.comida = precNum(v('precComida')); data.transporte = precNum(v('precTransporte'));
+      data.soloAlturas = document.getElementById('precSoloAlturas').checked;
+    } else if(t === 'logistica'){
+      data.costo = precNum(v('precCosto')); data.base = v('precBase') || 'dia'; data.soloAlturas = document.getElementById('precSoloAlturas').checked;
+    } else if(t === 'kit'){
+      data.componentes = prec.edit.componentes; data.margen = precNum(v('precMargen'));
+    } else {
+      data.costo = precNum(v('precCosto')); data.margen = precNum(v('precMargen'));
+      if(t === 'material' || t === 'equipo'){ data.stock = precNum(v('precStock')); data.stockNota = (v('precStockNota')||'').trim(); }
+    }
+    if(data.margen != null && (data.margen < 0 || data.margen >= 95)){ toast('El margen debe estar entre 0 y 95 %.'); return; }
+    var col = db.collection('precios');
+    var p = prec.editId ? col.doc(prec.editId).set(data) : col.add(data);
+    p.then(function(){ toast(nombre + ' guardado'); closePrecioModal(); })
+      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+  document.getElementById('precDelete').addEventListener('click', function(){
+    var db = requireDb(); if(!db || !prec.editId) return;
+    var id = prec.editId, p = state.precios.get(id) || {};
+    var enKits = []; state.precios.forEach(function(k){ if(k.tipo === 'kit' && (k.componentes||[]).some(function(c){ return c.id === id; })) enKits.push(k.nombre); });
+    confirmDialog('¿Borrar "'+(p.nombre||'')+'" de Precios?'+(enKits.length ? ' Está dentro de: '+enKits.join(', ')+'.' : '')+' Las cotizaciones que ya lo usan no cambian.').then(function(ok){
+      if(!ok) return;
+      db.collection('precios').doc(id).delete().then(function(){ toast('Borrado'); closePrecioModal(); }).catch(function(err){ toast('No se pudo borrar: ' + (err && err.message ? err.message : 'error')); });
+    });
+  });
+
+  /* ---------- Agregar a la cotización desde Precios ---------- */
+  function openPicker(){
+    document.getElementById('pickSearch').value = '';
+    renderPicker();
+    document.getElementById('pickOverlay').classList.add('open');
+    setTimeout(function(){ document.getElementById('pickSearch').focus(); }, 50);
+  }
+  function renderPicker(){
+    var q = (document.getElementById('pickSearch').value || '').trim().toLowerCase();
+    var grupos = [['instalacion','Servicios de instalación'],['servicio','Otros servicios'],['kit','Kits de instalación'],['material','Materiales'],['equipo','Equipos']];
+    var h = '';
+    grupos.forEach(function(g){
+      var l = precLista(g[0]).filter(function(p){ return !q || [p.nombre, p.descripcion].join(' ').toLowerCase().indexOf(q) !== -1; });
+      if(!l.length) return;
+      h += '<div class="fieldset-label">'+g[1]+'</div><div class="pick-list">';
+      l.forEach(function(p){
+        var c = precCosto(p), precio = precPrecio(p), st = precNum(p.stock);
+        var sub = g[0] === 'instalacion' ? 'Abre la calculadora · margen '+(p.margen||0)+' %' :
+          (c == null ? '<span style="color:var(--warning);">Sin costo en Precios: el precio queda para escribirlo a mano</span>' : 'Costo '+fmtMoney.format(c)+' · margen '+(p.margen||0)+' %') + (st != null ? ' · stock '+st.toLocaleString('es-CO') : '');
+        h += '<div class="pick-row" data-pick="'+escapeHtml(p._id)+'"><div class="pick-main"><strong>'+escapeHtml(p.nombre)+'</strong><span>'+sub+'</span></div>' +
+          '<div class="pick-price">'+(g[0] === 'instalacion' ? '' : precMoney(precio)+(p.unidad?' <small>/'+escapeHtml(p.unidad.toLowerCase())+'</small>':''))+'</div>' +
+          (g[0] === 'instalacion' ? '' : '<input type="number" class="pick-cant" min="0" step="1" value="1" title="Cantidad">') +
+          '<button type="button" class="btn sm primary pick-add">'+(g[0] === 'instalacion' ? 'Calcular' : 'Agregar')+'</button></div>';
+      });
+      h += '</div>';
+    });
+    var box = document.getElementById('pickList');
+    box.innerHTML = h || '<div class="empty-state" style="padding:22px;">'+(state.precios.size ? 'Nada coincide.' : 'Aún no hay ítems en Precios.')+'</div>';
+    box.querySelectorAll('.pick-add').forEach(function(b){ b.addEventListener('click', function(){
+      var row = b.closest('.pick-row'), id = row.dataset.pick, p = state.precios.get(id);
+      if(!p) return;
+      if(p.tipo === 'instalacion'){ closePicker(); openInstCalc(null, id); return; }
+      var cant = Number((row.querySelector('.pick-cant')||{}).value) || 1;
+      agregarItemDesdePrecios(id, cant);
+      b.textContent = 'Agregado ✓'; setTimeout(function(){ b.textContent = 'Agregar'; }, 1200);
+    }); });
+  }
+  function agregarItemDesdePrecios(id, cant){
+    var p = state.precios.get(id); if(!p) return;
+    var costo = precCosto(p), m = precNum(p.margen);
+    var it = {categoria: PREC_CAT_COT[p.tipo] || 'Materiales', descripcion: p.nombre, unidad: p.unidad || 'UND', cantidad: cant,
+      catalogoId: id, catalogoTipo: p.tipo, margenVenta: true, margenFijado: m};
+    if(costo != null && m != null){ it.costoUnit = Math.round(costo); it.margenPct = m; it.precioUnit = precioMargenVenta(costo, m); }
+    else { it.costoUnit = null; it.precioUnit = 0; }
+    state.items.push(it);
+    renderItemsTable(); recalcTotals();
+    toast(p.nombre + ' agregado' + (costo == null ? ' — sin costo en Precios, escribe el precio' : ''), 2200);
+  }
+  function closePicker(){ document.getElementById('pickOverlay').classList.remove('open'); }
+  document.getElementById('pickClose').addEventListener('click', closePicker);
+  document.getElementById('pickDone').addEventListener('click', closePicker);
+  document.getElementById('pickSearch').addEventListener('input', renderPicker);
+  document.getElementById('btnAddFromPrecios').addEventListener('click', openPicker);
+
+  /* ---------- Calculadora del servicio de instalación ---------- */
+  var inst = {idx: null, d: null};
+  function cotModoAiu(){ return document.getElementById('cotCostingMode').value === 'aiu'; }
+  function instDiasBase(d){ return Math.max(0, Math.max.apply(null, [0].concat(d.personal.map(function(r){ return Number(r.dias)||0; })))); }
+  function instPersonaDias(d){ return d.personal.reduce(function(s, r){ return s + (Number(r.cant)||0)*(Number(r.dias)||0); }, 0); }
+  function instCalc(d, aiu){
+    var pers = d.personal.reduce(function(s, r){
+      return s + (Number(r.cant)||0) * (Number(r.dias)||0) * ((r.usaDia ? Number(r.vDia)||0 : 0) + (r.usaComida ? Number(r.vComida)||0 : 0) + (r.usaTransporte ? Number(r.vTransporte)||0 : 0));
+    }, 0);
+    var log = d.logistica.reduce(function(s, r){ return s + (Number(r.cant)||0) * (Number(r.valor)||0); }, 0);
+    var mat = d.materiales.reduce(function(s, r){ return s + (Number(r.cant)||0) * (Number(r.valor)||0); }, 0);
+    var dir = pers + log + mat;
+    var a = aiu ? 0 : dir * (Number(d.adminPct)||0)/100, i = aiu ? 0 : dir * (Number(d.imprevistosPct)||0)/100;
+    return {pers: pers, log: log, mat: mat, dir: dir, admin: a, imprev: i, costo: Math.round(dir + a + i)};
+  }
+  function instNuevo(tplId){
+    var t = state.precios.get(tplId) || {};
+    return {plantillaId: tplId, nombre: t.nombre || '', descripcion: t.descripcion || '', alturas: !!t.alturas, adminPct: Number(t.adminPct)||0, imprevistosPct: Number(t.imprevistosPct)||0, margenFijado: precNum(t.margen),
+      personal: [], logistica: precLista('logistica').filter(function(l){ return t.alturas || !l.soloAlturas; }).map(function(l){ return {id: l._id, nombre: l.nombre, base: l.base || 'dia', valor: precNum(l.costo)||0, cant: 0, auto: true}; }),
+      materiales: []};
+  }
+  function openInstCalc(idx, tplId){
+    var it = idx != null ? state.items[idx] : null;
+    inst.idx = idx;
+    inst.d = it && it.inst ? JSON.parse(JSON.stringify(it.inst)) : instNuevo(tplId);
+    if(!it){ var df = Math.max(1, Number(document.getElementById('cotDiasInst').value) || 1); inst.diasDef = df; }
+    document.getElementById('instTitle').textContent = inst.d.nombre || 'Servicio de instalación';
+    renderInstCalc();
+    document.getElementById('instOverlay').classList.add('open');
+  }
+  function instAutoCant(d){
+    d.logistica.forEach(function(r){ if(r.auto) r.cant = r.base === 'persona_dia' ? instPersonaDias(d) : r.base === 'global' ? 1 : instDiasBase(d); });
+  }
+  function renderInstCalc(){
+    var d = inst.d, aiu = cotModoAiu();
+    var tiposPers = precLista('personal').filter(function(p){ return d.alturas || !p.soloAlturas; });
+    var chk = function(cls, on, v){ return '<label class="inst-chk"><input type="checkbox" class="'+cls+'"'+(on?' checked':'')+'> '+(v ? fmtMoney.format(v) : '<span class="muted">$0</span>')+'</label>'; };
+    var h = '<div class="no-file" style="margin-bottom:4px;">'+escapeHtml(d.descripcion)+'</div>';
+    h += '<div class="fieldset-label">Personal</div>';
+    h += d.personal.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Tipo</th><th style="width:70px;">Personas</th><th style="width:70px;">Días</th><th>Día técnico</th><th>Comida</th><th>Transporte</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody>' +
+      d.personal.map(function(r, i){
+        var tot = (Number(r.cant)||0)*(Number(r.dias)||0)*((r.usaDia?Number(r.vDia)||0:0)+(r.usaComida?Number(r.vComida)||0:0)+(r.usaTransporte?Number(r.vTransporte)||0:0));
+        return '<tr data-i="'+i+'"><td>'+escapeHtml(r.nombre)+'</td><td><input type="number" class="ip-cant" min="0" step="1" value="'+(r.cant||0)+'"></td><td><input type="number" class="ip-dias" min="0" step="0.5" value="'+(r.dias||0)+'"></td>' +
+          '<td>'+chk('ip-dia', r.usaDia, r.vDia)+'</td><td>'+chk('ip-comida', r.usaComida, r.vComida)+'</td><td>'+chk('ip-trans', r.usaTransporte, r.vTransporte)+'</td><td class="col-total">'+fmtMoney.format(tot)+'</td>' +
+          '<td class="col-rm"><button type="button" class="icon-btn ip-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
+      }).join('') + '</tbody></table></div>' : '<div class="no-file">Agrega quién va: el tipo carga solo sus valores de Precios. Desmarca lo que no se le reconozca (por ejemplo, solo transporte).</div>';
+    h += '<div style="display:flex; gap:8px; flex-wrap:wrap;">' + tiposPers.map(function(p){ return '<button type="button" class="btn sm ip-add" data-id="'+escapeHtml(p._id)+'">+ '+escapeHtml(p.nombre)+'</button>'; }).join('') + (tiposPers.length ? '' : '<span class="no-file">No hay tipos de personal en Precios.</span>') + '</div>';
+    h += '<div class="fieldset-label">Logística y herramientas</div>';
+    h += d.logistica.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Ítem</th><th>Se cobra</th><th style="width:90px;">Cantidad</th><th>Costo</th><th class="col-total">Total</th></tr></thead><tbody>' +
+      d.logistica.map(function(r, i){
+        return '<tr data-i="'+i+'"><td>'+escapeHtml(r.nombre)+'</td><td class="no-file">'+escapeHtml(PREC_BASES[r.base]||'')+(r.auto?' · automático':'')+'</td><td><input type="number" class="il-cant" min="0" step="0.5" value="'+(r.cant||0)+'" title="'+(r.base==='persona_dia'?'personas × días':r.base==='global'?'veces':'días')+'"></td><td class="num">'+fmtMoney.format(r.valor||0)+'</td><td class="col-total">'+fmtMoney.format((Number(r.cant)||0)*(Number(r.valor)||0))+'</td></tr>';
+      }).join('') + '</tbody></table></div><div class="no-file">La cantidad se calcula sola con el personal (días o personas × días). Si la cambias a mano, deja de calcularse sola; pon 0 si no se usa.</div>' : '<div class="no-file">No hay logística en Precios.</div>';
+    h += '<div class="fieldset-label">Kits y materiales</div>';
+    h += d.materiales.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Kit / material</th><th style="width:80px;">Cant.</th><th>Costo unit.</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody>' +
+      d.materiales.map(function(r, i){
+        return '<tr data-i="'+i+'"><td>'+escapeHtml(r.nombre)+'</td><td><input type="number" class="im-cant" min="0" step="1" value="'+(r.cant||0)+'"></td><td class="num">'+fmtMoney.format(r.valor||0)+'</td><td class="col-total">'+fmtMoney.format((Number(r.cant)||0)*(Number(r.valor)||0))+'</td><td class="col-rm"><button type="button" class="icon-btn im-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
+      }).join('') + '</tbody></table></div>' : '';
+    var opts = precLista('kit').concat(precLista('material'));
+    h += '<div class="field" style="max-width:440px;"><select id="imAdd"><option value="">+ Agregar kit o material…</option>'+opts.map(function(p){ var c = precCosto(p); return '<option value="'+escapeHtml(p._id)+'">'+escapeHtml(p.nombre)+' · '+(c == null ? 'sin costo' : fmtMoney.format(c))+'</option>'; }).join('')+'</select></div>';
+    var c = instCalc(d, aiu);
+    var it = inst.idx != null ? state.items[inst.idx] : null;
+    var m = it && it.margenPct != null ? Number(it.margenPct) : (aiu ? 0 : d.margenFijado);
+    var precio = precioMargenVenta(c.costo, m);
+    h += '<div class="totals-box inst-tot" style="margin-top:10px;">' +
+      '<div class="trow"><span>Personal</span><span class="num">'+fmtMoney.format(c.pers)+'</span></div>' +
+      '<div class="trow"><span>Logística y herramientas</span><span class="num">'+fmtMoney.format(c.log)+'</span></div>' +
+      '<div class="trow"><span>Kits y materiales</span><span class="num">'+fmtMoney.format(c.mat)+'</span></div>' +
+      (aiu ? '<div class="trow"><span class="muted">Administración e imprevistos: van en la línea del AIU de la cotización</span><span></span></div>' :
+        '<div class="trow"><span>Administración ('+d.adminPct+' %)</span><span class="num">'+fmtMoney.format(c.admin)+'</span></div><div class="trow"><span>Imprevistos ('+d.imprevistosPct+' %)</span><span class="num">'+fmtMoney.format(c.imprev)+'</span></div>') +
+      '<div class="trow"><span><strong>Costo del servicio</strong></span><span class="num"><strong>'+fmtMoney.format(c.costo)+'</strong></span></div>' +
+      '<div class="trow"><span>Margen '+(m||0)+' %'+(aiu ? ' (en AIU la utilidad va aparte)' : ' · fijado en Precios '+(d.margenFijado||0)+' %')+'</span><span class="num">'+fmtMoney.format((precio||0) - c.costo)+'</span></div>' +
+      '<div class="trow grand"><span>Precio para el cliente (sin IVA)</span><span class="num">'+fmtMoney.format(precio||0)+'</span></div></div>';
+    h += '<div class="no-file">El margen se puede ajustar luego en la columna "% Margen" de la cotización.</div>';
+    var body = document.getElementById('instBody'); body.innerHTML = h;
+    var redraw = function(){ instAutoCant(d); renderInstCalc(); };
+    body.querySelectorAll('.ip-add').forEach(function(b){ b.addEventListener('click', function(){
+      var p = state.precios.get(b.dataset.id) || {};
+      d.personal.push({id: b.dataset.id, nombre: p.nombre, cant: 1, dias: instDiasBase(d) || inst.diasDef || 1, vDia: precNum(p.dia)||0, vComida: precNum(p.comida)||0, vTransporte: precNum(p.transporte)||0, usaDia: true, usaComida: true, usaTransporte: true});
+      redraw();
+    }); });
+    var bindNum = function(cls, list, key, auto){ body.querySelectorAll('.'+cls).forEach(function(inp){ inp.addEventListener('change', function(){ var r = list[+inp.closest('tr').dataset.i]; r[key] = Number(inp.value)||0; if(auto) r.auto = false; redraw(); }); }); };
+    bindNum('ip-cant', d.personal, 'cant'); bindNum('ip-dias', d.personal, 'dias'); bindNum('il-cant', d.logistica, 'cant', true); bindNum('im-cant', d.materiales, 'cant');
+    [['ip-dia','usaDia'],['ip-comida','usaComida'],['ip-trans','usaTransporte']].forEach(function(x){ body.querySelectorAll('.'+x[0]).forEach(function(cb){ cb.addEventListener('change', function(){ d.personal[+cb.closest('tr').dataset.i][x[1]] = cb.checked; redraw(); }); }); });
+    body.querySelectorAll('.ip-rm').forEach(function(b){ b.addEventListener('click', function(){ d.personal.splice(+b.closest('tr').dataset.i, 1); redraw(); }); });
+    body.querySelectorAll('.im-rm').forEach(function(b){ b.addEventListener('click', function(){ d.materiales.splice(+b.closest('tr').dataset.i, 1); redraw(); }); });
+    document.getElementById('imAdd').addEventListener('change', function(){
+      var p = state.precios.get(this.value); if(!p) return;
+      d.materiales.push({id: this.value, nombre: p.nombre, cant: 1, valor: Math.round(precCosto(p)||0)});
+      redraw();
+    });
+  }
+  /* Recalcula costo y precio de un ítem de instalación (según el modo simple o AIU de la cotización) */
+  function instAplicar(it, aiu){
+    var c = instCalc(it.inst, aiu);
+    it.costoUnit = c.costo; it.instPersonal = Math.round(c.pers);
+    if(aiu && !it.inst.enAiu){ it.inst.margenAntesAiu = it.margenPct; it.margenPct = 0; it.inst.enAiu = true; }
+    else if(!aiu && it.inst.enAiu){ it.margenPct = it.inst.margenAntesAiu != null ? it.inst.margenAntesAiu : it.margenFijado; it.inst.enAiu = false; }
+    it.margenFijado = aiu ? 0 : it.inst.margenFijado;
+    it.precioUnit = precioMargenVenta(it.costoUnit, it.margenPct == null ? 0 : it.margenPct);
+  }
+  document.getElementById('instSave').addEventListener('click', function(){
+    var d = inst.d, aiu = cotModoAiu();
+    if(!d.personal.length && !d.materiales.length && !d.logistica.some(function(r){ return r.cant > 0; })){ toast('Agrega al menos el personal.'); return; }
+    var it;
+    if(inst.idx != null){ it = state.items[inst.idx]; it.inst = d; }
+    else {
+      it = {categoria: 'Instalación', descripcion: d.descripcion || d.nombre, unidad: 'GLB', cantidad: 1, catalogoId: d.plantillaId, catalogoTipo: 'instalacion', margenVenta: true,
+        margenFijado: d.margenFijado, margenPct: aiu ? 0 : d.margenFijado, inst: d};
+      if(aiu){ d.enAiu = true; d.margenAntesAiu = d.margenFijado; }
+      state.items.push(it);
+    }
+    instAplicar(it, aiu);
+    if(!document.getElementById('cotDiasInst').value){ var dias = instDiasBase(d); if(dias) document.getElementById('cotDiasInst').value = dias; }
+    closeInstCalc(); renderItemsTable(); recalcTotals();
+    toast('Servicio de instalación: ' + fmtMoney.format(it.precioUnit) + ' sin IVA', 2600);
+  });
+  function closeInstCalc(){ document.getElementById('instOverlay').classList.remove('open'); inst.idx = null; inst.d = null; }
+  document.getElementById('instClose').addEventListener('click', closeInstCalc);
+  document.getElementById('instCancel').addEventListener('click', closeInstCalc);
+  /* Al cambiar entre Simple y AIU: los servicios de instalación sacan o vuelven a meter la administración, los imprevistos y el margen */
+  document.getElementById('cotCostingMode').addEventListener('change', function(){
+    var aiu = cotModoAiu(), n = 0;
+    state.items.forEach(function(it){ if(it.inst){ instAplicar(it, aiu); n++; } });
+    if(n){ renderItemsTable(); recalcTotals(); toast(aiu ? 'Modo AIU: el servicio de instalación queda a costo directo; la administración, los imprevistos y la utilidad van en el AIU.' : 'Modo simple: el servicio de instalación vuelve a incluir administración, imprevistos y su margen.', 4500); }
+  });
+
+  /* ---------- Margen fijado frente a margen cotizado ---------- */
+  function margenItem(it){
+    var p = Number(it.precioUnit)||0, k = precNum(it.costoUnit);
+    return (k == null || p <= 0) ? null : (p - k) / p * 100;
+  }
+  function fijadoBadge(it){
+    if(it.margenFijado == null || precNum(it.costoUnit) == null) return '';
+    var m = precNum(it.margenPct); if(m == null) return '';
+    var dif = m - Number(it.margenFijado);
+    var cls = dif < -0.05 ? 'crit' : dif > 0.05 ? 'warn' : 'ok';
+    return '<div class="it-fijado '+cls+'" title="Margen fijado en Precios">Fijado '+it.margenFijado+' %</div>';
+  }
+  function cotMargenFijadoResumen(items, sobreVenta){
+    var r = {n: 0, venta: 0, costo: 0, ventaFijada: 0, bajos: [], altos: []};
+    (items||[]).forEach(function(it){
+      if(it.margenFijado == null || precNum(it.costoUnit) == null) return;
+      var q = Number(it.cantidad)||0, k = Number(it.costoUnit);
+      r.n++; r.venta += q*(Number(it.precioUnit)||0); r.costo += q*k;
+      r.ventaFijada += q*(precioMargenVenta(k, it.margenFijado)||0);
+      var m = precNum(it.margenPct);
+      if(m != null && m < Number(it.margenFijado) - 0.05) r.bajos.push(it);
+      else if(m != null && m > Number(it.margenFijado) + 0.05) r.altos.push(it);
+    });
+    r.mCot = r.venta > 0 ? (r.venta - r.costo)/r.venta*100 : null;
+    r.mFij = r.ventaFijada > 0 ? (r.ventaFijada - r.costo)/r.ventaFijada*100 : null;
+    r.dif = r.venta - r.ventaFijada;
+    return r;
+  }
+  function renderMargenResumen(){
+    var box = document.getElementById('cotMargenResumen'); if(!box) return;
+    var r = cotMargenFijadoResumen(state.items);
+    if(!r.n){ box.style.display = 'none'; return; }
+    box.style.display = '';
+    var pctF = function(x){ return x == null ? '—' : (Math.round(x*10)/10).toLocaleString('es-CO') + ' %'; };
+    var h = '<strong>Ítems de Precios ('+r.n+'):</strong> margen fijado '+pctF(r.mFij)+' · cotizado <strong>'+pctF(r.mCot)+'</strong>';
+    if(Math.abs(r.dif) >= 1){
+      h += ' · '+(r.dif < 0 ? 'se deja de ganar ' : 'se gana de más ')+'<strong>'+fmtMoney.format(Math.abs(r.dif))+'</strong> frente a lo fijado';
+      var lst = (r.dif < 0 ? r.bajos : r.altos).slice(0, 4).map(function(it){ return escapeHtml(String(it.descripcion||'').slice(0, 40))+' ('+it.margenPct+' % vs '+it.margenFijado+' %)'; });
+      if(lst.length) h += '<br><span class="muted">'+(r.dif < 0 ? 'Bajados: ' : 'Subidos: ')+lst.join(' · ')+'</span>';
+    }
+    box.innerHTML = h;
+    box.className = 'info-box ' + (r.dif <= -1 ? 'warn' : r.dif >= 1 ? '' : 'ok');
   }
 
   if(window.claude && window.claude.use){

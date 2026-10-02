@@ -36,6 +36,20 @@ Sección del menú visible solo para usuarios con `admin = 1`. El servidor no en
 
 Los pagos de clientes **no** se registran en Finanzas: se leen de la sección Pagos de cada orden de compra para no duplicarlos. Pestañas: Resumen (saldo, indicadores, puntos de mejora), Movimientos (con exportación a CSV), Gastos fijos, Rentabilidad (estado de resultados, por proyecto estimado vs. real, por cotización con precio mínimo para la meta, por tipo de ítem), Proyección a 6 meses y Cuentas y metas.
 
+## Precios (lista de precios estándar)
+
+Menú **Precios**, visible para todo el equipo (colección `precios`). Administración crea, edita y borra; el resto solo puede actualizar el `stock` y el contenido de los kits (`componentes`). El servidor rechaza cualquier otro cambio.
+
+| Tipo | Qué guarda |
+|---|---|
+| `instalacion` | Los servicios de instalación (con alturas y en piso): texto para el cliente, % de administración, % de imprevistos y margen. |
+| `personal` | Personal de apoyo por tipo (técnico, auxiliar, soldador…): día técnico, comida y transporte por día. |
+| `logistica` | Camioneta, herramientas, EPP y línea de vida: costo por día, por persona-día o global. |
+| `servicio`, `material`, `equipo` | Costo, margen y (materiales y equipos) stock. |
+| `kit` | Kits de instalación: su costo es la suma de los materiales que llevan. |
+
+El margen es sobre el precio de venta, igual que en Finanzas: precio = costo ÷ (1 − margen). En la cotización, "+ Desde Precios" agrega el ítem con su costo y margen ya calculados (el costo y el precio quedan bloqueados; solo se ajusta el margen). Los servicios de instalación abren una calculadora (personal, logística, kits y materiales + administración + imprevistos) y salen como una sola línea. En modo AIU el servicio queda a costo directo y la administración, los imprevistos y la utilidad van en la línea del AIU. Cada cotización compara el margen fijado en Precios con el cotizado. Las cotizaciones creadas desde el 2026-10-02 usan margen sobre la venta (`margenSobreVenta`); las anteriores conservan el recargo sobre el costo.
+
 ## Usuarios
 
 | Usuario | Correo | Rol |

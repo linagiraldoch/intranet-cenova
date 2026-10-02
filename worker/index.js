@@ -8,10 +8,13 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'precios'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
+// Precios: todos los ven; costos, márgenes y precios solo los cambia administración.
+// El equipo solo puede actualizar el stock y el contenido de los kits.
+const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'componentes', 'editadoPor', 'editadoEn'];
 const COOKIE = 'cenova_sesion';
 const MAX_INTENTOS = 5;
 const BLOQUEO_MS = 15 * 60 * 1000;
@@ -198,6 +201,9 @@ async function escribir(req, env, s, col, id, metodo) {
   const previo = actual ? JSON.parse(actual.data) : null;
   const ahora = Date.now();
 
+  if (col === 'precios' && !s.admin) {
+    if (metodo === 'DELETE' || !previo) return err(403, 'regla', 'Solo administración crea o borra ítems de Precios.');
+  }
   if (metodo === 'DELETE') {
     if (col === 'ordenesCompra' && !s.admin) return err(403, 'regla', 'Las órdenes de compra no se borran: cámbiala a "Anulada".');
     if (col === 'prefacturas' && !s.admin) return err(403, 'regla', 'Las prefacturas no se borran: son un registro con número consecutivo.');
@@ -215,6 +221,13 @@ async function escribir(req, env, s, col, id, metodo) {
   if (metodo === 'PATCH') {
     if (!previo) return err(404, 'no_existe', 'El registro no existe.');
     data = Object.assign({}, previo, data);
+  }
+  if (col === 'precios' && !s.admin) {
+    const llaves = new Set(Object.keys(previo).concat(Object.keys(data)));
+    for (const k of llaves) {
+      if (PRECIOS_CAMPOS_EQUIPO.indexOf(k) !== -1) continue;
+      if (JSON.stringify(previo[k]) !== JSON.stringify(data[k])) return err(403, 'regla', 'Los costos, márgenes y precios solo los cambia administración. Tú puedes actualizar el stock y el contenido de los kits.');
+    }
   }
   // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
   if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero) {
