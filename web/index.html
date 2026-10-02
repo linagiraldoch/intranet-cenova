@@ -1692,6 +1692,85 @@
 <div class="toast" id="toast"></div>
 
 <script>
+/* Puntos de miles en los campos de dinero (300000 → 300.000), mientras se escribe.
+   El campo muestra "300.000", pero input.value sigue entregando "300000" al resto del código.
+   Decimales con coma (1.500,5). */
+(function(){
+  var SEL = '#finMovMonto,#finFijoMonto,#ocValor,#ocCostoImprevistos,.pit-costo,.it-costo,.it-precio,.nv-costo,.ps-pago,.ps-alm,.ps-trans,.ps-otros,.pg-monto,.fc-saldo,.input-miles';
+  var D = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  function miles(entero){ return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+  // Texto escrito por la persona (formato colombiano) → número JS en texto
+  function aCrudo(txt){
+    txt = String(txt == null ? '' : txt).trim();
+    if(!txt) return '';
+    var neg = /^-/.test(txt);
+    var partes = txt.replace(/[^\d,]/g, '').split(',');
+    var ent = partes[0].replace(/^0+(?=\d)/, '');
+    var dec = partes.length > 1 ? partes.slice(1).join('').slice(0, 2) : '';
+    if(!ent && !dec) return neg ? '-' : '';
+    return (neg ? '-' : '') + (ent || '0') + (dec ? '.' + dec : '');
+  }
+  // Número JS (o texto con punto decimal) → texto con puntos de miles
+  function desdeNumero(v){
+    if(v === null || v === undefined) return '';
+    var s = String(v).trim();
+    if(s === '' || isNaN(Number(s))) return s;
+    var n = Number(s), neg = n < 0;
+    var p = String(Math.abs(n)).split('.');
+    if(/e/i.test(p[0])) p = Math.abs(n).toFixed(2).replace(/\.?0+$/, '').split('.');
+    return (neg ? '-' : '') + miles(p[0]) + (p[1] ? ',' + p[1].slice(0, 2) : '');
+  }
+  // Mientras se escribe: reformatea conservando la posición del cursor
+  function alEscribir(el){
+    var txt = D.get.call(el), pos = el.selectionStart == null ? txt.length : el.selectionStart;
+    var antes = txt.slice(0, pos).replace(/[^\d,-]/g, '').length;
+    var neg = /^\s*-/.test(txt);
+    var partes = txt.replace(/[^\d,]/g, '').split(',');
+    var ent = partes[0].replace(/^0+(?=\d)/, '');
+    var out = (neg ? '-' : '') + miles(ent) + (partes.length > 1 ? ',' + partes.slice(1).join('').slice(0, 2) : '');
+    if(out === txt) return;
+    D.set.call(el, out);
+    var i = 0, cuenta = 0;
+    while(i < out.length && cuenta < antes){ if(/[\d,-]/.test(out[i])) cuenta++; i++; }
+    try { el.setSelectionRange(i, i); } catch(e){}
+  }
+  function preparar(el){
+    if(el.__miles || !el.matches || !el.matches(SEL)) return;
+    el.__miles = true;
+    var actual = D.get.call(el);
+    if(el.type !== 'text') el.type = 'text';
+    el.setAttribute('inputmode', 'decimal');
+    el.setAttribute('autocomplete', 'off');
+    el.classList.add('miles');
+    Object.defineProperty(el, 'value', {
+      configurable: true,
+      get: function(){ return aCrudo(D.get.call(this)); },
+      set: function(v){ D.set.call(this, desdeNumero(v)); }
+    });
+    el.value = actual;
+    el.addEventListener('input', function(){ alEscribir(el); }, true);
+  }
+  function barrer(raiz){
+    if(!raiz || raiz.nodeType !== 1) return;
+    if(raiz.tagName === 'INPUT') { preparar(raiz); return; }
+    var l = raiz.querySelectorAll ? raiz.querySelectorAll(SEL) : [];
+    for(var i = 0; i < l.length; i++) preparar(l[i]);
+  }
+  window.cenovaMiles = { preparar: preparar, barrer: barrer, formato: desdeNumero };
+  barrer(document.body);
+  new MutationObserver(function(ms){
+    ms.forEach(function(m){ for(var i = 0; i < m.addedNodes.length; i++) barrer(m.addedNodes[i]); });
+  }).observe(document.body, { childList: true, subtree: true });
+  // Al limpiar un formulario, el navegador deja el valor sin puntos: se vuelve a formatear
+  document.addEventListener('reset', function(e){
+    setTimeout(function(){
+      var l = e.target.querySelectorAll ? e.target.querySelectorAll('input.miles') : [];
+      for(var i = 0; i < l.length; i++) l[i].value = D.get.call(l[i]);
+    }, 0);
+  }, true);
+})();
+</script>
+<script>
 (function(){
   /* "En proceso" = la estamos trabajando. "En pausa" = el cliente la pidió para más adelante, sin vigencia ni prisa:
      cada semana sale un recordatorio para validar si sigue en pausa. */
