@@ -43,7 +43,8 @@ Menú **Precios**, visible para todo el equipo (colección `precios`). Administr
 | Tipo | Qué guarda |
 |---|---|
 | `instalacion` | Los servicios de instalación (con alturas y en piso): texto para el cliente, % de administración, % de imprevistos y margen. |
-| `personal` | Personal de apoyo por tipo (técnico, auxiliar, soldador…): día técnico, comida y transporte por día. |
+| `personal` | Personal de apoyo por tipo (técnico, auxiliar, soldador…): tarifa por día. |
+| `viatico` | Almuerzo y transporte por persona por día; en la calculadora vienen desmarcados y solo se suman a quien se le pagan aparte. |
 | `logistica` | Camioneta, herramientas, EPP y línea de vida: costo por día, por persona-día o global. |
 | `servicio`, `material`, `equipo` | Costo, margen y (materiales y equipos) stock. |
 | `kit` | Kits de instalación: su costo es la suma de los materiales que llevan. |

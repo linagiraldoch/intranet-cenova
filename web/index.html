@@ -690,7 +690,9 @@
   .pick-cant{width:64px !important;}
   @media (max-width:560px){ .pick-row{flex-wrap:wrap;} .pick-main{flex-basis:100%;} }
   .inst-chk{display:flex; align-items:center; gap:5px; font-size:12.5px; white-space:nowrap; font-family:"IBM Plex Mono",monospace;}
-  .inst-chk input{width:auto !important;}
+  .inst-chk input[type=checkbox]{width:auto !important;}
+  .inst-chk input[type=number], .inst-chk input.input-miles{min-width:90px;}
+  .inst-chk input:disabled{opacity:.45;}
   .it-fijado{font-size:10.5px; margin-top:3px; white-space:nowrap; color:var(--text-muted); text-align:center;}
   .it-fijado.crit{color:var(--critical); font-weight:600;}
   .it-fijado.warn{color:var(--warning); font-weight:600;}
@@ -958,7 +960,6 @@
     <section class="view" id="view-precios">
       <div class="subtabs fin-tabs" id="precTabs">
         <button class="subtab-btn active" data-prec="instalacion">Servicios de instalación</button>
-        <button class="subtab-btn" data-prec="personal">Personal y logística</button>
         <button class="subtab-btn" data-prec="materiales">Materiales y kits</button>
         <button class="subtab-btn" data-prec="servicios">Otros servicios</button>
         <button class="subtab-btn" data-prec="equipos">Equipos</button>
@@ -1235,7 +1236,7 @@
       <div id="cotCostosAdic"></div>
 
       <details class="cot-pers-old" id="cotPersOld">
-      <summary>Personal y día técnico (método anterior — para cotizaciones nuevas usa "+ Desde Precios" → servicio de instalación)</summary>
+      <summary>Personal y día técnico (método anterior de esta cotización; en las nuevas el personal va dentro del servicio de instalación)</summary>
       <div class="fieldset-label">Personal de la instalación (interno — el cliente no lo ve)</div>
       <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
         <div class="field" style="flex:1; min-width:260px;"><label>Su costo se suma al ítem (día técnico)</label><select id="cotPersonalTarget"></select></div>
@@ -3101,7 +3102,9 @@
       ? 'Margen sobre el precio de venta, igual que en Finanzas: con costo $100.000 y 30 % el precio es $142.857. Cada % de categoría se aplica a sus ítems manuales que tengan costo; en "% Margen" puedes poner uno propio para un ítem. Los ítems "Desde Precios" ya traen su margen fijado y solo se ajusta ese %.'
       : 'Cotización anterior: el % se suma sobre el costo (costo + %). Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual. Los ítems "Desde Precios" sí usan margen sobre la venta.';
     Object.keys(MARGEN_INPUT_IDS).forEach(function(cat){ var lb = document.getElementById(MARGEN_INPUT_IDS[cat]).previousElementSibling; if(lb) lb.textContent = (state.cotMargenVenta ? 'Margen ' : 'Rentabilidad ') + cat + ' (%)'; });
-    document.getElementById('cotPersOld').open = !!((c.personal||[]).length || (c.items||[]).some(function(it){ return it.diaTecnico; }));
+    var persVieja = !!((c.personal||[]).length || (c.items||[]).some(function(it){ return it.diaTecnico; }));
+    document.getElementById('cotPersOld').open = persVieja;
+    document.getElementById('cotPersOld').style.display = persVieja ? '' : 'none';
     state.items = (c.items && c.items.length) ? JSON.parse(JSON.stringify(c.items)) : [];
     state.costosAdicionales = (c.costosAdicionales||[]).map(function(x){ return Object.assign({}, x); });
     renderCostosAdicionales();
@@ -6498,8 +6501,9 @@
   var prec = {tab: 'instalacion', editId: null, editTipo: null, edit: null, sembrado: false};
   var PREC_TIPOS = {
     instalacion: {lbl: 'Servicio de instalación', tab: 'instalacion'},
-    personal:    {lbl: 'Personal', tab: 'personal'},
-    logistica:   {lbl: 'Logística y herramientas', tab: 'personal'},
+    personal:    {lbl: 'Personal de apoyo', tab: 'instalacion'},
+    viatico:     {lbl: 'Viático (almuerzo, transporte…)', tab: 'instalacion'},
+    logistica:   {lbl: 'Logística y herramientas', tab: 'instalacion'},
     servicio:    {lbl: 'Servicio', tab: 'servicios'},
     material:    {lbl: 'Material', tab: 'materiales'},
     kit:         {lbl: 'Kit de instalación', tab: 'materiales'},
@@ -6534,7 +6538,7 @@
   function precCosto(p){
     if(!p) return null;
     if(p.tipo === 'kit') return precKitCosto(p).costo;
-    if(p.tipo === 'personal') return (precNum(p.dia)||0) + (precNum(p.comida)||0) + (precNum(p.transporte)||0);
+    if(p.tipo === 'personal') return precNum(p.dia);
     return precNum(p.costo);
   }
   function precPrecio(p){ return precioMargenVenta(precCosto(p), p.margen); }
@@ -6551,10 +6555,12 @@
   var PREC_BASE = [
     ['inst-alturas', {tipo:'instalacion', orden:1, nombre:'Instalación con trabajo en alturas', descripcion:'Servicio de instalación, implementación y materiales. Incluye trabajo en alturas con personal certificado, EPP y línea de vida.', alturas:true, adminPct:5, imprevistosPct:3, margen:30, unidad:'GLB'}],
     ['inst-piso', {tipo:'instalacion', orden:2, nombre:'Instalación en piso', descripcion:'Servicio de instalación, implementación y materiales.', alturas:false, adminPct:5, imprevistosPct:3, margen:30, unidad:'GLB'}],
-    ['pers-tecnico', {tipo:'personal', orden:1, nombre:'Técnico', dia:null, comida:null, transporte:null}],
-    ['pers-tecnico-alturas', {tipo:'personal', orden:2, nombre:'Técnico certificado en alturas', dia:null, comida:null, transporte:null, soloAlturas:true}],
-    ['pers-auxiliar', {tipo:'personal', orden:3, nombre:'Auxiliar', dia:null, comida:null, transporte:null}],
-    ['pers-soldador', {tipo:'personal', orden:4, nombre:'Soldador', dia:null, comida:null, transporte:null}],
+    ['pers-tecnico', {tipo:'personal', orden:1, nombre:'Técnico', dia:null}],
+    ['pers-tecnico-alturas', {tipo:'personal', orden:2, nombre:'Técnico certificado en alturas', dia:null, soloAlturas:true}],
+    ['pers-auxiliar', {tipo:'personal', orden:3, nombre:'Auxiliar', dia:null}],
+    ['pers-soldador', {tipo:'personal', orden:4, nombre:'Soldador', dia:null}],
+    ['viat-almuerzo', {tipo:'viatico', orden:1, nombre:'Almuerzo', costo:null, notas:'Solo si la persona no lo incluye en su tarifa'}],
+    ['viat-transporte', {tipo:'viatico', orden:2, nombre:'Transporte', costo:null, notas:'Solo si la persona no lo incluye en su tarifa'}],
     ['log-camioneta', {tipo:'logistica', orden:1, nombre:'Camioneta de la empresa', base:'dia', costo:null, notas:'Combustible, peajes y desgaste por día de uso'}],
     ['log-herramientas', {tipo:'logistica', orden:2, nombre:'Herramientas', base:'dia', costo:null, notas:'Desgaste y reposición por día de trabajo'}],
     ['log-epp-linea-vida', {tipo:'logistica', orden:3, nombre:'EPP y línea de vida', base:'persona_dia', costo:null, soloAlturas:true}],
@@ -6610,16 +6616,19 @@
           '<td class="num">'+(p.adminPct||0)+' %</td><td class="num">'+(p.imprevistosPct||0)+' %</td>', precMargenCell(p)]);
       });
       h += precTabla('Servicios de instalación', 'una sola línea para el cliente', ['Servicio','Texto que ve el cliente','#Administración','#Imprevistos','#Margen'], rows, 'Sin servicios de instalación.');
-      h += '<div class="info-box" style="margin-top:12px;">Al agregar uno de estos servicios a una cotización se abre una calculadora: eliges el personal por tipo y sus días (con día técnico, comida y transporte), la logística, los kits y materiales. El costo se suma solo con la administración y los imprevistos, y encima va el margen. El cliente ve una sola línea con el texto de arriba. Si la cotización está en modo AIU, la administración, los imprevistos y la utilidad salen en la línea del AIU y no dentro del servicio. El EPP, la línea de vida y el personal certificado en alturas solo se ofrecen en el servicio con alturas.</div>';
-    } else if(prec.tab === 'personal'){
       var pr = precLista('personal').filter(precFiltro).map(function(p){
-        return precRow(p, [precDesc(p), '<td class="num">'+precMoney(precNum(p.dia))+'</td><td class="num">'+precMoney(precNum(p.comida))+'</td><td class="num">'+precMoney(precNum(p.transporte))+'</td><td class="num"><strong>'+precMoney(precCosto(p) || null)+'</strong></td>']);
+        return precRow(p, [precDesc(p), '<td class="num"><strong>'+precMoney(precNum(p.dia))+'</strong></td>']);
       });
-      h += precTabla('Personal de apoyo por tipo', 'costo por persona por día', ['Tipo','#Día técnico','#Comida','#Transporte','#Día completo'], pr, 'Sin tipos de personal.');
+      h += precTabla('Personal de apoyo', 'tarifa por persona por día (lo que cobra)', ['Tipo','#Tarifa por día'], pr, 'Sin tipos de personal.');
+      var vr = precLista('viatico').filter(precFiltro).map(function(p){
+        return precRow(p, [precDesc(p), '<td class="num"><strong>'+precMoney(precNum(p.costo))+'</strong></td>']);
+      });
+      h += precTabla('Viáticos', 'por persona por día · se marcan solo si se pagan aparte', ['Viático','#Valor'], vr, 'Sin viáticos.');
       var lr = precLista('logistica').filter(precFiltro).map(function(p){
         return precRow(p, [precDesc(p), '<td>'+escapeHtml(PREC_BASES[p.base] || '—')+'</td><td class="num"><strong>'+precMoney(precNum(p.costo))+'</strong></td>']);
       });
-      h += precTabla('Logística y herramientas', 'se cargan como costo dentro del servicio de instalación', ['Ítem','Se cobra','#Costo'], lr, 'Sin ítems de logística.');
+      h += precTabla('Logística y herramientas', 'costo dentro del servicio de instalación', ['Ítem','Se cobra','#Costo'], lr, 'Sin ítems de logística.');
+      h += '<div class="info-box">El personal, los viáticos y la logística no se cotizan sueltos: van dentro de los servicios de instalación. Al agregar un servicio a una cotización se abre una calculadora donde eliges a cada persona por tipo con su tarifa (se puede cambiar si alguien cobra distinto), sus días y, solo si se le paga aparte, su almuerzo o su transporte. Se suman la logística, los kits y materiales, la administración y los imprevistos, y encima va el margen. El cliente ve una sola línea con el texto del servicio. En modo AIU, la administración, los imprevistos y la utilidad salen en la línea del AIU. El EPP, la línea de vida y el técnico de alturas solo se ofrecen en el servicio con alturas.</div>';
     } else if(prec.tab === 'servicios'){
       var sr = precLista('servicio').filter(precFiltro).map(function(p){
         return precRow(p, [precDesc(p), '<td>'+escapeHtml(p.unidad||'')+'</td><td class="num">'+precMoney(precNum(p.costo))+'</td>', precMargenCell(p), '<td class="num"><strong>'+precMoney(precPrecio(p))+'</strong></td>']);
@@ -6651,18 +6660,17 @@
   });
   document.getElementById('precSearch').addEventListener('input', renderPrecios);
   document.getElementById('precNuevo').addEventListener('click', function(){
-    var t = {instalacion:'instalacion', personal:'personal', servicios:'servicio', materiales:'material', equipos:'equipo'}[prec.tab] || 'material';
+    var t = {instalacion:'personal', servicios:'servicio', materiales:'material', equipos:'equipo'}[prec.tab] || 'material';
     openPrecioModal(null, t);
   });
   document.getElementById('precExportar').addEventListener('click', function(){
     var q = function(v){ v = String(v==null?'':v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; };
-    var rows = [['Tipo','Nombre','Unidad','Proveedor','Costo','Margen %','Precio sin IVA','Día técnico','Comida','Transporte','Se cobra','Stock','Contenido del kit','Notas','Actualizado']];
-    ['instalacion','personal','logistica','servicio','material','kit','equipo'].forEach(function(t){
+    var rows = [['Tipo','Nombre','Unidad','Proveedor','Costo','Margen %','Precio sin IVA','Se cobra','Stock','Contenido del kit','Notas','Actualizado']];
+    ['instalacion','personal','viatico','logistica','servicio','material','kit','equipo'].forEach(function(t){
       precLista(t).forEach(function(p){
         var cont = p.tipo === 'kit' ? (p.componentes||[]).map(function(c){ var m = state.precios.get(c.id); return (Number(c.cantidad)||0)+' x '+(m?m.nombre:'?'); }).join(' + ') : '';
         var c = precCosto(p);
         rows.push([PREC_TIPOS[t].lbl, p.nombre, p.unidad||'', p.proveedor||'', c == null ? '' : Math.round(c), precNum(p.margen) == null ? '' : p.margen, precPrecio(p) == null ? '' : precPrecio(p),
-          p.tipo==='personal' ? (precNum(p.dia)||'') : '', p.tipo==='personal' ? (precNum(p.comida)||'') : '', p.tipo==='personal' ? (precNum(p.transporte)||'') : '',
           p.tipo==='logistica' ? (PREC_BASES[p.base]||'') : '', precNum(p.stock) == null ? '' : p.stock, cont, [p.notas, p.stockNota].filter(Boolean).join(' · '), p.actualizado || '']);
       });
     });
@@ -6693,7 +6701,7 @@
       h += precCampo('Tipo de ítem', '<select id="precTipo">'+Object.keys(PREC_TIPOS).map(function(k){ return '<option value="'+k+'"'+(k===t?' selected':'')+'>'+PREC_TIPOS[k].lbl+'</option>'; }).join('')+'</select>');
     }
     h += '<div class="field-row">' + precCampo(t === 'personal' ? 'Tipo de personal' : 'Nombre', precInput('precNombre', p.nombre, {ro: ro, ph: t==='personal' ? 'Ej. Técnico, Auxiliar, Soldador' : ''})) +
-      (t === 'personal' || t === 'logistica' || t === 'instalacion' ? precCampo('Proveedor / quién lo presta', precInput('precProveedor', p.proveedor, {ro: ro})) :
+      (t === 'personal' || t === 'logistica' || t === 'viatico' || t === 'instalacion' ? precCampo('Proveedor / quién lo presta', precInput('precProveedor', p.proveedor, {ro: ro})) :
         '<div class="field-row" style="gap:10px;">' + precCampo('Unidad', precInput('precUnidad', p.unidad, {ro: ro, ph:'UND, MT, DÍA…'})) + precCampo('Proveedor', precInput('precProveedor', p.proveedor, {ro: ro})) + '</div>') + '</div>';
     if(t === 'instalacion'){
       h += precCampo('Texto que ve el cliente', '<textarea id="precDescripcion" rows="3"'+(ro?' disabled':'')+'>'+escapeHtml(p.descripcion||'')+'</textarea>');
@@ -6701,9 +6709,12 @@
       h += '<div class="field-row three">' + precCampo('Administración (%)', precInput('precAdmin', p.adminPct, {num:1, ro: ro, step:'0.5', max:'100'})) + precCampo('Imprevistos (%)', precInput('precImprev', p.imprevistosPct, {num:1, ro: ro, step:'0.5', max:'100'})) + precCampo('Margen (%)', precInput('precMargen', p.margen, {num:1, ro: ro, step:'0.5', max:'95'})) + '</div>';
       h += '<div class="no-file">La administración y los imprevistos se suman al costo directo (personal, logística, kits y materiales). Encima va el margen sobre la venta.</div>';
     } else if(t === 'personal'){
-      h += '<div class="field-row three">' + precCampo('Día técnico', precInput('precDia', p.dia, {money:1, ro: ro})) + precCampo('Comida por día', precInput('precComida', p.comida, {money:1, ro: ro})) + precCampo('Transporte por día', precInput('precTransporte', p.transporte, {money:1, ro: ro})) + '</div>';
+      h += '<div class="field-row">' + precCampo('Tarifa por día', precInput('precDia', p.dia, {money:1, ro: ro}), 'Lo que cobra esa persona por un día de trabajo.') + '<div class="field"></div></div>';
       h += '<label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="precSoloAlturas"'+(p.soloAlturas?' checked':'')+(ro?' disabled':'')+'> Solo para trabajos en alturas</label>';
-      h += '<div class="no-file">Es lo que se le paga a esa persona. En la cotización se marca qué se le reconoce (día técnico, comida y/o transporte) y el margen se aplica sobre el servicio de instalación completo, no aquí.</div>';
+      h += '<div class="no-file">Es la tarifa de referencia: en la calculadora de cada cotización se puede cambiar para una persona que cobre distinto. El almuerzo y el transporte son viáticos aparte y solo se marcan si esa persona los pide. El margen se aplica sobre el servicio de instalación completo, no aquí.</div>';
+    } else if(t === 'viatico'){
+      h += '<div class="field-row">' + precCampo('Valor por persona por día', precInput('precCosto', p.costo, {money:1, ro: ro})) + '<div class="field"></div></div>';
+      h += '<div class="no-file">Valor de referencia. En la calculadora viene desmarcado: solo se suma a quien se le pague aparte, y el valor se puede cambiar ahí.</div>';
     } else if(t === 'logistica'){
       h += '<div class="field-row">' + precCampo('Costo', precInput('precCosto', p.costo, {money:1, ro: ro})) + precCampo('Se cobra', '<select id="precBase"'+(ro?' disabled':'')+'>'+Object.keys(PREC_BASES).map(function(k){ return '<option value="'+k+'"'+((p.base||'dia')===k?' selected':'')+'>'+PREC_BASES[k]+'</option>'; }).join('')+'</select>') + '</div>';
       h += '<label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="precSoloAlturas"'+(p.soloAlturas?' checked':'')+(ro?' disabled':'')+'> Solo para trabajos en alturas</label>';
@@ -6717,7 +6728,7 @@
         h += '<div class="field-row">' + precCampo('Stock (lo que tenemos)', '<input type="number" id="precStock" min="0" step="1" value="'+(precNum(p.stock)==null?'':p.stock)+'" placeholder="Sin contar">') + precCampo('Nota del stock', '<input type="text" id="precStockNota" value="'+escapeHtml(p.stockNota||'')+'" placeholder="Dónde está, de qué obra sobró…">') + '</div>';
       }
     }
-    if(t !== 'instalacion' && t !== 'personal' && t !== 'logistica'){
+    if(t !== 'instalacion' && t !== 'personal' && t !== 'logistica' && t !== 'viatico'){
       h += '<div class="field-row">' + precCampo('Precio de venta (sin IVA)', '<input type="number" id="precPrecio" class="input-miles" min="0" step="100"'+(ro?' disabled':'')+'>', admin ? 'Si escribes el precio, el margen se calcula solo.' : '') + '<div class="field"><label>&nbsp;</label><div class="info-box" id="precCalc" style="margin:0;"></div></div></div>';
     }
     h += precCampo('Notas', precInput('precNotas', p.notas, {ro: ro, ph:'Referencia, marca, condiciones…'}));
@@ -6797,8 +6808,10 @@
       data.adminPct = precNum(v('precAdmin')) || 0; data.imprevistosPct = precNum(v('precImprev')) || 0; data.margen = precNum(v('precMargen'));
       data.unidad = data.unidad || 'GLB';
     } else if(t === 'personal'){
-      data.dia = precNum(v('precDia')); data.comida = precNum(v('precComida')); data.transporte = precNum(v('precTransporte'));
+      data.dia = precNum(v('precDia')); delete data.comida; delete data.transporte;
       data.soloAlturas = document.getElementById('precSoloAlturas').checked;
+    } else if(t === 'viatico'){
+      data.costo = precNum(v('precCosto'));
     } else if(t === 'logistica'){
       data.costo = precNum(v('precCosto')); data.base = v('precBase') || 'dia'; data.soloAlturas = document.getElementById('precSoloAlturas').checked;
     } else if(t === 'kit'){
@@ -6913,16 +6926,16 @@
   function renderInstCalc(){
     var d = inst.d, aiu = cotModoAiu();
     var tiposPers = precLista('personal').filter(function(p){ return d.alturas || !p.soloAlturas; });
-    var chk = function(cls, on, v){ return '<label class="inst-chk"><input type="checkbox" class="'+cls+'"'+(on?' checked':'')+'> '+(v ? fmtMoney.format(v) : '<span class="muted">$0</span>')+'</label>'; };
+    var chk = function(cls, on, vcls, v){ return '<div class="inst-chk"><input type="checkbox" class="'+cls+'"'+(on?' checked':'')+'><input type="number" class="input-miles '+vcls+'" min="0" step="1000" value="'+(Number(v)||0)+'"'+(on?'':' disabled')+'></div>'; };
     var h = '<div class="no-file" style="margin-bottom:4px;">'+escapeHtml(d.descripcion)+'</div>';
     h += '<div class="fieldset-label">Personal</div>';
-    h += d.personal.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Tipo</th><th style="width:70px;">Personas</th><th style="width:70px;">Días</th><th>Día técnico</th><th>Comida</th><th>Transporte</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody>' +
+    h += d.personal.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Tipo / nombre</th><th style="width:70px;">Personas</th><th style="width:70px;">Días</th><th style="width:120px;">Tarifa por día</th><th>Almuerzo</th><th>Transporte</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody>' +
       d.personal.map(function(r, i){
         var tot = (Number(r.cant)||0)*(Number(r.dias)||0)*((r.usaDia?Number(r.vDia)||0:0)+(r.usaComida?Number(r.vComida)||0:0)+(r.usaTransporte?Number(r.vTransporte)||0:0));
-        return '<tr data-i="'+i+'"><td>'+escapeHtml(r.nombre)+'</td><td><input type="number" class="ip-cant" min="0" step="1" value="'+(r.cant||0)+'"></td><td><input type="number" class="ip-dias" min="0" step="0.5" value="'+(r.dias||0)+'"></td>' +
-          '<td>'+chk('ip-dia', r.usaDia, r.vDia)+'</td><td>'+chk('ip-comida', r.usaComida, r.vComida)+'</td><td>'+chk('ip-trans', r.usaTransporte, r.vTransporte)+'</td><td class="col-total">'+fmtMoney.format(tot)+'</td>' +
+        return '<tr data-i="'+i+'"><td><div style="font-weight:600;">'+escapeHtml(r.nombre)+'</div><input type="text" class="ip-quien" value="'+escapeHtml(r.quien||'')+'" placeholder="Nombre (opcional)" style="margin-top:4px;"></td><td><input type="number" class="ip-cant" min="0" step="1" value="'+(r.cant||0)+'"></td><td><input type="number" class="ip-dias" min="0" step="0.5" value="'+(r.dias||0)+'"></td>' +
+          '<td><input type="number" class="input-miles ip-vdia" min="0" step="1000" value="'+(Number(r.vDia)||0)+'"></td><td>'+chk('ip-comida', r.usaComida, 'ip-vcomida', r.vComida)+'</td><td>'+chk('ip-trans', r.usaTransporte, 'ip-vtrans', r.vTransporte)+'</td><td class="col-total">'+fmtMoney.format(tot)+'</td>' +
           '<td class="col-rm"><button type="button" class="icon-btn ip-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
-      }).join('') + '</tbody></table></div>' : '<div class="no-file">Agrega quién va: el tipo carga solo sus valores de Precios. Desmarca lo que no se le reconozca (por ejemplo, solo transporte).</div>';
+      }).join('') + '</tbody></table></div>' : '<div class="no-file">Agrega a cada persona por tipo: carga su tarifa de Precios y la puedes cambiar si esa persona cobra distinto. Marca almuerzo o transporte solo si se le pagan aparte.</div>';
     h += '<div style="display:flex; gap:8px; flex-wrap:wrap;">' + tiposPers.map(function(p){ return '<button type="button" class="btn sm ip-add" data-id="'+escapeHtml(p._id)+'">+ '+escapeHtml(p.nombre)+'</button>'; }).join('') + (tiposPers.length ? '' : '<span class="no-file">No hay tipos de personal en Precios.</span>') + '</div>';
     h += '<div class="fieldset-label">Logística y herramientas</div>';
     h += d.logistica.length ? '<div class="items-table-wrap"><table class="items-table"><thead><tr><th>Ítem</th><th>Se cobra</th><th style="width:90px;">Cantidad</th><th>Costo</th><th class="col-total">Total</th></tr></thead><tbody>' +
@@ -6954,12 +6967,14 @@
     var redraw = function(){ instAutoCant(d); renderInstCalc(); };
     body.querySelectorAll('.ip-add').forEach(function(b){ b.addEventListener('click', function(){
       var p = state.precios.get(b.dataset.id) || {};
-      d.personal.push({id: b.dataset.id, nombre: p.nombre, cant: 1, dias: instDiasBase(d) || inst.diasDef || 1, vDia: precNum(p.dia)||0, vComida: precNum(p.comida)||0, vTransporte: precNum(p.transporte)||0, usaDia: true, usaComida: true, usaTransporte: true});
+      var va = state.precios.get('viat-almuerzo') || {}, vt = state.precios.get('viat-transporte') || {};
+      d.personal.push({id: b.dataset.id, nombre: p.nombre, quien: '', cant: 1, dias: instDiasBase(d) || inst.diasDef || 1, vDia: precNum(p.dia)||0, vComida: precNum(va.costo)||0, vTransporte: precNum(vt.costo)||0, usaDia: true, usaComida: false, usaTransporte: false});
       redraw();
     }); });
     var bindNum = function(cls, list, key, auto){ body.querySelectorAll('.'+cls).forEach(function(inp){ inp.addEventListener('change', function(){ var r = list[+inp.closest('tr').dataset.i]; r[key] = Number(inp.value)||0; if(auto) r.auto = false; redraw(); }); }); };
-    bindNum('ip-cant', d.personal, 'cant'); bindNum('ip-dias', d.personal, 'dias'); bindNum('il-cant', d.logistica, 'cant', true); bindNum('im-cant', d.materiales, 'cant');
-    [['ip-dia','usaDia'],['ip-comida','usaComida'],['ip-trans','usaTransporte']].forEach(function(x){ body.querySelectorAll('.'+x[0]).forEach(function(cb){ cb.addEventListener('change', function(){ d.personal[+cb.closest('tr').dataset.i][x[1]] = cb.checked; redraw(); }); }); });
+    bindNum('ip-cant', d.personal, 'cant'); bindNum('ip-vdia', d.personal, 'vDia'); bindNum('ip-vcomida', d.personal, 'vComida'); bindNum('ip-vtrans', d.personal, 'vTransporte');
+    body.querySelectorAll('.ip-quien').forEach(function(inp){ inp.addEventListener('input', function(){ d.personal[+inp.closest('tr').dataset.i].quien = inp.value; }); }); bindNum('ip-dias', d.personal, 'dias'); bindNum('il-cant', d.logistica, 'cant', true); bindNum('im-cant', d.materiales, 'cant');
+    [['ip-comida','usaComida'],['ip-trans','usaTransporte']].forEach(function(x){ body.querySelectorAll('.'+x[0]).forEach(function(cb){ cb.addEventListener('change', function(){ d.personal[+cb.closest('tr').dataset.i][x[1]] = cb.checked; redraw(); }); }); });
     body.querySelectorAll('.ip-rm').forEach(function(b){ b.addEventListener('click', function(){ d.personal.splice(+b.closest('tr').dataset.i, 1); redraw(); }); });
     body.querySelectorAll('.im-rm').forEach(function(b){ b.addEventListener('click', function(){ d.materiales.splice(+b.closest('tr').dataset.i, 1); redraw(); }); });
     document.getElementById('imAdd').addEventListener('change', function(){
