@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Intranet Cenova</title><script>(function(){var t="light";try{t=localStorage.getItem("cenova.theme")||"light";}catch(e){}if(["light","dark","lavanda"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);})();</script><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.classList.add("cenova-locked");</script><script src="/app.js"></script></head><body>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#173a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Cenova"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Intranet Cenova</title><script>(function(){var t="light";try{t=localStorage.getItem("cenova.theme")||"light";}catch(e){}if(["light","dark","lavanda"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);})();</script><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.classList.add("cenova-locked");</script><script src="/app.js"></script></head><body>
 <style>html.cenova-locked .app{visibility:hidden;}
 #cenovaLogin{position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:24px 16px; overflow-y:auto;
   background:radial-gradient(1200px 600px at 10% -10%, var(--accent-soft), transparent 60%), radial-gradient(900px 500px at 110% 110%, var(--accent-soft), transparent 55%), var(--bg);}
@@ -7067,6 +7067,276 @@
   }
   renderAll();
   initDb();
+})();
+</script>
+
+<!-- ================= Vista de celular (2026-10-05) =================
+     Todo lo de celular está en este bloque: menú lateral, tablas en tarjetas,
+     ventanas a pantalla completa y "Anclar al inicio". Se activa con pantallas
+     de 760 px o menos; en computador no cambia nada. -->
+<style>
+  .menu-scrim{display:none;}
+  .sb-close{display:none;}
+  .pwa-btn{display:flex; align-items:center; gap:8px; width:100%; margin-top:6px; padding:8px 10px; border-radius:8px; border:1px dashed var(--border); background:none; color:var(--text-muted); font-size:13px; cursor:pointer; text-align:left;}
+  .pwa-btn:hover{background:var(--surface-2); color:var(--text);}
+  .pwa-btn svg{width:15px; height:15px; flex:none;}
+  html.es-app .pwa-btn{display:none;}
+  .pwa-steps{margin:0; padding-left:20px; line-height:1.7; font-size:13.5px;}
+  .pwa-steps b{color:var(--text);}
+
+  @media (max-width:760px){
+    html, body{overflow-x:hidden;}
+    body{-webkit-text-size-adjust:100%;}
+    /* ---- Barra superior fija con el botón ☰ ---- */
+    .main{padding:0 14px calc(40px + env(safe-area-inset-bottom));}
+    .topbar{position:sticky; top:0; z-index:30; margin:0 -14px 16px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+      background:color-mix(in srgb, var(--bg) 88%, transparent); -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--border); align-items:center; flex-wrap:nowrap;}
+    .topbar h1{font-size:18px; line-height:1.2;}
+    .topbar p{display:none;}
+    .topbar .synctag span:last-child{display:none;}
+    .menu-btn{display:inline-flex !important; width:40px; height:40px; border-radius:11px; flex:none;}
+    /* ---- Menú que sale por la izquierda ---- */
+    .sidebar{position:fixed; left:0; top:0; bottom:0; height:100%; width:min(84vw, 300px); z-index:70;
+      transform:translateX(-102%); transition:transform .26s cubic-bezier(.2,.8,.2,1); box-shadow:none;
+      padding:calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom)); overscroll-behavior:contain;}
+    .sidebar.open{transform:none; box-shadow:12px 0 40px -12px rgba(0,0,0,.35);}
+    .menu-scrim{display:block; position:fixed; inset:0; z-index:65; background:rgba(10,16,26,.42); opacity:0; pointer-events:none; transition:opacity .22s;}
+    .menu-scrim.show{opacity:1; pointer-events:auto;}
+    body.menu-abierto{overflow:hidden;}
+    .sb-close{display:flex; position:absolute; top:calc(14px + env(safe-area-inset-top)); right:12px; width:34px; height:34px; border:none; border-radius:9px; background:var(--surface-2); color:var(--text-muted); align-items:center; justify-content:center; cursor:pointer;}
+    .nav-btn{padding:12px 10px; font-size:15px;}
+    /* ---- Pestañas en una sola línea que se desliza ---- */
+    .subtabs{width:auto; max-width:100%; overflow-x:auto; flex-wrap:nowrap !important; scrollbar-width:none; -webkit-overflow-scrolling:touch;}
+    .subtabs::-webkit-scrollbar{display:none;}
+    .subtabs > *{flex:none; white-space:nowrap;}
+    /* ---- Tablas como tarjetas ---- */
+    .table-wrap.mc{overflow:visible; background:none; border:none; box-shadow:none; border-radius:0;}
+    .table-wrap.mc .empty-state{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);}
+    table.mc{min-width:0 !important; display:block; width:100%;}
+    table.mc thead{display:none;}
+    table.mc tbody, table.mc tfoot{display:block;}
+    table.mc tr{display:block; position:relative; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow); padding:12px 14px 10px; margin-bottom:10px;}
+    table.mc tbody tr:hover{background:var(--surface);}
+    table.mc td{display:grid; grid-template-columns:auto minmax(0,1fr); column-gap:12px; justify-items:end; align-items:baseline; padding:5px 0; border:none !important; text-align:right; font-size:13.5px; max-width:none !important; width:auto !important; white-space:normal;}
+    table.mc td > *{grid-column:2;}
+    table.mc td::before{content:attr(data-label); grid-column:1; grid-row:1 / span 6; align-self:start; padding-top:2px; justify-self:start; max-width:42vw; text-align:left; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); font-family:"IBM Plex Sans", system-ui, sans-serif;}
+    table.mc td:not([data-label])::before, table.mc td[data-label=""]::before{display:none;}
+    table.mc td > *{min-width:0;}
+    table.mc td:not([data-label]), table.mc td[data-label=""]{grid-template-columns:minmax(0,1fr);}
+    table.mc td:not([data-label]) > *, table.mc td[data-label=""] > *{grid-column:1;}
+    table.mc td.mc-title, table.mc td.mc-block, table.mc td[colspan], table.items-table.mc td{justify-items:stretch;}
+    table.mc td.mc-title{display:block; text-align:left; font-size:15px; font-weight:700; padding:0 0 8px; margin-bottom:4px; border-bottom:1px dashed var(--border) !important; padding-right:var(--mc-pad, 0);}
+    table.mc td.mc-title::before{display:none;}
+    table.mc td.mc-block{display:block; text-align:left;}
+    table.mc td.mc-block::before{display:block; max-width:none; margin-bottom:3px;}
+    table.mc td.desc-cell .d-title, table.mc td.desc-cell .d-notes{max-width:none;}
+    table.mc td.mc-vacia{display:none;}
+    table.mc td.mc-hide{display:none;}
+    table.mc td.mc-actions{position:absolute; top:9px; right:10px; padding:0; display:block;}
+    table.mc td.mc-actions .row-actions{gap:6px;}
+    table.mc td.mc-actions .icon-btn{width:34px; height:34px; border-radius:9px;}
+    table.mc td.mc-actions .btn{padding:7px 10px;}
+    table.mc td[colspan]{display:block; text-align:left;}
+    table.mc td[colspan]::before{display:none;}
+    table.mc .list-row{flex-wrap:wrap;} table.mc .list-row .title{white-space:normal;} table.mc .list-row .main-txt{flex:1 1 180px; min-width:0;}
+    table.mc .list-row > .pill{margin-left:32px;}
+    table.mc tr.mc-sub{margin-top:-14px; border-top-left-radius:0; border-top-right-radius:0; border-top:1px dashed var(--border); box-shadow:none;}
+    table.mc tfoot tr{background:var(--surface-2);}
+    table.mc tr[style*="cursor:pointer"]:active{transform:scale(.995);}
+    /* ---- Tablas de ítems dentro de los formularios ---- */
+    .items-table-wrap{overflow:visible;}
+    table.items-table.mc tr{display:grid; grid-template-columns:1fr 1fr; gap:8px 10px; padding:34px 12px 12px; box-shadow:none; background:var(--surface-2);}
+    table.items-table.mc td{display:flex; flex-direction:column; justify-items:stretch; align-items:stretch; gap:4px; padding:0 !important; text-align:left;}
+    table.items-table.mc td::before{max-width:none; font-size:10.5px; padding-top:0;}
+    table.items-table.mc td > *{grid-column:auto;}
+    table.items-table.mc td.mc-ancha, table.items-table.mc td.col-desc, table.items-table.mc td.col-cat{grid-column:1 / -1;}
+    table.items-table.mc td.col-idx{position:absolute; top:9px; left:12px; display:block; padding:0 !important; font-weight:700; color:var(--text-muted);}
+    table.items-table.mc td.col-idx::before{display:none;}
+    table.items-table.mc td.col-idx:not(:empty)::after{content:none;}
+    table.items-table.mc td.col-rm, table.items-table.mc td.mc-actions{position:absolute; top:4px; right:6px; width:auto !important; display:block;}
+    table.items-table.mc td.col-rm::before{display:none;}
+    table.items-table.mc td.col-total{grid-column:1 / -1; flex-direction:row; justify-content:space-between; align-items:center; font-size:14px; font-weight:700; padding-top:6px !important; border-top:1px dashed var(--border) !important;}
+    table.items-table.mc input, table.items-table.mc select, table.items-table.mc textarea{font-size:16px !important; padding:9px 10px !important;}
+    /* ---- Ventanas y formularios a pantalla completa ---- */
+    .overlay, .overlay.roomy{padding:0 !important; align-items:flex-start;}
+    .overlay .modal, .overlay .modal.wide, .overlay .modal.xwide{max-width:none !important; width:100%; min-height:100%; min-height:100dvh; border-radius:0; border:none; display:flex; flex-direction:column; animation:sube .22s ease-out;}
+    .overlay .modal-head{position:sticky; top:0; z-index:2; background:var(--surface); padding:calc(12px + env(safe-area-inset-top)) 16px 12px;}
+    .overlay .modal-head h3{font-size:16.5px;}
+    .overlay .modal-close{width:40px; height:40px; display:flex; align-items:center; justify-content:center; border-radius:10px; background:var(--surface-2);}
+    .overlay .modal-body, .overlay.roomy .modal-body{max-height:none !important; flex:1; padding:16px; overflow:visible;}
+    .overlay .modal-foot{position:sticky; bottom:0; z-index:2; background:var(--surface); flex-wrap:wrap; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); box-shadow:0 -8px 20px -14px rgba(0,0,0,.3);}
+    .overlay .modal-foot > div{display:flex; flex-wrap:wrap; gap:8px; flex:1 1 auto; justify-content:flex-end;}
+    .modal-foot.tiene-mas .foot-extra{display:none !important;}
+    .modal-foot.tiene-mas.mas-abierta .foot-extra{display:inline-flex !important;}
+    .modal-foot.tiene-mas.mas-abierta{flex-wrap:wrap;}
+    .foot-mas{display:inline-flex; align-items:center; gap:6px;}
+    .modal-foot.tiene-mas .btn.primary{flex:1 1 auto; justify-content:center;}
+    .overlay .modal-foot .btn{padding:10px 14px; font-size:14px;}
+    .field-row, .field-row.three{grid-template-columns:1fr !important;}
+    .field input, .field select, .field textarea, .modal input:not([type=checkbox]):not([type=radio]), .modal select, .modal textarea{font-size:16px !important;}
+    .field input, .field select{min-height:44px;}
+    .totals-box .trow{max-width:none;}
+    .costing-toggle{flex-wrap:wrap;} .costing-toggle select{min-width:0; width:100%;}
+    #previewOverlay .modal-body{overflow-x:auto;}
+    @keyframes sube{from{opacity:.4; transform:translateY(24px);} to{opacity:1; transform:none;}}
+    .btn{min-height:38px;}
+  }
+  @media print{ .menu-scrim, .sb-close{display:none !important;} }
+</style>
+<div class="menu-scrim" id="menuScrim" aria-hidden="true"></div>
+<div class="overlay" id="pwaOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3>Anclar la intranet al inicio</h3><button class="modal-close" id="pwaClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="pwaBody"></div>
+    <div class="modal-foot"><span></span><button class="btn primary" id="pwaOk">Entendido</button></div>
+  </div>
+</div>
+<script>
+(function(){
+  'use strict';
+  var sb = document.getElementById('sidebar'), scrim = document.getElementById('menuScrim'), mbtn = document.getElementById('menuBtn');
+  if(!sb || !scrim || !mbtn) return;
+  var mq = window.matchMedia('(max-width:760px)');
+
+  /* ---------- Menú lateral ---------- */
+  var cerrar = document.createElement('button');
+  cerrar.className = 'sb-close'; cerrar.type = 'button'; cerrar.setAttribute('aria-label', 'Cerrar menú');
+  cerrar.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  sb.appendChild(cerrar);
+  function sync(){
+    var abierto = sb.classList.contains('open') && mq.matches;
+    scrim.classList.toggle('show', abierto);
+    document.body.classList.toggle('menu-abierto', abierto);
+    mbtn.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+  }
+  new MutationObserver(sync).observe(sb, {attributes:true, attributeFilter:['class']});
+  scrim.addEventListener('click', function(){ sb.classList.remove('open'); });
+  cerrar.addEventListener('click', function(){ sb.classList.remove('open'); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') sb.classList.remove('open'); });
+  // Deslizar a la izquierda para cerrar
+  var x0 = null;
+  sb.addEventListener('touchstart', function(e){ x0 = e.touches[0].clientX; }, {passive:true});
+  sb.addEventListener('touchend', function(e){ if(x0 != null && x0 - e.changedTouches[0].clientX > 60) sb.classList.remove('open'); x0 = null; }, {passive:true});
+  // Al elegir una sección, volver arriba
+  document.getElementById('primaryNav').addEventListener('click', function(e){ if(e.target.closest('.nav-btn') && mq.matches) window.scrollTo(0, 0); });
+  if(mq.addEventListener) mq.addEventListener('change', function(){ if(!mq.matches) sb.classList.remove('open'); sync(); });
+
+  /* ---------- Tablas como tarjetas ----------
+     Copia el encabezado de cada columna a sus celdas (data-label) y marca:
+     título (primera columna con nombre), acciones (última sin nombre), celdas vacías. */
+  function cls(el, c, on){ if(el.classList.contains(c) !== !!on) el.classList.toggle(c, !!on); }
+  function txt(el){ return (el.textContent || '').replace(/\s+/g, ' ').trim(); }
+  function etiquetar(table){
+    var ths = table.tHead ? Array.prototype.slice.call(table.tHead.rows[0] ? table.tHead.rows[0].cells : []) : [];
+    if(!ths.length) return;
+    var esItems = table.classList.contains('items-table');
+    var wrap = table.closest('.table-wrap'); if(wrap) cls(wrap, 'mc', true);
+    cls(table, 'mc', true);
+    var labels = [], spans = [];
+    ths.forEach(function(th){ labels.push(txt(th)); spans.push(th.colSpan || 1); });
+    var titleIdx = -1;
+    if(!esItems){ for(var k = 0; k < labels.length; k++){ if(labels[k]){ titleIdx = k; break; } } }
+    Array.prototype.forEach.call(table.tBodies, function(tb){
+      Array.prototype.forEach.call(tb.rows, function(tr){
+        if(tr.dataset.mcHecho === String(tr.cells.length) + ':' + (tr.innerHTML.length)) return;
+        var cells = tr.cells;
+        var unica = Array.prototype.some.call(cells, function(c){ return c.colSpan > 1; }) && Array.prototype.every.call(cells, function(c){ return c.colSpan > 1 || !txt(c); });
+        cls(tr, 'mc-sub', unica && !!tr.previousElementSibling);
+        var col = 0;
+        Array.prototype.forEach.call(cells, function(td, i){
+          var lab = labels[col] || '';
+          col += td.colSpan || 1;
+          if(td.colSpan > 1){ td.removeAttribute('data-label'); return; }
+          td.setAttribute('data-label', lab);
+          td.classList.remove('mc-title', 'mc-actions', 'mc-hide', 'mc-vacia', 'mc-block', 'mc-ancha');
+          var vacia = !txt(td) && !td.querySelector('input,select,textarea,button,svg,img,a');
+          if(esItems){
+            if(td.querySelector('textarea')) td.classList.add('mc-ancha');
+            if(!lab && td.querySelector('button')) td.classList.add('mc-actions');
+            return;
+          }
+          if(i === titleIdx){ td.classList.add('mc-title'); return; }
+          if(!lab){
+            if(td.querySelector('button, .row-actions')) td.classList.add('mc-actions');
+            else td.classList.add('mc-hide');
+            return;
+          }
+          if(vacia || txt(td) === '—' && !td.querySelector('input,select')){ td.classList.add('mc-vacia'); return; }
+          if(td.classList.contains('desc-cell') || txt(td).length > 46 || td.querySelector('textarea, .list-row, table')) td.classList.add('mc-block');
+        });
+        var act = tr.querySelector('td.mc-actions'), tit = tr.querySelector('td.mc-title');
+        if(tit) tit.style.setProperty('--mc-pad', act ? (act.querySelectorAll('button,a').length * 40 + 6) + 'px' : '0');
+        tr.dataset.mcHecho = String(tr.cells.length) + ':' + (tr.innerHTML.length);
+      });
+    });
+  }
+  /* Pie de las ventanas: en celular deja visibles solo los botones principales
+     y agrupa el resto en "Más acciones". */
+  function pies(){
+    document.querySelectorAll('.overlay.open .modal-foot').forEach(function(f){
+      var btns = Array.prototype.filter.call(f.querySelectorAll('button.btn, a.btn'), function(b){ return !b.classList.contains('foot-mas') && b.offsetParent !== null || b.classList.contains('foot-extra'); });
+      var visibles = btns.filter(function(b){ return !b.hidden && b.style.display !== 'none'; });
+      if(!mq.matches || visibles.length <= 2){ cls(f, 'tiene-mas', false); cls(f, 'mas-abierta', false); return; }
+      var mas = f.querySelector('.foot-mas');
+      if(!mas){
+        mas = document.createElement('button'); mas.type = 'button'; mas.className = 'btn foot-mas';
+        mas.innerHTML = 'Más acciones <span aria-hidden="true">▾</span>';
+        mas.addEventListener('click', function(){ f.classList.toggle('mas-abierta'); mas.lastChild.textContent = f.classList.contains('mas-abierta') ? '▴' : '▾'; });
+        f.insertBefore(mas, f.firstChild);
+      }
+      visibles.forEach(function(b){ cls(b, 'foot-extra', !b.classList.contains('primary')); });
+      cls(f, 'tiene-mas', true);
+    });
+  }
+  var pendiente = false;
+  function revisar(){
+    pendiente = false;
+    pies();
+    document.querySelectorAll('.table-wrap table, table.items-table').forEach(function(t){
+      if(t.closest('.preview-doc, #previewOverlay, .print-only')) return;
+      etiquetar(t);
+    });
+  }
+  new MutationObserver(function(){ if(!pendiente){ pendiente = true; requestAnimationFrame(revisar); } })
+    .observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+  revisar();
+
+  /* ---------- Anclar al inicio ---------- */
+  var standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  if(standalone) document.documentElement.classList.add('es-app');
+  var ua = navigator.userAgent || '';
+  var esIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var aviso = null;
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); aviso = e; });
+  window.addEventListener('appinstalled', function(){ aviso = null; document.documentElement.classList.add('es-app'); if(window.showToast) window.showToast('Listo: la intranet quedó en tu pantalla de inicio.'); });
+  var anclaBtn = document.createElement('button');
+  anclaBtn.className = 'pwa-btn'; anclaBtn.type = 'button';
+  anclaBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 8v7M8.8 11.8 12 15l3.2-3.2"/></svg>Anclar al inicio del celular';
+  var ql = sb.querySelector('.quicklinks');
+  (ql || sb).appendChild(anclaBtn);
+  var ov = document.getElementById('pwaOverlay'), body = document.getElementById('pwaBody');
+  function abrirAyuda(){
+    var h;
+    if(esIOS){
+      h = '<p style="margin:0">En el iPhone hazlo desde <b>Safari</b>:</p><ol class="pwa-steps"><li>Toca el botón <b>Compartir</b> (el cuadrito con la flecha hacia arriba).</li><li>Baja y elige <b>Agregar a pantalla de inicio</b>.</li><li>Toca <b>Agregar</b>. Aparece el ícono de Cenova junto a tus apps.</li></ol>';
+    } else if(/Android/i.test(ua)){
+      h = '<p style="margin:0">En <b>Chrome</b> del celular:</p><ol class="pwa-steps"><li>Toca el menú <b>⋮</b> (arriba a la derecha).</li><li>Elige <b>Agregar a la pantalla principal</b> o <b>Instalar app</b>.</li><li>Confirma con <b>Instalar</b>.</li></ol>';
+    } else {
+      h = '<p style="margin:0">Abre <b>intranet.cenovasas.com</b> desde el celular y vuelve a tocar este botón: ahí te digo los pasos para tu teléfono.</p><p style="margin:0">En el computador, Chrome también la puede instalar con el ícono de instalar que aparece en la barra de direcciones.</p>';
+    }
+    h += '<p style="margin:0; font-size:12.5px; color:var(--text-muted);">Se abre como una app, sin la barra del navegador. Por seguridad te pedirá ingresar cada vez que la abras.</p>';
+    body.innerHTML = h; ov.classList.add('open');
+  }
+  anclaBtn.addEventListener('click', function(){
+    sb.classList.remove('open');
+    if(aviso){ aviso.prompt(); aviso.userChoice.finally(function(){ aviso = null; }); return; }
+    abrirAyuda();
+  });
+  function cerrarAyuda(){ ov.classList.remove('open'); }
+  document.getElementById('pwaClose').addEventListener('click', cerrarAyuda);
+  document.getElementById('pwaOk').addEventListener('click', cerrarAyuda);
+  ov.addEventListener('click', function(e){ if(e.target === ov) cerrarAyuda(); });
 })();
 </script>
 

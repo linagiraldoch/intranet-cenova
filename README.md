@@ -111,3 +111,11 @@ npx wrangler d1 migrations apply intranet-cenova --local
 printf 'PEPPER="local"\nCLAVES_INICIALES={"lmgiraldo":"Lmgiraldo"}\n' > .dev.vars
 npx wrangler dev
 ```
+
+## Celular y "Anclar al inicio" (2026-10-05)
+
+- Todo lo de celular está en el bloque "Vista de celular" al final de `web/index.html` y se activa con pantallas de 760 px o menos. En computador no cambia nada.
+- Menú: el botón ☰ abre el menú desde la izquierda; se cierra tocando afuera, con la X o deslizando a la izquierda.
+- Tablas: se ven como tarjetas. El encabezado de cada columna se copia solo a sus celdas (`data-label`), así que una tabla nueva dentro de `.table-wrap` queda en tarjetas sin hacer nada más.
+- Ventanas: a pantalla completa, con el encabezado y los botones fijos; si hay más de dos botones, los secundarios van en "Más acciones".
+- Anclar al inicio: `manifest.webmanifest` + íconos (`icon-*.png`, `apple-touch-icon.png`), servidos sin sesión por el Worker. El botón "Anclar al inicio del celular" del menú muestra los pasos (iPhone: Safari → Compartir → Agregar a pantalla de inicio; Android: Chrome → ⋮ → Instalar app). La app abre en `/login`: por seguridad cada apertura pide ingresar.

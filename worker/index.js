@@ -405,6 +405,14 @@ export default {
       /* --- Páginas --- */
       if (p === '/login' || p === '/login.html') return await pagina(env, req, '/login.html');
       if (p === '/login.js' || p === '/favicon.ico') return await pagina(env, req, p);
+      // Archivos para anclar la intranet a la pantalla de inicio (no tienen datos privados).
+      if (p === '/manifest.webmanifest' || p === '/apple-touch-icon.png' || p === '/icon-192.png' || p === '/icon-512.png' || p === '/icon-maskable-512.png') {
+        const r = await pagina(env, req, p);
+        const h = new Headers(r.headers);
+        if (p.endsWith('.webmanifest')) { h.set('content-type', 'application/manifest+json; charset=utf-8'); h.set('cache-control', 'no-cache'); }
+        else h.set('cache-control', 'public, max-age=604800');
+        return new Response(r.body, { status: r.status, headers: h });
+      }
       // Todo lo demás (el panel y sus archivos) exige una sesión válida.
       const s = await sesionDe(req, env, { exigirPestana: false });
       if (!s || s.debe_cambiar) return redir('/login');
