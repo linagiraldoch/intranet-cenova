@@ -57,6 +57,13 @@ El margen es sobre el precio de venta, igual que en Finanzas: precio = costo ÷ 
 - **Inventario** (colección `inventario`): los artículos son los materiales y equipos de Precios, donde viven `stock`, `stockMin`, `ubicacion` y `costo`. Cada entrada, salida a obra (ligada a una orden de compra), devolución o conteo se guarda como movimiento (`tipo`, `cantidad`, `delta`, `stockAntes`, `stockDespues`, `ordenId`, `costoUnit`/`costoRef`, quién y cuándo) y actualiza el stock en Precios. El equipo registra movimientos; el servidor solo deja a administración cambiarlos o borrarlos (al borrar, el stock se corrige). Un cambio de stock hecho a mano en Precios queda como conteo.
 - **Costos**: *Costos por cargar* (llenar costos de Precios de una vez, con referencias de proveedores, de lo pagado en obras y de la última compra en Inventario), *Precios de proveedores* (todos los ítems de las cotizaciones de proveedor, antigüedad, el más barato y "→ Precios") y *Costo real por obra* (cotizado frente a real por orden: personal pagado, imprevistos y novedades; material de bodega como dato).
 
+## Formatos (2026-10-09)
+
+- Menú **Documentos → Formatos**. 11 formatos en Word con el diseño de la cotización (logo, cinta, caja de N° y fecha, barra de título, pie): CNV-FR-01 Informe de proyecto · 02 Acta de entrega · 03 Orden de trabajo · 04 Contrato con cliente · 05 Contrato con técnico · 06 Contrato con proveedor · 07 Liquidación de pago a personal · 08 Cuenta de cobro · 09 Liquidación laboral · 10 Entrega contable · 11 Carta con membrete.
+- Los .docx viven en `web/formatos/` y el Worker los entrega solo con sesión (`/formatos/CNV-FR-xx_….docx`). Se generan con `herramientas/formatos/formatos.js` (librería `docx` de npm): `node formatos.js` deja los archivos en `out/` y se copian a `web/formatos/`.
+- 01, 02, 04, 07 y 08 se llenan en la intranet con los datos de una orden de compra (07 y 08 por persona del personal de la orden) y bajan en PDF. Se guardan en la colección `documentos` con consecutivo por tipo (INF, ACT, CON, LIQ, CC). Solo administración borra documentos.
+- Los PDF se generan en el navegador con html2pdf.js (`web/html2pdf.bundle.min.js`, servido solo con sesión).
+
 ## Usuarios
 
 | Usuario | Correo | Rol |

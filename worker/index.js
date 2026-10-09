@@ -8,7 +8,7 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'precios', 'inventario'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'precios', 'inventario', 'documentos'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
@@ -205,6 +205,7 @@ async function escribir(req, env, s, col, id, metodo) {
   if (col === 'precios' && !s.admin) {
     if (metodo === 'DELETE' || !previo) return err(403, 'regla', 'Solo administración crea o borra ítems de Precios.');
   }
+  if (col === 'documentos' && !s.admin && metodo === 'DELETE') return err(403, 'regla', 'Los documentos guardados solo los borra administración.');
   if (col === 'inventario' && !s.admin && (metodo === 'DELETE' || previo)) {
     return err(403, 'regla', 'Los movimientos de inventario no se cambian ni se borran: registra un conteo para corregir.');
   }
@@ -422,6 +423,16 @@ export default {
       if (!s || s.debe_cambiar) return redir('/login');
       if (p === '/' || p === '/index.html') return await pagina(env, req, '/index.html');
       if (p === '/app.js') return await pagina(env, req, '/app.js');
+      // Formatos en Word para descargar (solo con sesión)
+      if (/^\/formatos\/CNV-FR-\d{2}_[A-Za-z0-9-]+\.docx$/.test(p)) {
+        const r = await pagina(env, req, p);
+        if (r.status !== 200) return redir('/');
+        const h = new Headers(r.headers);
+        h.set('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        h.set('content-disposition', 'attachment; filename="' + p.split('/').pop() + '"');
+        h.set('cache-control', 'private, no-cache');
+        return new Response(r.body, { status: 200, headers: h });
+      }
       // Librería para generar los PDF (cotizaciones, prefacturas, informes) dentro del navegador.
       if (p === '/html2pdf.bundle.min.js') {
         const r = await pagina(env, req, p);

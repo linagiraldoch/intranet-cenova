@@ -723,6 +723,23 @@
   @media (max-width:1100px){ .fin-grid{grid-template-columns:1fr;} }
   @media (max-width:900px){ .kpis.stats{grid-template-columns:1fr 1fr;} }
   @media (max-width:480px){ .kpis.stats .kpi{padding:12px 12px;} .kpis.stats .kpi .value{font-size:17px; overflow-wrap:anywhere;} }
+  /* Formatos (2026-10-09) */
+  .fmt-grupo{margin-bottom:22px;}
+  .fmt-grupo-head{display:flex; align-items:baseline; gap:10px; margin-bottom:10px;}
+  .fmt-grupo-head h3{margin:0; font-size:15px;} .fmt-grupo-head span{color:var(--text-muted); font-size:12.5px;}
+  .fmt-cards{display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px;}
+  .fmt-card{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow);}
+  .fmt-card h4{margin:0; font-size:14.5px;} .fmt-card p{margin:0; color:var(--text-muted); font-size:12.8px; line-height:1.45; flex:1;}
+  .fmt-cod{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--accent-2); font-weight:600;}
+  .fmt-acc{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px;} .fmt-acc a.btn{text-decoration:none; display:inline-flex; align-items:center; gap:5px;}
+  .fmt-checks{display:grid; grid-template-columns:repeat(auto-fill, minmax(210px, 1fr)); gap:6px 14px; font-size:13px;}
+  .fmt-checks label{display:flex; gap:7px; align-items:center; font-weight:400;}
+  .fmt-tabla .items-table input, .fmt-tabla .items-table select{width:100%;}
+  .fmt-tabla .fmt-add{margin-top:6px;}
+  .fmt-fotos{display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:10px;}
+  .fmt-foto{position:relative; border:1px solid var(--border); border-radius:8px; overflow:hidden; background:var(--surface-2);}
+  .fmt-foto img{display:block; width:100%; height:110px; object-fit:cover;} .fmt-foto input{width:100%; border:none; border-top:1px solid var(--border); padding:6px 8px; font-size:12px; background:var(--surface); color:var(--text);}
+  .fmt-foto .icon-btn{position:absolute; top:5px; right:5px; background:var(--surface);}
   /* Inventario y Costos (2026-10-09) */
   .nav-btn .count.alerta{color:var(--warning); font-weight:700;}
   html.menu-plegado .nav-btn .count.alerta{background:var(--warning-soft); border-color:var(--warning);}
@@ -809,6 +826,11 @@
       <button class="nav-btn fin-admin" data-view="finanzas" hidden title="Solo administración">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><path d="M16 15h2.5"/><path d="M6 6V4.5h12V6"/></svg>
         Finanzas
+      </button>
+      <div class="nav-label">Documentos</div>
+      <button class="nav-btn" data-view="formatos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+        Formatos
       </button>
     </nav>
 
@@ -1043,6 +1065,11 @@
       </div>
       <div class="info-box" id="cosInfo" style="margin-bottom:14px;"></div>
       <div id="cosContainer"></div>
+    </section>
+
+    <section class="view" id="view-formatos">
+      <div class="info-box" style="margin-bottom:16px;">Descarga el formato en <strong>Word</strong> para escribir encima, o usa <strong>Llenar con una obra</strong>: los datos de la orden de compra se ponen solos, ajustas lo que haga falta y bajas el PDF con el diseño de la cotización. Lo resaltado en amarillo en los Word es lo que hay que llenar.</div>
+      <div id="fmtContainer"></div>
     </section>
 
     <section class="view" id="view-finanzas">
@@ -1424,6 +1451,20 @@
 </div>
 
 <!-- Modal: ítem de Precios -->
+<div class="overlay" id="fmtOverlay">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="fmtTitle">Formato</h3><button class="modal-close" id="fmtClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="fmtBody"></div>
+    <div class="modal-foot">
+      <button class="btn" id="fmtBorrar" style="color:var(--critical); display:none;">Borrar</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="fmtCancel">Cerrar</button>
+        <button class="btn" id="fmtGuardarBtn">Guardar</button>
+        <button class="btn primary" id="fmtVerPdf">Guardar y ver PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="infOverlay">
   <div class="modal xwide">
     <div class="modal-head"><h3 id="infTitle">Informe de la obra</h3><button class="modal-close" id="infClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -2088,11 +2129,12 @@
   document.getElementById('confirmOverlay').addEventListener('click', function(e){ if(e.target===this) _closeConfirm(false); });
 
   /* ---------- Navigation ---------- */
-  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas','inventario','costos'];
+  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas','inventario','costos','formatos'];
   var titles = {
     resumen:['Resumen','Cotizaciones, proyectos y agenda de Cenova en un solo lugar.'],
     cotizaciones:['Cotizaciones','Arma, edita y da seguimiento a cada cotización.'],
     estadisticas:['Estadísticas','Cuánto deja cada proyecto, qué se dejó de cobrar y cómo va la operación.'],
+    formatos:['Formatos','Contratos, informes, actas, liquidaciones y demás documentos de Cenova en Word, y los que se llenan aquí con los datos de la obra.'],
     inventario:['Inventario','Lo que Cenova tiene guardado: entradas, salidas a cada obra, conteos y alertas de stock bajo.'],
     costos:['Costos','Precios de proveedores, costos por cargar en Precios y lo que costó de verdad cada obra frente a lo cotizado.'],
     precios:['Precios','Precios estándar de servicios, personal, materiales, kits y equipos para cotizar sin volver a calcular.'],
@@ -2114,6 +2156,7 @@
     if(v==='precios') renderPrecios();
     if(v==='inventario') renderInventario();
     if(v==='costos') renderCostos();
+    if(v==='formatos') renderFormatos();
   }
   document.getElementById('primaryNav').addEventListener('click', function(e){
     var btn = e.target.closest('.nav-btn'); if(btn) showView(btn.dataset.view);
@@ -3500,7 +3543,7 @@
             image: {type: 'jpeg', quality: 0.96},
             html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false},
             jsPDF: {unit: 'mm', format: opciones.formato || 'letter', orientation: 'portrait'},
-            pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '.preview-terms', '.preview-footicons', '.preview-totals-box', '.inf-kpis', '.inf-compra', '.inf-grid', '.inf-p', '.inf-aviso', '.inf-cobro', 'dt', 'dd', 'li', 'h3']}
+            pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '.preview-terms', '.preview-footicons', '.preview-totals-box', '.inf-kpis', '.inf-compra', '.inf-grid', '.inf-p', '.inf-aviso', '.inf-cobro', 'dt', 'dd', 'li', 'h3', '.fd-blk', '.fd-firmas', '.fd-p', '.fd-campos', '.fd-check', 'figure', '.preview-cols']}
           }))).from(el).outputPdf('blob');
         }).then(function(blob){ listo = true; clearTimeout(tope); limpiar(); resolve(blob); })
           .catch(function(e){ listo = true; clearTimeout(tope); limpiar(); reject(e); });
@@ -3705,7 +3748,7 @@
   function openPrefacturaPreview(pfId){
     var pf = state.prefacturas.get(pfId); if(!pf) return;
     var c = pf.cot || {};
-    state.previewingPfId = pfId; state.previewingCotId = null;
+    state.previewingPfId = pfId; state.previewingCotId = null; state.previewingFormato = null;
     var tt = cotTablaTotales(c);
     var emisor = EMISOR_INFO[c.responsable] || {cargo:'', tel:'+57 3207174937', email:'gerencia@cenovasas.com'};
     var correoPago = emisor.email || 'gerencia@cenovasas.com';
@@ -3773,7 +3816,7 @@
 
   function openPreview(id){
     var c = state.cotizaciones.get(id); if(!c) return;
-    state.previewingCotId = id; state.previewingPfId = null;
+    state.previewingCotId = id; state.previewingPfId = null; state.previewingFormato = null;
     var items = c.items||[];
     var sub = items.reduce(function(s,it){ return s + (Number(it.cantidad)||0)*(Number(it.precioUnit)||0); }, 0);
     var emisor = EMISOR_INFO[c.responsable] || {cargo:'', tel:'+57 3207174937', email:'gerencia@cenovasas.com'};
@@ -3836,6 +3879,11 @@
   document.getElementById('previewPrint').addEventListener('click', function(){
     var docEl = document.getElementById('previewDoc');
     if(!docEl || !docEl.innerHTML.trim()){ toast('No hay documento para imprimir.'); return; }
+    if(state.previewingFormato){
+      var pf = state.previewingFormato;
+      offerPdfDownload(pf.nombre, buildPrintDocument(docEl.innerHTML).replace('<title>Cotización — Cenova S.A.S.</title>', '<title>' + escapeHtml(pf.titulo) + ' — Cenova S.A.S.</title>'), pf.titulo + ' descargado en PDF.', this);
+      return;
+    }
     var pfDoc = state.previewingPfId ? state.prefacturas.get(state.previewingPfId) : null;
     if(pfDoc){
       var pfName = 'Prefactura-' + slugFile(pfDoc.numero || 'Cenova') + '-' + slugFile((pfDoc.cot && pfDoc.cot.cliente) || '') + '.pdf';
@@ -6687,6 +6735,11 @@
         renderPrecios(); precSembrar(); invCostRefresh();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
+      db.collection('documentos').onSnapshot(function(snap){
+        state.documentos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        if(document.getElementById('view-formatos').classList.contains('active')) renderFormatos();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
       db.collection('inventario').onSnapshot(function(snap){
         state.inventario = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         invCostRefresh();
@@ -8202,6 +8255,543 @@
       '<div class="doc inf">' + infContenido(inf.pid) + '</div>' +
       '<scr'+'ipt>document.getElementById("pb").addEventListener("click", function(){ window.print(); });</scr'+'ipt></body></html>';
     offerPdfDownload('Informe-' + slugFile(p.nombre || 'proyecto') + '.pdf', html, 'Informe descargado en PDF.', this);
+  });
+
+
+  /* =====================================================================
+     FORMATOS (2026-10-09)
+     - Los 11 formatos en Word (web/formatos/*.docx, solo con sesión) para
+       descargar y escribir encima.
+     - 5 se pueden llenar aquí con los datos de una orden de compra y bajar
+       en PDF con el mismo diseño de la cotización: informe de proyecto,
+       acta de entrega, contrato con cliente, liquidación de pago al
+       personal y cuenta de cobro. Lo que se llena se guarda en la colección
+       "documentos" con su consecutivo (INF-0001, ACT-0001…).
+     ===================================================================== */
+  state.documentos = new Map();
+  var fmt = {spec: null, docId: null, ordenId: '', persona: -1, datos: null, fotos: []};
+  var FMT_GRUPOS = [
+    ['Proyectos', 'Para el cliente y la obra'],
+    ['Contratos', 'Con clientes, personal y proveedores'],
+    ['Pagos y nómina', 'Personal de obra y empleados'],
+    ['Administración', 'Contabilidad y comunicaciones']
+  ];
+  var FMT_WORD = [
+    {cod:'CNV-FR-01', grupo:0, tit:'Informe de proyecto', desc:'Para entregar al cliente: alcance, actividades, equipos instalados, pruebas, novedades, recomendaciones y fotos.', file:'CNV-FR-01_Informe-de-proyecto.docx', llenar:'informe'},
+    {cod:'CNV-FR-02', grupo:0, tit:'Acta de entrega y recibo a satisfacción', desc:'El cliente firma que recibió la obra funcionando. Desde esa fecha corre la garantía.', file:'CNV-FR-02_Acta-de-entrega.docx', llenar:'acta'},
+    {cod:'CNV-FR-03', grupo:0, tit:'Orden de trabajo / visita técnica', desc:'Levantamientos, mantenimientos, garantías y soporte: qué se pidió, qué se hizo, materiales y firma del cliente.', file:'CNV-FR-03_Orden-de-trabajo.docx'},
+    {cod:'CNV-FR-04', grupo:1, tit:'Contrato con cliente', desc:'Prestación de servicios y suministro e instalación: objeto, valor, anticipo y saldo, plazos, garantía y reserva de dominio.', file:'CNV-FR-04_Contrato-cliente-servicios-e-instalacion.docx', llenar:'contrato'},
+    {cod:'CNV-FR-05', grupo:1, tit:'Contrato con técnico / personal de apoyo', desc:'Prestación de servicios independiente (no laboral): valor por día, seguridad social, trabajo en alturas y confidencialidad.', file:'CNV-FR-05_Contrato-servicios-personal-tecnico.docx'},
+    {cod:'CNV-FR-06', grupo:1, tit:'Contrato con proveedor / subcontratista', desc:'Suministro u obra subcontratada: entregas, multas, garantía, responsabilidad de su personal y pólizas opcionales.', file:'CNV-FR-06_Contrato-proveedor-subcontratista.docx'},
+    {cod:'CNV-FR-07', grupo:2, tit:'Liquidación de pago a personal de obra', desc:'Días, valor por día, almuerzo, transporte, anticipos y neto a pagar a cada técnico, con su firma de recibido.', file:'CNV-FR-07_Liquidacion-pago-personal-de-obra.docx', llenar:'liquidacion'},
+    {cod:'CNV-FR-08', grupo:2, tit:'Cuenta de cobro', desc:'La que el personal independiente le presenta a Cenova, con las declaraciones para la retención en la fuente.', file:'CNV-FR-08_Cuenta-de-cobro.docx', llenar:'cuenta'},
+    {cod:'CNV-FR-09', grupo:2, tit:'Liquidación laboral', desc:'Prestaciones sociales de un empleado: cesantías, intereses, prima, vacaciones, deducciones y paz y salvo.', file:'CNV-FR-09_Liquidacion-prestaciones-sociales.docx'},
+    {cod:'CNV-FR-10', grupo:3, tit:'Entrega contable mensual', desc:'Lista de documentos del mes para el contador: ingresos, egresos, nómina, bancos e impuestos.', file:'CNV-FR-10_Entrega-contable-mensual.docx'},
+    {cod:'CNV-FR-11', grupo:3, tit:'Carta con membrete', desc:'Hoja con el diseño de Cenova para cartas y comunicados.', file:'CNV-FR-11_Carta-con-membrete.docx'}
+  ];
+
+  /* ---------- Número en letras (pesos) ---------- */
+  function numeroEnLetras(n){
+    n = Math.round(Number(n) || 0);
+    if(n === 0) return 'CERO';
+    var U = ['','UNO','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE','VEINTE','VEINTIUNO','VEINTIDÓS','VEINTITRÉS','VEINTICUATRO','VEINTICINCO','VEINTISÉIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE'];
+    var D = ['','','','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+    var C = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+    function cientos(x){
+      if(x === 100) return 'CIEN';
+      var c = Math.floor(x/100), r = x % 100, s = C[c];
+      if(r){ var t = r < 30 ? U[r] : D[Math.floor(r/10)] + (r % 10 ? ' Y ' + U[r % 10] : ''); s = (s ? s + ' ' : '') + t; }
+      return s;
+    }
+    function miles(x){
+      var m = Math.floor(x/1000), r = x % 1000, s = '';
+      if(m) s = m === 1 ? 'MIL' : cientos(m).replace(/UNO$/, 'UN').replace(/VEINTIUN$/, 'VEINTIÚN') + ' MIL';
+      if(r) s = (s ? s + ' ' : '') + cientos(r);
+      return s;
+    }
+    var mill = Math.floor(n/1e6), resto = n % 1e6, out = '';
+    if(mill) out = mill === 1 ? 'UN MILLÓN' : miles(mill).replace(/UNO$/, 'UN').replace(/VEINTIUN$/, 'VEINTIÚN') + ' MILLONES';
+    if(resto) out = (out ? out + ' ' : '') + miles(resto);
+    else if(mill) out += ' DE';
+    return out;
+  }
+  function fmtLetras(v){ return numeroEnLetras(v) + ' PESOS M/CTE'; }
+
+  /* ---------- Piezas del documento (mismo diseño de la cotización) ---------- */
+  var FD_CSS = [
+    '.preview-doc .fd-h{font-size:10.8px; text-transform:uppercase; letter-spacing:.05em; color:#173a73; font-weight:800; margin:16px 0 7px; padding-bottom:4px; border-bottom:1px solid #cfe0f5;}',
+    '.preview-doc .fd-p{font-size:11.5px; color:#3a4a60; line-height:1.6; margin:0 0 8px; text-align:justify; white-space:pre-line;}',
+    '.preview-doc .fd-p b{color:#173a73;}',
+    '.preview-doc .fd-campos{display:grid; grid-template-columns:1fr 1fr; border:1px solid #cfe0f5; border-radius:6px; overflow:hidden; font-size:11.2px; margin-bottom:6px;}',
+    '.preview-doc .fd-campos > div{display:flex; border-bottom:1px solid #e4e9f1; min-height:26px;}',
+    '.preview-doc .fd-campos > div > span{background:#eef4fc; color:#5b6b80; width:132px; flex:none; padding:5px 9px;}',
+    '.preview-doc .fd-campos > div > strong{font-weight:600; padding:5px 9px; color:#16233a;}',
+    '.preview-doc .fd-check{display:grid; grid-template-columns:repeat(3,1fr); gap:4px 14px; font-size:11.3px; margin-bottom:6px;}',
+    '.preview-doc .fd-check span{white-space:nowrap;} .preview-doc .fd-check i{font-style:normal; color:#2456a6; margin-right:5px;}',
+    '.preview-doc .fd-firmas{display:grid; gap:34px; margin:46px 10px 4px; break-inside:avoid;}',
+    '.preview-doc .fd-firma{border-top:1.5px solid #173a73; padding-top:6px; text-align:center; font-size:11.3px;}',
+    '.preview-doc .fd-firma small{display:block; color:#5b6b80; font-size:10px; margin-top:1px;}',
+    '.preview-doc .fd-fotos{display:grid; grid-template-columns:1fr 1fr; gap:10px;}',
+    '.preview-doc .fd-fotos figure{margin:0; border:1px solid #e4e9f1; border-radius:6px; overflow:hidden; break-inside:avoid;}',
+    '.preview-doc .fd-fotos img{display:block; width:100%; height:200px; object-fit:cover;}',
+    '.preview-doc .fd-fotos figcaption{font-size:10.5px; color:#5b6b80; padding:5px 8px;}',
+    '.preview-doc .fd-centro{text-align:center;}',
+    '.preview-doc .fd-grande{font-size:15px; font-weight:800; color:#173a73; margin:2px 0;}',
+    '.preview-doc .fd-nota{font-size:9.8px; color:#8090a3; font-style:italic; margin-top:8px;}',
+    '.preview-doc .preview-table td.r, .preview-doc .preview-table th.r{text-align:right;} .preview-doc .preview-table td.c, .preview-doc .preview-table th.c{text-align:center;}',
+    '.preview-doc .preview-table tr.fd-tot td{background:#173a73 !important; color:#fff; font-weight:800;}'
+  ].join('\n');
+  (function(){ var st = document.createElement('style'); st.textContent = FD_CSS; document.head.appendChild(st); })();
+  PRINT_DOC_CSS += '\n' + FD_CSS;
+
+  function fdE(v){ return escapeHtml(v == null ? '' : String(v)); }
+  function fdHead(spec, d, subtitulo){
+    var info = [['Código', spec.codigo], [spec.etNumero || 'N°', d.numero || '—'], ['Fecha', d.fecha ? fmtDate(d.fecha) : '—'], ['Versión', '1']];
+    return '<div class="preview-head"><div class="corner-ribbon"><i></i><i></i><i></i></div>' +
+      '<div class="pv-brand"><div class="pv-mark"><img src="'+CENOVA_LOGO_B64+'" alt="Cenova"></div><div><div class="pv-brandname">CENOVA</div><div class="pv-sub">Tecnología que transforma</div></div></div>' +
+      '<div class="doc-info-box">' + info.map(function(r){ return '<div class="di-row"><span>'+fdE(r[0])+'</span><span>'+fdE(r[1])+'</span></div>'; }).join('') + '</div></div>' +
+      '<div class="preview-title-row"><h2>'+fdE(spec.tituloDoc)+'</h2></div>' + (subtitulo ? '<div class="subtitle-bar">'+fdE(subtitulo)+'</div>' : '') + '<div class="preview-body">';
+  }
+  function fdFoot(){
+    return '<div class="preview-footicons"><span><span class="fi-dot">@</span>gerencia@cenovasas.com</span><span><span class="fi-dot">&gt;</span>https://'+fdE(EMPRESA.web)+'</span><span><span class="fi-dot">T</span>+57 3207174937</span></div></div>';
+  }
+  function fdCols(t1, c1, t2, c2){
+    var col = function(t, c){ return '<div><h4>'+fdE(t)+'</h4>' + c.filter(function(x){ return x[1]; }).map(function(x, i){ return '<div class="pv-field"><span>'+fdE(x[0])+':</span>'+(i === 0 ? '<strong>'+fdE(x[1])+'</strong>' : fdE(x[1]))+'</div>'; }).join('') + '</div>'; };
+    return '<div class="preview-cols">' + col(t1, c1) + col(t2, c2) + '</div>';
+  }
+  function fdEmisor(){ return [['Empresa', 'Cenova S.A.S.'], ['NIT', EMPRESA.nit], ['Representante', 'Lina Giraldo'], ['Dirección', EMPRESA.ciudad], ['Teléfono', '+57 3207174937'], ['Email', 'gerencia@cenovasas.com']]; }
+  function fdH(t){ return '<div class="fd-h">'+fdE(t)+'</div>'; }
+  /* Bloque que no se parte entre páginas del PDF (título + tabla corta o texto) */
+  function fdBlk(html){ return '<div class="fd-blk">'+html+'</div>'; }
+  function fdP(t){ return t ? '<p class="fd-p">'+fdE(t)+'</p>' : ''; }
+  function fdCampos(pares){ return '<div class="fd-campos">' + pares.map(function(x){ return '<div><span>'+fdE(x[0])+'</span><strong>'+fdE(x[1] || '')+'</strong></div>'; }).join('') + '</div>'; }
+  function fdTabla(cols, filas, total){
+    return '<table class="preview-table"><thead><tr>' + cols.map(function(c){ return '<th'+(c.a ? ' class="'+c.a+'"' : '')+(c.w ? ' style="width:'+c.w+'"' : '')+'>'+fdE(c.t)+'</th>'; }).join('') + '</tr></thead><tbody>' +
+      filas.map(function(f){ return '<tr>' + f.map(function(v, j){ return '<td'+(cols[j].a ? ' class="'+cols[j].a+'"' : '')+'>'+fdE(v)+'</td>'; }).join('') + '</tr>'; }).join('') +
+      (total ? '<tr class="fd-tot"><td colspan="'+(cols.length - 1)+'" class="r">'+fdE(total[0])+'</td><td class="r">'+fdE(total[1])+'</td></tr>' : '') + '</tbody></table>';
+  }
+  function fdCheck(opciones, marcadas){ return '<div class="fd-check">' + opciones.map(function(o){ return '<span><i>'+(marcadas.indexOf(o) !== -1 ? '☑' : '☐')+'</i>'+fdE(o)+'</span>'; }).join('') + '</div>'; }
+  function fdFirmas(lista){ return '<div class="fd-firmas" style="grid-template-columns:repeat('+lista.length+',1fr);">' + lista.map(function(f){ return '<div class="fd-firma"><strong>'+fdE(f[0] || ' ')+'</strong>' + f.slice(1).filter(Boolean).map(function(x){ return '<small>'+fdE(x)+'</small>'; }).join('') + '</div>'; }).join('') + '</div>'; }
+  function fdM(v){ return v === '' || v == null ? '' : fmtMoney.format(Math.round(Number(v) || 0)); }
+  function fdN(v){ return Number(String(v == null ? '' : v).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')) || 0; }
+
+  /* ---------- Datos de la obra para prellenar ---------- */
+  function fmtCtx(ordenId, persona){
+    var o = state.ordenes.get(ordenId) || {}, c = state.cotizaciones.get(o.cotizacionId) || {};
+    var p = state.proyectos.get(o.proyectoId || c.proyectoId) || {};
+    var k = o.fechaInicio ? ocCalc(o) : {dias: [], fin: null};
+    var per = persona >= 0 ? ((o.personal || [])[persona] || {}) : null;
+    return {o: o, c: c, p: p, k: k, per: per, id: ordenId};
+  }
+  function fmtEntregados(c){ return (c.items || []).filter(function(it){ return !INF_NO_ENTREGADO.test(it.costoProveedor || ''); }); }
+  function fmtLimpiarDesc(s){ return String(s || '').replace(/\s*\((cobertura|zonas|grabación|video y)[^)]*\)\s*$/i, ''); }
+
+  /* ---------- Formatos que se llenan aquí ---------- */
+  var FMT_SPECS = {
+    informe: {
+      codigo: 'CNV-FR-01', prefijo: 'INF', tituloDoc: 'Informe de proyecto', etNumero: 'Informe N°', fotos: true,
+      campos: [
+        {k:'proyecto', l:'Proyecto (va en la barra de título)'}, {k:'cliente', l:'Cliente'}, {k:'nit', l:'NIT del cliente'}, {k:'contacto', l:'Atención'},
+        {k:'direccion', l:'Dirección de la obra'}, {k:'ciudad', l:'Ciudad'}, {k:'orden', l:'Orden de compra'}, {k:'cotizacion', l:'Cotización'},
+        {k:'inicio', l:'Fecha de inicio', t:'date'}, {k:'fin', l:'Fecha de finalización', t:'date'}, {k:'responsable', l:'Responsable Cenova'}, {k:'estado', l:'Estado'},
+        {k:'objetivo', l:'1. Objetivo y alcance', t:'area'},
+        {k:'actividades', l:'2. Actividades realizadas', t:'tabla', cols:[{k:'fecha', t:'Fecha', tipo:'date'}, {k:'act', t:'Actividad', w:'2'}, {k:'resp', t:'Responsable'}]},
+        {k:'equipos', l:'3. Equipos y materiales instalados', t:'tabla', cols:[{k:'desc', t:'Descripción', w:'2'}, {k:'cant', t:'Cant.', tipo:'num'}, {k:'ubic', t:'Ubicación'}, {k:'serial', t:'Serial / ID'}]},
+        {k:'pruebas', l:'4. Pruebas y resultados', t:'tabla', cols:[{k:'prueba', t:'Prueba', w:'2'}, {k:'res', t:'Resultado'}, {k:'obs', t:'Observación'}]},
+        {k:'novedades', l:'5. Novedades y observaciones', t:'area'},
+        {k:'recomendaciones', l:'6. Recomendaciones', t:'area'},
+        {k:'garEquipos', l:'Garantía de equipos (meses)', t:'num'}, {k:'garObra', l:'Garantía de mano de obra (meses)', t:'num'},
+        {k:'firmaCenova', l:'Elaboró (Cenova)'}, {k:'firmaCliente', l:'Recibe (cliente)'}
+      ],
+      prellenar: function(x){
+        var o = x.o, c = x.c;
+        var nov = (o.novedades || []).map(function(n){ return '• ' + (n.cantidad > 1 ? n.cantidad + ' × ' : '') + n.material + ': ' + (NOV_MOTIVOS[n.motivo] || '').toLowerCase() + '; se reemplazó en la obra sin costo para el cliente.'; }).join('\n');
+        return {proyecto: x.p.nombre || c.descripcion || '', cliente: o.cliente || c.cliente || '', nit: c.clienteNit || '', contacto: c.clienteContacto || '', direccion: c.clienteDireccion || '', ciudad: c.clienteCiudad || 'Cartagena, Bolívar',
+          orden: o.numero || '', cotizacion: o.cotizacionNumero || c.numero || '', inicio: o.fechaInicio || '', fin: x.k.fin || '', responsable: o.responsable || c.responsable || '', estado: ['finalizada','facturada','pagada'].indexOf(o.estado) !== -1 ? 'Finalizado' : 'En ejecución',
+          objetivo: c.descripcion || '',
+          actividades: (x.k.dias || []).map(function(dd, i, a){ return {fecha: dd, act: i === 0 ? 'Inicio de labores: cableado e instalación' : (i === a.length - 1 ? 'Configuración, pruebas y entrega' : 'Instalación'), resp: o.responsable || ''}; }),
+          equipos: fmtEntregados(c).map(function(it){ return {desc: fmtLimpiarDesc(it.descripcion), cant: it.cantidad, ubic: '', serial: ''}; }),
+          pruebas: [{prueba:'Encendido y funcionamiento de cada equipo', res:'OK', obs:''}, {prueba:'Visualización local y remota (app / web)', res:'OK', obs:''}, {prueba:'Grabación y reproducción', res:'OK', obs:''}],
+          novedades: nov || 'Sin novedades.', recomendaciones: 'Mantenimiento preventivo cada 6 meses (limpieza de cámaras, revisión de conexiones y del disco de grabación).',
+          garEquipos: 12, garObra: 6, firmaCenova: o.responsable || '', firmaCliente: c.clienteContacto || ''};
+      },
+      render: function(d, spec){
+        var h = fdHead(spec, d, d.proyecto);
+        h += fdCols('Datos del cliente', [['Cliente', d.cliente], ['NIT', d.nit], ['Atención', d.contacto], ['Dirección', d.direccion], ['Ciudad', d.ciudad]], 'Datos del emisor', fdEmisor());
+        h += fdH('Datos del proyecto') + fdCampos([['Orden de compra', d.orden], ['Cotización', d.cotizacion], ['Fecha de inicio', d.inicio ? fmtDate(d.inicio) : ''], ['Fecha de finalización', d.fin ? fmtDate(d.fin) : ''], ['Responsable Cenova', d.responsable], ['Estado', d.estado]]);
+        h += fdH('1. Objetivo y alcance') + fdP(d.objetivo);
+        if((d.actividades || []).length) h += fdBlk(fdH('2. Actividades realizadas') + fdTabla([{t:'Fecha', w:'90px'}, {t:'Actividad'}, {t:'Responsable', w:'150px'}], d.actividades.map(function(r){ return [r.fecha ? fmtShort(r.fecha) : '', r.act, r.resp]; })));
+        if((d.equipos || []).length) h += fdH('3. Equipos y materiales instalados') + fdTabla([{t:'#', w:'26px'}, {t:'Descripción'}, {t:'Cant.', a:'c', w:'50px'}, {t:'Ubicación', w:'130px'}, {t:'Serial / ID', w:'110px'}], d.equipos.map(function(r, i){ return [i + 1, r.desc, r.cant, r.ubic, r.serial]; }));
+        if((d.pruebas || []).length) h += fdBlk(fdH('4. Pruebas y resultados') + fdTabla([{t:'Prueba realizada'}, {t:'Resultado', a:'c', w:'90px'}, {t:'Observación'}], d.pruebas.map(function(r){ return [r.prueba, r.res, r.obs]; })));
+        h += fdBlk(fdH('5. Novedades y observaciones') + fdP(d.novedades || 'Sin novedades.'));
+        if(d.recomendaciones) h += fdBlk(fdH('6. Recomendaciones') + fdP(d.recomendaciones));
+        if((d.fotos || []).length) h += fdH('7. Registro fotográfico') + '<div class="fd-fotos">' + d.fotos.map(function(f){ return '<figure><img src="'+f.src+'" alt=""><figcaption>'+fdE(f.desc || '')+'</figcaption></figure>'; }).join('') + '</div>';
+        h += fdBlk(fdH('Garantía y soporte') + fdP('Los equipos cuentan con garantía de ' + (d.garEquipos || 12) + ' meses por defectos de fábrica, sujeta a las políticas del fabricante, y la mano de obra con garantía de ' + (d.garObra || 6) + ' meses contados desde la fecha de entrega. Para soporte escríbanos a gerencia@cenovasas.com o al +57 320 717 4937.'));
+        h += fdFirmas([[d.firmaCenova, 'Elaboró · Cenova S.A.S.'], [d.firmaCliente, 'Recibe · ' + (d.cliente || 'Cliente')]]);
+        return h + fdFoot();
+      },
+      nombre: function(d){ return 'Informe-' + d.numero + '-' + slugFile(d.cliente); }
+    },
+
+    acta: {
+      codigo: 'CNV-FR-02', prefijo: 'ACT', tituloDoc: 'Acta de entrega y recibo a satisfacción', etNumero: 'Acta N°',
+      PRUEBAS: ['Encendido de todos los equipos', 'Visualización en sitio', 'Visualización remota (app)', 'Grabación y reproducción', 'Respaldo de energía', 'Etiquetado del cableado'],
+      DOCS: ['Capacitación al usuario', 'Usuarios y contraseñas', 'Manual / guía de uso', 'Certificados de garantía', 'Planos o esquema', 'Facturas de equipos'],
+      campos: [
+        {k:'proyecto', l:'Proyecto'}, {k:'cliente', l:'Cliente'}, {k:'nit', l:'NIT del cliente'}, {k:'recibe', l:'Recibe (nombre y cargo)'}, {k:'recibeCc', l:'C.C. de quien recibe'},
+        {k:'direccion', l:'Dirección de la obra'}, {k:'ciudad', l:'Ciudad'}, {k:'cotizacion', l:'Cotización'}, {k:'orden', l:'Orden de compra'},
+        {k:'equipos', l:'1. Equipos y trabajos entregados', t:'tabla', cols:[{k:'desc', t:'Descripción', w:'2'}, {k:'cant', t:'Cant.', tipo:'num'}, {k:'ubic', t:'Ubicación / serial'}, {k:'estado', t:'Estado'}]},
+        {k:'pruebas', l:'2. Pruebas hechas con el cliente', t:'checks', opciones:'PRUEBAS'},
+        {k:'docs', l:'3. Capacitación y documentos entregados', t:'checks', opciones:'DOCS'},
+        {k:'capacitado', l:'Capacitación dada a'},
+        {k:'pendientes', l:'4. Observaciones y pendientes', t:'area'},
+        {k:'garEquipos', l:'Garantía de equipos (meses)', t:'num'}, {k:'garObra', l:'Garantía de mano de obra (meses)', t:'num'},
+        {k:'firmaCenova', l:'Entrega (Cenova)'}
+      ],
+      prellenar: function(x){
+        var o = x.o, c = x.c;
+        return {proyecto: x.p.nombre || c.descripcion || '', cliente: o.cliente || c.cliente || '', nit: c.clienteNit || '', recibe: c.clienteContacto || '', recibeCc: '', direccion: c.clienteDireccion || '', ciudad: c.clienteCiudad || 'Cartagena, Bolívar',
+          cotizacion: o.cotizacionNumero || c.numero || '', orden: o.numero || '',
+          equipos: fmtEntregados(c).map(function(it){ return {desc: fmtLimpiarDesc(it.descripcion), cant: it.cantidad, ubic: '', estado: 'Funcionando'}; }),
+          pruebas: this.PRUEBAS.slice(0, 4), docs: ['Capacitación al usuario', 'Usuarios y contraseñas'], capacitado: c.clienteContacto || '', pendientes: 'Ninguno.', garEquipos: 12, garObra: 6, firmaCenova: o.responsable || ''};
+      },
+      render: function(d, spec){
+        var f = d.fecha ? new Date(d.fecha + 'T00:00:00') : new Date();
+        var mes = f.toLocaleDateString('es-CO', {month: 'long'});
+        var h = fdHead(spec, d, d.proyecto);
+        h += fdCols('Datos del cliente', [['Cliente', d.cliente], ['NIT', d.nit], ['Recibe', d.recibe], ['Dirección', d.direccion], ['Ciudad', d.ciudad]], 'Datos del emisor', fdEmisor());
+        h += fdP('En ' + (d.ciudad || 'Cartagena') + ', a los ' + f.getDate() + ' días del mes de ' + mes + ' de ' + f.getFullYear() + ', se reúnen las partes para hacer la entrega formal de los trabajos ejecutados por CENOVA S.A.S. según la cotización ' + (d.cotizacion || '—') + ' y la orden de compra ' + (d.orden || '—') + ', y dejar constancia de lo siguiente:');
+        h += fdH('1. Equipos y trabajos entregados') + fdTabla([{t:'#', w:'26px'}, {t:'Descripción'}, {t:'Cant.', a:'c', w:'50px'}, {t:'Ubicación / serial', w:'150px'}, {t:'Estado', a:'c', w:'90px'}], (d.equipos || []).map(function(r, i){ return [i + 1, r.desc, r.cant, r.ubic, r.estado]; }));
+        h += fdBlk(fdH('2. Pruebas realizadas en presencia del cliente') + fdCheck(spec.PRUEBAS, d.pruebas || []));
+        h += fdBlk(fdH('3. Capacitación y documentos entregados') + fdCheck(spec.DOCS, d.docs || []) + (d.capacitado ? fdCampos([['Capacitación dada a', d.capacitado], ['Fecha', d.fecha ? fmtDate(d.fecha) : '']]) : ''));
+        h += fdBlk(fdH('4. Observaciones y pendientes') + fdP(d.pendientes || 'Ninguno.'));
+        h += fdBlk(fdH('5. Recibo a satisfacción') + fdP('El cliente declara que recibe los equipos y trabajos descritos, que fueron probados en su presencia y que funcionan correctamente. Desde esta fecha corre la garantía: ' + (d.garEquipos || 12) + ' meses para los equipos por defectos de fábrica, según las políticas del fabricante, y ' + (d.garObra || 6) + ' meses para la mano de obra. La garantía no cubre daños por mal uso, variaciones eléctricas, manipulación por terceros ni causas externas.'));
+        h += fdFirmas([[d.firmaCenova, 'Entrega · Cenova S.A.S.'], [d.recibe, 'Recibe a satisfacción · ' + (d.cliente || ''), d.recibeCc ? 'C.C. ' + d.recibeCc : 'C.C. ____________']]);
+        return h + fdFoot();
+      },
+      nombre: function(d){ return 'Acta-entrega-' + d.numero + '-' + slugFile(d.cliente); }
+    },
+
+    contrato: {
+      codigo: 'CNV-FR-04', prefijo: 'CON', tituloDoc: 'Contrato de prestación de servicios', etNumero: 'Contrato N°',
+      campos: [
+        {k:'cliente', l:'Contratante (razón social o nombre)'}, {k:'nit', l:'NIT / C.C. del contratante'}, {k:'rep', l:'Representante del contratante'}, {k:'repCc', l:'C.C. del representante'},
+        {k:'direccion', l:'Dirección del contratante'}, {k:'email', l:'Correo del contratante'}, {k:'ciudad', l:'Ciudad de firma'},
+        {k:'objeto', l:'Objeto (qué se suministra e instala)', t:'area'}, {k:'sitio', l:'Dirección de la obra'}, {k:'cotizacion', l:'Cotización'}, {k:'cotFecha', l:'Fecha de la cotización', t:'date'},
+        {k:'incluye', l:'Incluye', t:'area'},
+        {k:'valor', l:'Valor total', t:'money'}, {k:'iva', l:'IVA', t:'select', opciones:['IVA incluido', 'más IVA del 19 %', 'no causa IVA']},
+        {k:'anticipo', l:'Anticipo (%)', t:'num'}, {k:'diasSaldo', l:'Días para pagar el saldo', t:'num'}, {k:'plazo', l:'Plazo de ejecución (días hábiles)', t:'num'},
+        {k:'banco', l:'Cuenta para pagos (banco, tipo y número)'}, {k:'garEquipos', l:'Garantía de equipos (meses)', t:'num'}, {k:'garObra', l:'Garantía de mano de obra (meses)', t:'num'}
+      ],
+      prellenar: function(x){
+        var o = x.o, c = x.c;
+        return {cliente: o.cliente || c.cliente || '', nit: c.clienteNit || '', rep: c.clienteContacto || '', repCc: '', direccion: c.clienteDireccion || '', email: c.clienteEmail || '', ciudad: 'Cartagena',
+          objeto: c.descripcion || '', sitio: c.clienteDireccion || '', cotizacion: o.cotizacionNumero || c.numero || '', cotFecha: c.fecha || '',
+          incluye: 'Equipos y materiales descritos en la cotización, mano de obra de instalación, configuración, pruebas y capacitación básica al usuario.',
+          valor: Number(o.valor) || cotTotal(c) || 0, iva: (Number(c.ivaPct) || 0) > 0 ? 'IVA incluido' : 'no causa IVA', anticipo: Number(o.anticipoPct) || 50, diasSaldo: Number(o.plazoPagoDias) || 5,
+          plazo: Number(o.diasInstalacion) || Number(c.diasInstalacion) || 5, banco: '', garEquipos: 12, garObra: 6};
+      },
+      render: function(d, spec){
+        var v = Number(d.valor) || 0, ant = Math.round(v * (Number(d.anticipo) || 0) / 100), sal = v - ant;
+        var cl = function(n, t, txt){ return '<p class="fd-p"><b>' + n.toUpperCase() + '. ' + t + '.</b> ' + fdE(txt) + '</p>'; };
+        var h = fdHead(spec, d, 'Suministro e instalación · ' + (d.cliente || ''));
+        h += fdCols('El contratante (cliente)', [['Nombre', d.cliente], ['NIT / C.C.', d.nit], ['Representante', d.rep], ['C.C. rep.', d.repCc], ['Dirección', d.direccion], ['Email', d.email]], 'El contratista', fdEmisor());
+        h += fdP('Entre las partes identificadas arriba, que en adelante se llamarán EL CONTRATANTE y EL CONTRATISTA (CENOVA S.A.S.), se celebra el presente contrato de prestación de servicios y suministro, que se regirá por las siguientes cláusulas y, en lo no previsto, por las normas del Código Civil y del Código de Comercio colombianos.');
+        h += cl('Primera', 'Objeto', 'EL CONTRATISTA se obliga a suministrar e instalar, con autonomía técnica y administrativa, ' + (d.objeto || '') + ', en el inmueble ubicado en ' + (d.sitio || '—') + ', según el alcance, las cantidades y las especificaciones de la cotización ' + (d.cotizacion || '—') + (d.cotFecha ? ' del ' + fmtDate(d.cotFecha) : '') + ', que hace parte integral de este contrato como Anexo 1.');
+        h += cl('Segunda', 'Alcance', 'Incluye: ' + (d.incluye || '') + ' No incluye, salvo que se indique en la cotización: obra civil (rotura de muros, resanes, pintura), acometidas eléctricas, permisos ante terceros, ni equipos o servicios no descritos en el Anexo 1.');
+        h += cl('Tercera', 'Valor', 'El valor total del contrato es de ' + fmtLetras(v) + ' (' + fdM(v) + '), ' + (d.iva || 'IVA incluido') + '. Cualquier trabajo adicional se cotizará por aparte y solo se ejecutará con aprobación escrita de EL CONTRATANTE (orden de cambio).');
+        h += cl('Cuarta', 'Forma de pago', 'a) Anticipo del ' + (d.anticipo || 0) + ' %: ' + fdM(ant) + ', a la firma de este contrato, para la compra de equipos y materiales. b) Saldo del ' + (100 - (Number(d.anticipo) || 0)) + ' %: ' + fdM(sal) + ', contra entrega e instalación, a la firma del acta de entrega y recibo a satisfacción, dentro de los ' + (d.diasSaldo || 5) + ' días siguientes a la presentación de la factura electrónica. Los pagos se harán a ' + (d.banco || 'la cuenta que indique CENOVA S.A.S. por escrito') + ', a nombre de CENOVA S.A.S. Los pagos por pasarela tendrán los descuentos propios de esa plataforma.');
+        h += cl('Quinta', 'Plazo', 'Los trabajos se ejecutarán en ' + (d.plazo || '—') + ' días hábiles contados desde el pago del anticipo y la disponibilidad del sitio. El plazo se ampliará por el tiempo que duren las demoras atribuibles a EL CONTRATANTE, a terceros o a fuerza mayor.');
+        h += cl('Sexta', 'Obligaciones del contratista', '1) Ejecutar los trabajos con personal idóneo y con las normas técnicas y de seguridad aplicables, incluido el trabajo en alturas cuando corresponda. 2) Suministrar equipos nuevos y con garantía del fabricante. 3) Mantener el sitio ordenado y retirar los residuos de la instalación. 4) Entregar el sistema probado, configurado y con capacitación básica al usuario. 5) Responder por la afiliación y los pagos a seguridad social de su personal.');
+        h += cl('Séptima', 'Obligaciones del contratante', '1) Pagar el valor en los plazos acordados. 2) Dar acceso al sitio en los horarios convenidos y designar una persona de contacto. 3) Tener disponibles los puntos eléctricos, el internet y las condiciones locativas necesarias. 4) Obtener los permisos de copropiedad o de terceros que se requieran. 5) Informar por escrito cualquier cambio en el alcance.');
+        h += cl('Octava', 'Entrega y recibo', 'Terminados los trabajos se firmará el acta de entrega y recibo a satisfacción (formato CNV-FR-02). Si EL CONTRATANTE no firma ni presenta observaciones por escrito dentro de los 3 días hábiles siguientes a la entrega, los trabajos se entenderán recibidos a satisfacción.');
+        h += cl('Novena', 'Garantía', 'Los equipos tienen la garantía del fabricante por ' + (d.garEquipos || 12) + ' meses por defectos de fábrica. La mano de obra tiene garantía de ' + (d.garObra || 6) + ' meses. La garantía no cubre daños por mal uso, variaciones eléctricas, humedad, manipulación de terceros o causas externas.');
+        h += cl('Décima', 'Reserva de dominio', 'Los equipos y materiales suministrados serán propiedad de EL CONTRATISTA hasta que EL CONTRATANTE pague la totalidad del precio (artículo 952 del Código de Comercio).');
+        h += cl('Undécima', 'Datos personales e imágenes', 'Si el sistema capta imágenes o datos personales, EL CONTRATANTE es el responsable de su tratamiento conforme a la Ley 1581 de 2012 y a sus decretos reglamentarios, incluido el aviso de videovigilancia. EL CONTRATISTA solo accederá a esa información para fines de instalación y soporte, y guardará reserva sobre ella.');
+        h += cl('Duodécima', 'Terminación', 'El contrato termina por cumplimiento del objeto, por mutuo acuerdo o por incumplimiento grave de una de las partes, previo aviso escrito de 5 días hábiles para corregirlo. Si EL CONTRATANTE termina el contrato sin justa causa, pagará los trabajos ejecutados y los equipos ya adquiridos para la obra.');
+        h += cl('Decimotercera', 'Solución de controversias', 'Las diferencias se resolverán primero por arreglo directo durante 15 días; si no hay acuerdo, se acudirá a la conciliación en un centro de conciliación de ' + (d.ciudad || 'Cartagena') + ' y, de no lograrse, a la justicia ordinaria.');
+        h += cl('Decimocuarta', 'Mérito ejecutivo y domicilio', 'Este contrato presta mérito ejecutivo para exigir las obligaciones de pago. Para todos los efectos, el domicilio contractual es la ciudad de ' + (d.ciudad || 'Cartagena') + '. Las notificaciones se enviarán a los correos indicados al inicio.');
+        h += cl('Decimoquinta', 'Perfeccionamiento', 'El contrato se perfecciona con la firma de las partes y forman parte de él la cotización (Anexo 1) y las órdenes de cambio aprobadas.');
+        h += fdP('Para constancia se firma en ' + (d.ciudad || 'Cartagena') + ', el ' + (d.fecha ? fmtDate(d.fecha) : '') + ', en dos ejemplares del mismo valor.');
+        h += fdFirmas([[d.rep || d.cliente, 'EL CONTRATANTE · ' + (d.cliente || ''), (d.repCc ? 'C.C. ' + d.repCc : 'C.C. ____________')], ['Lina Giraldo', 'EL CONTRATISTA · Cenova S.A.S.', 'Representante legal · NIT ' + EMPRESA.nit]]);
+        h += '<div class="fd-nota">Formato de referencia. Antes de firmar un contrato de valor alto o con condiciones especiales, revíselo con un abogado.</div>';
+        return h + fdFoot();
+      },
+      nombre: function(d){ return 'Contrato-' + d.numero + '-' + slugFile(d.cliente); }
+    },
+
+    liquidacion: {
+      codigo: 'CNV-FR-07', prefijo: 'LIQ', tituloDoc: 'Liquidación de pago', etNumero: 'Liquidación N°', persona: true,
+      campos: [
+        {k:'nombre', l:'Nombre'}, {k:'cc', l:'C.C.'}, {k:'rol', l:'Rol'}, {k:'vinculo', l:'Tipo de vinculación'},
+        {k:'proyecto', l:'Proyecto / cliente'}, {k:'orden', l:'Orden de compra'}, {k:'periodo', l:'Periodo'}, {k:'responsable', l:'Responsable de obra'},
+        {k:'dias', l:'Días trabajados', t:'tabla', cols:[{k:'fecha', t:'Fecha', tipo:'date'}, {k:'act', t:'Actividad', w:'2'}, {k:'dias', t:'Días', tipo:'num'}, {k:'vd', t:'Valor día', tipo:'money'}, {k:'alm', t:'Almuerzo/día', tipo:'money'}, {k:'tr', t:'Transporte/día', tipo:'money'}]},
+        {k:'ajustes', l:'Otros pagos (+) y descuentos (−)', t:'tabla', cols:[{k:'concepto', t:'Concepto', w:'2'}, {k:'tipo', t:'Suma / Resta', tipo:'sel', opciones:['Suma', 'Resta']}, {k:'valor', t:'Valor', tipo:'money'}]},
+        {k:'medio', l:'Medio de pago'}, {k:'cuenta', l:'Banco y cuenta'}, {k:'fechaPago', l:'Fecha de pago', t:'date'}, {k:'planilla', l:'N° de planilla de seguridad social'},
+        {k:'aprueba', l:'Aprueba (Cenova)'}
+      ],
+      prellenar: function(x){
+        var o = x.o, r = x.per || {}, c = x.c;
+        return {nombre: r.nombre || '', cc: '', rol: r.tipo === 'socio' ? 'Socio Cenova' : 'Técnico de apoyo', vinculo: r.tipo === 'socio' ? 'Socio' : 'Prestación de servicios',
+          proyecto: (x.p.nombre || c.descripcion || '') + (o.cliente ? ' · ' + o.cliente : ''), orden: o.numero || '', periodo: o.fechaInicio ? fmtShort(o.fechaInicio) + ' a ' + fmtDate(x.k.fin || o.fechaInicio) : '', responsable: o.responsable || '',
+          dias: [{fecha: o.fechaInicio || '', act: 'Instalación ' + (o.numero || ''), dias: Number(r.dias) || 0, vd: Number(r.pagoDia) || 0, alm: Number(r.almuerzoDia) || 0, tr: Number(r.transporteDia) || 0}],
+          ajustes: (Number(r.otros) ? [{concepto: 'Otros acordados', tipo: 'Suma', valor: Number(r.otros)}] : []),
+          medio: 'Transferencia', cuenta: '', fechaPago: '', planilla: '', aprueba: o.responsable || ''};
+      },
+      totales: function(d){
+        var sub = (d.dias || []).reduce(function(s, r){ return s + (Number(r.dias) || 0) * ((Number(r.vd) || 0) + (Number(r.alm) || 0) + (Number(r.tr) || 0)); }, 0);
+        var aj = (d.ajustes || []).reduce(function(s, r){ return s + (r.tipo === 'Resta' ? -1 : 1) * (Number(r.valor) || 0); }, 0);
+        return {sub: sub, neto: sub + aj};
+      },
+      render: function(d, spec){
+        var t = spec.totales(d);
+        var h = fdHead(spec, d, 'Personal de obra · ' + (d.proyecto || ''));
+        h += fdCampos([['Nombre', d.nombre], ['C.C.', d.cc], ['Rol', d.rol], ['Tipo de vinculación', d.vinculo], ['Proyecto / cliente', d.proyecto], ['Orden de compra', d.orden], ['Periodo', d.periodo], ['Responsable de obra', d.responsable]]);
+        h += fdH('Días trabajados') + fdTabla([{t:'Fecha', w:'78px'}, {t:'Actividad'}, {t:'Días', a:'c', w:'44px'}, {t:'Valor día', a:'r', w:'84px'}, {t:'Almuerzo', a:'r', w:'76px'}, {t:'Transporte', a:'r', w:'80px'}, {t:'Total', a:'r', w:'90px'}],
+          (d.dias || []).map(function(r){ var n = Number(r.dias) || 0; return [r.fecha ? fmtShort(r.fecha) : '', r.act, n, fdM(r.vd), fdM(r.alm), fdM(r.tr), fdM(n * ((Number(r.vd)||0) + (Number(r.alm)||0) + (Number(r.tr)||0)))]; }), ['SUBTOTAL', fdM(t.sub)]);
+        if((d.ajustes || []).length) h += fdH('Otros pagos y descuentos') + fdTabla([{t:'Concepto'}, {t:'Tipo', a:'c', w:'90px'}, {t:'Valor', a:'r', w:'110px'}], d.ajustes.map(function(r){ return [r.concepto, r.tipo, (r.tipo === 'Resta' ? '− ' : '') + fdM(r.valor)]; }), ['NETO A PAGAR', fdM(t.neto)]);
+        else h += '<div class="preview-totals-box"><div class="pt-row total"><span>Neto a pagar</span><span>'+fdM(t.neto)+'</span></div></div>';
+        h += fdP('Son: ' + fmtLetras(t.neto) + '.');
+        h += fdH('Forma de pago') + fdCampos([['Medio', d.medio], ['Banco y cuenta', d.cuenta], ['Fecha de pago', d.fechaPago ? fmtDate(d.fechaPago) : ''], ['Planilla de seguridad social', d.planilla]]);
+        h += fdP('Recibí a satisfacción el valor neto indicado como pago total por los servicios prestados en el periodo y proyecto descritos, y declaro que no existen saldos pendientes por este concepto.');
+        h += fdFirmas([[d.aprueba, 'Aprueba · Cenova S.A.S.'], [d.nombre, 'Recibí conforme', d.cc ? 'C.C. ' + d.cc : 'C.C. ____________']]);
+        return h + fdFoot();
+      },
+      nombre: function(d){ return 'Liquidacion-' + d.numero + '-' + slugFile(d.nombre); }
+    },
+
+    cuenta: {
+      codigo: 'CNV-FR-08', prefijo: 'CC', tituloDoc: 'Cuenta de cobro', etNumero: 'Cuenta N°', persona: true,
+      campos: [
+        {k:'ciudad', l:'Ciudad'}, {k:'nombre', l:'Nombre de quien cobra'}, {k:'cc', l:'C.C.'}, {k:'ccCiudad', l:'Expedida en'}, {k:'telefono', l:'Teléfono'},
+        {k:'conceptos', l:'Por concepto de', t:'tabla', cols:[{k:'concepto', t:'Concepto', w:'2'}, {k:'orden', t:'Proyecto / orden'}, {k:'dias', t:'Días', tipo:'num'}, {k:'valor', t:'Valor', tipo:'money'}]},
+        {k:'banco', l:'Banco'}, {k:'tipoCuenta', l:'Tipo de cuenta', t:'select', opciones:['Ahorros', 'Corriente', 'Nequi / Daviplata']}, {k:'numCuenta', l:'N° de cuenta'}, {k:'titular', l:'Titular'},
+        {k:'planilla', l:'N° de planilla de seguridad social'}, {k:'periodoSS', l:'Periodo cotizado'}
+      ],
+      prellenar: function(x){
+        var o = x.o, r = x.per || {}, n = Number(r.dias) || 0;
+        var con = [{concepto: 'Servicios técnicos de instalación', orden: o.numero || '', dias: n, valor: n * (Number(r.pagoDia) || 0)}];
+        var via = n * ((Number(r.almuerzoDia) || 0) + (Number(r.transporteDia) || 0)); if(via) con.push({concepto: 'Viáticos (almuerzo / transporte) acordados', orden: o.numero || '', dias: n, valor: via});
+        if(Number(r.otros)) con.push({concepto: 'Otros acordados', orden: o.numero || '', dias: '', valor: Number(r.otros)});
+        return {ciudad: 'Cartagena', nombre: r.nombre || '', cc: '', ccCiudad: '', telefono: '', conceptos: con, banco: '', tipoCuenta: 'Ahorros', numCuenta: '', titular: r.nombre || '', planilla: '', periodoSS: ''};
+      },
+      render: function(d, spec){
+        var tot = (d.conceptos || []).reduce(function(s, r){ return s + (Number(r.valor) || 0); }, 0);
+        var f = d.fecha ? new Date(d.fecha + 'T00:00:00') : new Date();
+        var h = fdHead(spec, d, (d.ciudad || 'Cartagena') + ', ' + f.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'}));
+        h += '<div class="fd-centro"><div class="fd-grande">CENOVA S.A.S.</div><div style="color:#5b6b80; font-size:11.5px; margin-bottom:12px;">NIT ' + fdE(EMPRESA.nit) + '</div>' +
+          '<div class="fd-grande" style="font-size:13px;">DEBE A:</div><div style="font-weight:700; font-size:12.5px; margin-bottom:12px;">' + fdE((d.nombre || '').toUpperCase()) + ' · C.C. ' + fdE(d.cc || '__________') + (d.ccCiudad ? ' de ' + fdE(d.ccCiudad) : '') + '</div>' +
+          '<div class="fd-grande" style="font-size:13px;">LA SUMA DE:</div><div style="font-weight:700; font-size:12.5px;">' + fdE(fmtLetras(tot)) + ' (' + fdE(fdM(tot)) + ')</div></div>';
+        h += fdH('Por concepto de') + fdTabla([{t:'Concepto'}, {t:'Proyecto / orden', w:'120px'}, {t:'Días', a:'c', w:'50px'}, {t:'Valor', a:'r', w:'110px'}], (d.conceptos || []).map(function(r){ return [r.concepto, r.orden, r.dias, fdM(r.valor)]; }), ['TOTAL', fdM(tot)]);
+        h += fdH('Datos para el pago') + fdCampos([['Banco', d.banco], ['Tipo de cuenta', d.tipoCuenta], ['N° de cuenta', d.numCuenta], ['Titular', d.titular], ['Planilla de seguridad social', d.planilla], ['Periodo cotizado', d.periodoSS]]);
+        h += fdH('Declaraciones') + '<ul class="fd-p" style="padding-left:18px; margin:0;"><li>No soy responsable del impuesto sobre las ventas (IVA) y no estoy obligado a expedir factura electrónica.</li><li>No he contratado ni vinculado dos o más trabajadores para desarrollar esta actividad (para efectos de la retención en la fuente, artículo 383 del Estatuto Tributario).</li><li>Adjunto el soporte de pago de mis aportes a salud, pensión y riesgos laborales del periodo.</li></ul>';
+        h += '<div style="max-width:300px; margin:0 auto;">' + fdFirmas([[d.nombre, 'Firma de quien cobra', 'C.C. ' + (d.cc || '____________') + (d.telefono ? ' · Tel. ' + d.telefono : '')]]) + '</div>';
+        return h + fdFoot();
+      },
+      nombre: function(d){ return 'Cuenta-de-cobro-' + d.numero + '-' + slugFile(d.nombre); }
+    }
+  };
+
+  /* ---------- Vista Formatos ---------- */
+  function fmtSiguienteNumero(prefijo){
+    var max = 0;
+    state.documentos.forEach(function(d){ var m = String(d.numero || '').match(new RegExp('^' + prefijo + '-(\\d+)$')); if(m) max = Math.max(max, Number(m[1])); });
+    return prefijo + '-' + String(max + 1).padStart(4, '0');
+  }
+  function renderFormatos(){
+    var cont = document.getElementById('fmtContainer'); if(!cont) return;
+    var h = '';
+    FMT_GRUPOS.forEach(function(g, gi){
+      var items = FMT_WORD.filter(function(f){ return f.grupo === gi; });
+      h += '<div class="fmt-grupo"><div class="fmt-grupo-head"><h3>'+fdE(g[0])+'</h3><span>'+fdE(g[1])+'</span></div><div class="fmt-cards">' + items.map(function(f){
+        return '<div class="fmt-card"><div class="fmt-cod">'+fdE(f.cod)+'</div><h4>'+fdE(f.tit)+'</h4><p>'+fdE(f.desc)+'</p><div class="fmt-acc">' +
+          '<a class="btn sm" href="/formatos/'+encodeURIComponent(f.file)+'" download="'+fdE(f.file)+'"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Word</a>' +
+          (f.llenar ? '<button type="button" class="btn sm primary fmt-llenar" data-spec="'+f.llenar+'">Llenar con una obra</button>' : '') + '</div></div>';
+      }).join('') + '</div></div>';
+    });
+    var docs = []; state.documentos.forEach(function(d, id){ docs.push(Object.assign({}, d, {_id: id})); });
+    docs.sort(function(a, b){ return String(b.actualizadoEn || b.creadoEn || '').localeCompare(String(a.actualizadoEn || a.creadoEn || '')); });
+    h += '<div class="fmt-grupo"><div class="fmt-grupo-head"><h3>Documentos llenados</h3><span>'+docs.length+' guardado(s)</span></div>';
+    if(docs.length){
+      h += '<div class="table-wrap"><table><thead><tr><th>Documento</th><th>Formato</th><th>Obra / persona</th><th>Fecha</th><th>Quién</th><th></th></tr></thead><tbody>' + docs.map(function(d){
+        var sp = FMT_SPECS[d.tipo] || {}, dd = d.datos || {};
+        return '<tr data-doc="'+fdE(d._id)+'" style="cursor:pointer;"><td><strong>'+fdE(d.numero)+'</strong></td><td>'+fdE(sp.tituloDoc || d.tipo)+'</td><td>'+fdE([dd.nombre, dd.cliente || dd.proyecto].filter(Boolean).join(' · '))+'</td><td>'+fdE(fmtShort(dd.fecha))+'</td><td>'+fdE(invUsuario(d.creadoPorId))+'</td>' +
+          '<td><div class="row-actions"><button class="icon-btn fmt-pdf" title="Ver y descargar PDF" aria-label="Ver y descargar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button></div></td></tr>';
+      }).join('') + '</tbody></table></div>';
+    } else h += '<div class="table-wrap"><div class="empty-state">Lo que llenes aquí (informes, actas, contratos, liquidaciones y cuentas de cobro) queda guardado en esta lista con su número.</div></div>';
+    h += '</div>';
+    cont.innerHTML = h;
+    cont.querySelectorAll('.fmt-llenar').forEach(function(b){ b.addEventListener('click', function(){ openFormato(b.dataset.spec); }); });
+    cont.querySelectorAll('tr[data-doc]').forEach(function(tr){ tr.addEventListener('click', function(e){
+      var d = state.documentos.get(tr.dataset.doc); if(!d) return;
+      if(e.target.closest('.fmt-pdf')){ fmtPreview(d.tipo, d.datos); return; }
+      openFormato(d.tipo, tr.dataset.doc);
+    }); });
+  }
+
+  /* ---------- Ventana para llenar ---------- */
+  function fmtValorCampo(c, v){
+    var val = v == null ? '' : v;
+    if(c.t === 'area') return '<textarea data-k="'+c.k+'" rows="3">'+fdE(val)+'</textarea>';
+    if(c.t === 'date') return '<input type="date" data-k="'+c.k+'" value="'+fdE(val)+'">';
+    if(c.t === 'num') return '<input type="number" data-k="'+c.k+'" value="'+fdE(val)+'" step="any">';
+    if(c.t === 'money') return '<input type="number" class="input-miles" data-k="'+c.k+'" value="'+fdE(val)+'" step="1">';
+    if(c.t === 'select') return '<select data-k="'+c.k+'">'+c.opciones.map(function(o){ return '<option'+(o === val ? ' selected' : '')+'>'+fdE(o)+'</option>'; }).join('')+'</select>';
+    return '<input type="text" data-k="'+c.k+'" value="'+fdE(val)+'">';
+  }
+  function fmtTablaHtml(c, filas){
+    var cols = c.cols;
+    var celda = function(col, v){
+      v = v == null ? '' : v;
+      if(col.tipo === 'date') return '<input type="date" data-c="'+col.k+'" value="'+fdE(v)+'">';
+      if(col.tipo === 'num') return '<input type="number" data-c="'+col.k+'" value="'+fdE(v)+'" step="any">';
+      if(col.tipo === 'money') return '<input type="number" class="input-miles" data-c="'+col.k+'" value="'+fdE(v)+'" step="1">';
+      if(col.tipo === 'sel') return '<select data-c="'+col.k+'">'+col.opciones.map(function(o){ return '<option'+(o === v ? ' selected' : '')+'>'+fdE(o)+'</option>'; }).join('')+'</select>';
+      return '<input type="text" data-c="'+col.k+'" value="'+fdE(v)+'">';
+    };
+    return '<div class="fmt-tabla" data-tabla="'+c.k+'"><div class="items-table-wrap"><table class="items-table"><thead><tr>' + cols.map(function(col){ return '<th style="'+(col.w ? 'width:40%;' : '')+'">'+fdE(col.t)+'</th>'; }).join('') + '<th style="width:36px;"></th></tr></thead><tbody>' +
+      (filas || []).map(function(f){ return '<tr>' + cols.map(function(col){ return '<td data-label="'+fdE(col.t)+'">'+celda(col, f[col.k])+'</td>'; }).join('') + '<td class="col-rm"><button type="button" class="icon-btn fmt-rm" title="Quitar fila"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>'; }).join('') +
+      '</tbody></table></div><button type="button" class="btn sm fmt-add">+ Agregar fila</button></div>';
+  }
+  function openFormato(tipo, docId){
+    var spec = FMT_SPECS[tipo]; if(!spec) return;
+    var saved = docId ? state.documentos.get(docId) : null;
+    fmt.spec = tipo; fmt.docId = docId || null; fmt.ordenId = saved ? (saved.ordenId || '') : ''; fmt.persona = saved && saved.persona != null ? saved.persona : -1;
+    fmt.datos = saved ? JSON.parse(JSON.stringify(saved.datos || {})) : null;
+    document.getElementById('fmtTitle').textContent = spec.tituloDoc + (saved ? ' · ' + saved.numero : '');
+    document.getElementById('fmtBorrar').style.display = saved && precAdmin() ? 'inline-flex' : 'none';
+    fmtPintar();
+    document.getElementById('fmtOverlay').classList.add('open');
+  }
+  function fmtPintar(){
+    var spec = FMT_SPECS[fmt.spec], body = document.getElementById('fmtBody');
+    var ords = invOrdenes();
+    var h = '<div class="field-row">' + precCampo('Obra (orden de compra)', '<select id="fmtOrden"><option value="">'+(ords.length ? 'Elige la orden…' : 'No hay órdenes')+'</option>' + ords.map(function(o){ return '<option value="'+fdE(o._id)+'"'+(o._id === fmt.ordenId ? ' selected' : '')+'>'+fdE((o.numero||'Orden') + ' · ' + (o.cliente||''))+'</option>'; }).join('') + '</select>', fmt.datos ? 'Cambiar la orden vuelve a llenar los campos con sus datos.' : 'Los campos se llenan solos con los datos de la orden; luego los ajustas.');
+    if(spec.persona){
+      var o = state.ordenes.get(fmt.ordenId) || {};
+      h += precCampo('Persona', '<select id="fmtPersona"><option value="-1">'+((o.personal||[]).length ? 'Elige la persona…' : 'La orden no tiene personal registrado')+'</option>' + (o.personal || []).map(function(r, i){ return '<option value="'+i+'"'+(i === fmt.persona ? ' selected' : '')+'>'+fdE((r.nombre || 'Persona ' + (i + 1)) + ' · ' + (r.dias || 0) + ' día(s)')+'</option>'; }).join('') + '</select>');
+    } else h += '<div class="field"></div>';
+    h += '</div>';
+    if(!fmt.datos){ body.innerHTML = h + '<div class="empty-state" style="padding:22px;">Elige la obra'+(spec.persona ? ' y la persona' : '')+' para empezar.</div>'; fmtEventosCabecera(); return; }
+    var d = fmt.datos;
+    h += '<div class="field-row">' + precCampo('Número', '<input type="text" data-k="numero" value="'+fdE(d.numero)+'">') + precCampo('Fecha', '<input type="date" data-k="fecha" value="'+fdE(d.fecha)+'">') + '</div>';
+    var simples = [];
+    var flush = function(){ for(var i = 0; i < simples.length; i += 2){ h += '<div class="field-row">' + precCampo(fdE(simples[i].l), fmtValorCampo(simples[i], d[simples[i].k])) + (simples[i+1] ? precCampo(fdE(simples[i+1].l), fmtValorCampo(simples[i+1], d[simples[i+1].k])) : '<div class="field"></div>') + '</div>'; } simples = []; };
+    spec.campos.forEach(function(c){
+      if(c.t === 'area' || c.t === 'tabla' || c.t === 'checks'){
+        flush();
+        if(c.t === 'area') h += precCampo(fdE(c.l), fmtValorCampo(c, d[c.k]));
+        else if(c.t === 'tabla') h += '<div class="field"><label>'+fdE(c.l)+'</label>' + fmtTablaHtml(c, d[c.k]) + '</div>';
+        else h += '<div class="field"><label>'+fdE(c.l)+'</label><div class="fmt-checks" data-checks="'+c.k+'">' + spec[c.opciones].map(function(o){ return '<label><input type="checkbox" value="'+fdE(o)+'"'+((d[c.k] || []).indexOf(o) !== -1 ? ' checked' : '')+'> '+fdE(o)+'</label>'; }).join('') + '</div></div>';
+      } else simples.push(c);
+    });
+    flush();
+    if(spec.fotos){
+      h += '<div class="field"><label>7. Registro fotográfico (hasta 6 fotos)</label><div class="fmt-fotos" id="fmtFotos">' + (d.fotos || []).map(function(f, i){ return '<div class="fmt-foto"><img src="'+f.src+'" alt=""><input type="text" data-foto="'+i+'" value="'+fdE(f.desc || '')+'" placeholder="Descripción"><button type="button" class="icon-btn fmt-foto-rm" data-i="'+i+'" title="Quitar foto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'; }).join('') + '</div>' +
+        ((d.fotos || []).length < 6 ? '<label class="btn sm" style="margin-top:6px;">+ Agregar fotos<input type="file" id="fmtFotoIn" accept="image/*" multiple hidden></label>' : '') + '</div>';
+    }
+    body.innerHTML = h;
+    fmtEventosCabecera();
+    body.querySelectorAll('.fmt-tabla').forEach(function(t){
+      var c = spec.campos.filter(function(x){ return x.k === t.dataset.tabla; })[0];
+      t.querySelector('.fmt-add').addEventListener('click', function(){ fmtLeer(); var fila = {}; c.cols.forEach(function(col){ fila[col.k] = col.tipo === 'sel' ? col.opciones[0] : ''; }); (fmt.datos[c.k] = fmt.datos[c.k] || []).push(fila); fmtPintar(); });
+      t.querySelectorAll('.fmt-rm').forEach(function(b, i){ b.addEventListener('click', function(){ fmtLeer(); fmt.datos[c.k].splice(i, 1); fmtPintar(); }); });
+    });
+    var fin = document.getElementById('fmtFotoIn');
+    if(fin) fin.addEventListener('change', function(){ fmtLeer(); fmtAgregarFotos(Array.prototype.slice.call(fin.files || [])); });
+    body.querySelectorAll('.fmt-foto-rm').forEach(function(b){ b.addEventListener('click', function(){ fmtLeer(); fmt.datos.fotos.splice(Number(b.dataset.i), 1); fmtPintar(); }); });
+  }
+  function fmtEventosCabecera(){
+    var so = document.getElementById('fmtOrden'), sp = document.getElementById('fmtPersona'), spec = FMT_SPECS[fmt.spec];
+    so.addEventListener('change', function(){ fmt.ordenId = so.value; fmt.persona = -1; fmtCargar(); });
+    if(sp) sp.addEventListener('change', function(){ fmt.persona = Number(sp.value); fmtCargar(); });
+    void spec;
+  }
+  function fmtCargar(){
+    var spec = FMT_SPECS[fmt.spec];
+    if(!fmt.ordenId || (spec.persona && fmt.persona < 0)){ fmt.datos = null; fmtPintar(); return; }
+    var x = fmtCtx(fmt.ordenId, fmt.persona);
+    var nuevo = spec.prellenar(x);
+    nuevo.numero = fmt.datos && fmt.datos.numero ? fmt.datos.numero : fmtSiguienteNumero(spec.prefijo);
+    nuevo.fecha = fmt.datos && fmt.datos.fecha ? fmt.datos.fecha : todayIso();
+    if(fmt.datos && fmt.datos.fotos) nuevo.fotos = fmt.datos.fotos;
+    fmt.datos = nuevo; fmtPintar();
+  }
+  function fmtLeer(){
+    var spec = FMT_SPECS[fmt.spec], body = document.getElementById('fmtBody'), d = fmt.datos; if(!d) return null;
+    body.querySelectorAll('[data-k]').forEach(function(el){
+      var c = spec.campos.filter(function(x){ return x.k === el.dataset.k; })[0];
+      d[el.dataset.k] = c && (c.t === 'num' || c.t === 'money') ? (el.value === '' ? '' : Number(el.value)) : el.value;
+    });
+    body.querySelectorAll('.fmt-tabla').forEach(function(t){
+      var c = spec.campos.filter(function(x){ return x.k === t.dataset.tabla; })[0];
+      d[c.k] = Array.prototype.map.call(t.querySelectorAll('tbody tr'), function(tr){
+        var fila = {}; c.cols.forEach(function(col){ var el = tr.querySelector('[data-c="'+col.k+'"]'); fila[col.k] = el ? ((col.tipo === 'num' || col.tipo === 'money') ? (el.value === '' ? '' : Number(el.value)) : el.value) : ''; }); return fila;
+      });
+    });
+    body.querySelectorAll('[data-checks]').forEach(function(box){ d[box.dataset.checks] = Array.prototype.filter.call(box.querySelectorAll('input'), function(i){ return i.checked; }).map(function(i){ return i.value; }); });
+    body.querySelectorAll('[data-foto]').forEach(function(el){ var f = (d.fotos || [])[Number(el.dataset.foto)]; if(f) f.desc = el.value; });
+    return d;
+  }
+  /* Fotos: se reducen a 1000 px y JPEG para que el documento no pese de más */
+  function fmtAgregarFotos(files){
+    var d = fmt.datos; d.fotos = d.fotos || [];
+    var libres = 6 - d.fotos.length; files = files.slice(0, libres);
+    if(!files.length) return;
+    toast('Preparando ' + files.length + ' foto(s)…');
+    Promise.all(files.map(function(f){ return new Promise(function(res){
+      var fr = new FileReader();
+      fr.onload = function(){ var img = new Image(); img.onload = function(){
+        var esc = Math.min(1, 1000 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * esc); cv.height = Math.round(img.height * esc);
+        cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+        res({src: cv.toDataURL('image/jpeg', 0.72), desc: ''});
+      }; img.onerror = function(){ res(null); }; img.src = fr.result; };
+      fr.onerror = function(){ res(null); }; fr.readAsDataURL(f);
+    }); })).then(function(fotos){ fotos.filter(Boolean).forEach(function(f){ d.fotos.push(f); }); fmtPintar(); });
+  }
+  function fmtPreview(tipo, datos){
+    var spec = FMT_SPECS[tipo];
+    state.previewingCotId = null; state.previewingPfId = null;
+    state.previewingFormato = {tipo: tipo, nombre: spec.nombre(datos) + '.pdf', titulo: spec.tituloDoc + ' ' + (datos.numero || '')};
+    document.getElementById('previewDoc').innerHTML = spec.render(datos, spec);
+    document.getElementById('previewOverlay').classList.add('open');
+  }
+  function fmtGuardar(){
+    var db = requireDb(); var d = fmtLeer(); if(!db || !d) return Promise.resolve(null);
+    var spec = FMT_SPECS[fmt.spec];
+    if(!d.numero){ toast('Ponle número al documento.'); return Promise.resolve(null); }
+    var dup = false; state.documentos.forEach(function(x, id){ if(x.numero === d.numero && id !== fmt.docId) dup = true; });
+    if(dup){ toast('Ya existe un documento con el número ' + d.numero + '.'); return Promise.resolve(null); }
+    var o = state.ordenes.get(fmt.ordenId) || {};
+    var rec = {tipo: fmt.spec, codigo: spec.codigo, numero: d.numero, ordenId: fmt.ordenId || null, persona: fmt.persona, proyectoId: o.proyectoId || '', datos: d, actualizadoEn: new Date().toISOString()};
+    if(JSON.stringify(rec).length > 1700000){ toast('El documento pesa demasiado (fotos). Quita alguna foto.'); return Promise.resolve(null); }
+    var col = db.collection('documentos');
+    if(fmt.docId){ var prev = state.documentos.get(fmt.docId) || {}; rec.creadoEn = prev.creadoEn; rec.creadoPorId = prev.creadoPorId; return col.doc(fmt.docId).set(rec).then(function(){ return fmt.docId; }); }
+    rec.creadoEn = rec.actualizadoEn; rec.creadoPorId = state.userId || null;
+    return col.add(rec).then(function(ref){ fmt.docId = ref && ref.id; return fmt.docId; });
+  }
+  function closeFormato(){ document.getElementById('fmtOverlay').classList.remove('open'); fmt.spec = null; fmt.datos = null; }
+  document.getElementById('fmtClose').addEventListener('click', closeFormato);
+  document.getElementById('fmtCancel').addEventListener('click', closeFormato);
+  document.getElementById('fmtGuardarBtn').addEventListener('click', function(){
+    if(!fmt.datos){ toast('Elige primero la obra.'); return; }
+    fmtGuardar().then(function(id){ if(id){ toast('Guardado como ' + fmt.datos.numero); document.getElementById('fmtTitle').textContent = FMT_SPECS[fmt.spec].tituloDoc + ' · ' + fmt.datos.numero; document.getElementById('fmtBorrar').style.display = precAdmin() ? 'inline-flex' : 'none'; } })
+      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+  document.getElementById('fmtVerPdf').addEventListener('click', function(){
+    if(!fmt.datos){ toast('Elige primero la obra.'); return; }
+    var tipo = fmt.spec;
+    fmtGuardar().then(function(id){ if(!id) return; fmtPreview(tipo, fmt.datos); })
+      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+  document.getElementById('fmtBorrar').addEventListener('click', function(){
+    var db = requireDb(), id = fmt.docId; if(!db || !id) return;
+    confirmDialog('¿Borrar este documento?').then(function(ok){
+      if(!ok) return;
+      db.doc('documentos/' + id).delete().then(function(){ toast('Documento borrado'); closeFormato(); })
+        .catch(function(err){ toast('No se pudo borrar: ' + (err && err.message ? err.message : 'error')); });
+    });
   });
 
   if(window.claude && window.claude.use){
