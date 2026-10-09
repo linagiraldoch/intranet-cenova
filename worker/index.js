@@ -205,6 +205,9 @@ async function escribir(req, env, s, col, id, metodo) {
   if (col === 'precios' && !s.admin) {
     if (metodo === 'DELETE' || !previo) return err(403, 'regla', 'Solo administración crea o borra ítems de Precios.');
   }
+  if (col === 'clientes' && !s.admin && (metodo === 'DELETE' || !previo)) {
+    return err(403, 'regla', 'Solo administración (Lina) crea o borra clientes. Si es una persona nueva de un cliente que ya existe, agrégala como contacto.');
+  }
   if (col === 'documentos' && !s.admin && metodo === 'DELETE') return err(403, 'regla', 'Los documentos guardados solo los borra administración.');
   if (col === 'inventario' && !s.admin && (metodo === 'DELETE' || previo)) {
     return err(403, 'regla', 'Los movimientos de inventario no se cambian ni se borran: registra un conteo para corregir.');
@@ -233,6 +236,9 @@ async function escribir(req, env, s, col, id, metodo) {
       if (PRECIOS_CAMPOS_EQUIPO.indexOf(k) !== -1) continue;
       if (JSON.stringify(previo[k]) !== JSON.stringify(data[k])) return err(403, 'regla', 'Los costos, márgenes y precios solo los cambia administración. Tú puedes actualizar el stock y el contenido de los kits.');
     }
+  }
+  if (col === 'clientes' && !s.admin && (String(data.nombre || '').trim() !== String(previo.nombre || '').trim() || String(data.nit || '') !== String(previo.nit || ''))) {
+    return err(403, 'regla', 'El nombre y el NIT del cliente solo los cambia administración. Puedes agregar o editar contactos.');
   }
   // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
   if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero) {

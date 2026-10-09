@@ -992,13 +992,13 @@
         <h2>Clientes</h2>
         <div class="filters">
           <input type="search" id="cliSearch" placeholder="Buscar cliente…">
-          <button class="btn primary" id="btnAddCli">
+          <button class="btn primary fin-admin" id="btnAddCli" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             Nuevo cliente
           </button>
         </div>
       </div>
-      <div class="no-file" style="margin:-6px 0 14px;">Registra cada cliente una vez y luego selecciónalo al crear una cotización o proyecto para autocompletar sus datos.</div>
+      <div class="no-file" style="margin:-6px 0 14px;">Cada cliente se registra una sola vez y se elige al crear una cotización o proyecto. Un cliente puede tener varios contactos (gerente, mantenimiento, compras…): si aparece una persona nueva, ábrelo y agrégala como contacto. <strong>Solo administración crea clientes nuevos.</strong></div>
       <div id="cliContainer"></div>
     </section>
 
@@ -1297,7 +1297,7 @@
         <div class="field"><label>NIT</label><input type="text" id="cotClienteNit" placeholder="000.000.000-0"></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Atención (contacto)</label><input type="text" id="cotClienteContacto"></div>
+        <div class="field"><label>Atención (contacto)</label><input type="text" id="cotClienteContacto" list="cotContactosList" placeholder="Elige o escribe un contacto"><datalist id="cotContactosList"></datalist></div>
         <div class="field"><label>Dirección</label><input type="text" id="cotClienteDireccion"></div>
       </div>
       <div class="field-row three">
@@ -1627,14 +1627,11 @@
         <div class="field"><label>NIT</label><input type="text" id="cliNit" placeholder="000.000.000-0"></div>
         <div class="field"><label>Ciudad</label><input type="text" id="cliCiudad" placeholder="Cartagena, Bolívar"></div>
       </div>
-      <div class="field-row">
-        <div class="field"><label>Contacto</label><input type="text" id="cliContacto" placeholder="Nombre de la persona de contacto"></div>
-        <div class="field"><label>Teléfono</label><input type="text" id="cliTelefono"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Correo</label><input type="text" id="cliEmail"></div>
-        <div class="field"><label>Dirección</label><input type="text" id="cliDireccion"></div>
-      </div>
+      <div class="field"><label>Dirección</label><input type="text" id="cliDireccion"></div>
+      <div class="fieldset-label">Contactos <span style="font-weight:400; text-transform:none; letter-spacing:0;">— el primero es el principal</span></div>
+      <div id="cliContactosBox"></div>
+      <button type="button" class="btn sm" id="cliAddContacto" style="align-self:flex-start;">+ Agregar contacto</button>
+      <div class="no-file" id="cliNoAdminNota" style="display:none;">El nombre y el NIT solo los cambia administración. Puedes agregar o corregir contactos.</div>
       <div class="field"><label>Notas</label><textarea id="cliNotas" placeholder="Observaciones, preferencias, referencias…"></textarea></div>
     </div>
     <div class="modal-foot">
@@ -2173,11 +2170,15 @@
   });
 
   /* ---------- Shared option lists ---------- */
+  /* Solo se sugieren clientes registrados: así no se multiplican nombres escritos a mano
+     ("HOTEL OSH", "Puntos de datos OSH"…). Si aún no hay ninguno, se usan los de las cotizaciones. */
   function clienteOptionsRefresh(){
     var set = new Set();
     state.clientes.forEach(function(c){ if(c.nombre) set.add(c.nombre); });
-    state.cotizaciones.forEach(function(c){ if(c.cliente) set.add(c.cliente); });
-    state.proyectos.forEach(function(p){ if(p.cliente) set.add(p.cliente); });
+    if(!set.size){
+      state.cotizaciones.forEach(function(c){ if(c.cliente) set.add(c.cliente); });
+      state.proyectos.forEach(function(p){ if(p.cliente) set.add(p.cliente); });
+    }
     document.getElementById('clientesList').innerHTML = Array.from(set).sort().map(function(c){ return '<option value="'+escapeHtml(c)+'">'; }).join('');
   }
   /* Busca un cliente registrado por nombre exacto (sin distinguir mayúsculas/espacios) */
@@ -2188,12 +2189,52 @@
     state.clientes.forEach(function(c){ if(!found && c.nombre && c.nombre.trim().toLowerCase()===needle) found = c; });
     return found;
   }
+  /* Contactos de un cliente. Los clientes viejos tienen un solo contacto en
+     contacto/telefono/email; los nuevos guardan la lista en contactos[] y copian el
+     primero (el principal) en esos campos para que todo lo demás siga funcionando. */
+  function cliContactos(c){
+    if(!c) return [];
+    if(Array.isArray(c.contactos)) return c.contactos.filter(function(k){ return k && (k.nombre||k.telefono||k.email); });
+    if(c.contacto || c.telefono || c.email) return [{nombre:c.contacto||'', cargo:'', telefono:c.telefono||'', email:c.email||''}];
+    return [];
+  }
+  function findClienteIdByNombre(nombre){
+    var needle = String(nombre||'').trim().toLowerCase(), found = null;
+    if(!needle) return null;
+    state.clientes.forEach(function(c, id){ if(!found && c.nombre && c.nombre.trim().toLowerCase()===needle) found = id; });
+    return found;
+  }
+  /* Quien no es administración no puede usar un cliente que no esté registrado
+     (solo se valida si el nombre cambió, para no trabar registros viejos). */
+  function clienteNoPermitido(nombre, nombreAnterior){
+    nombre = String(nombre||'').trim();
+    if(!nombre || precAdmin() || !state.clientes.size) return false;
+    if(nombre.toLowerCase() === String(nombreAnterior||'').trim().toLowerCase()) return false;
+    return !findClienteByNombre(nombre);
+  }
+  var MSG_CLIENTE_NO_REG = 'Ese cliente no está registrado. Elígelo de la lista; si es un cliente nuevo, pídele a Lina que lo cree. Si es otra persona de un cliente existente, agrégala como contacto.';
+  function cotContactosRefresh(){
+    var c = findClienteByNombre(document.getElementById('cotCliente').value);
+    document.getElementById('cotContactosList').innerHTML = cliContactos(c).map(function(k){
+      return '<option value="'+escapeHtml(k.nombre||'')+'">'+escapeHtml([k.cargo, k.telefono].filter(Boolean).join(' · '))+'</option>';
+    }).join('');
+  }
+  /* Al elegir un contacto del cliente, se llenan su teléfono y correo */
+  document.getElementById('cotClienteContacto').addEventListener('input', function(){
+    var c = findClienteByNombre(document.getElementById('cotCliente').value);
+    var needle = this.value.trim().toLowerCase(), k = null;
+    cliContactos(c).forEach(function(x){ if(!k && (x.nombre||'').trim().toLowerCase() === needle) k = x; });
+    if(!k) return;
+    if(k.telefono) document.getElementById('cotClienteTelefono').value = k.telefono;
+    if(k.email) document.getElementById('cotClienteEmail').value = k.email;
+  });
   /* Autocompleta los datos del cliente en la cotización desde el registro de Clientes.
      onlyBlank=true (al abrir una cotización existente para editar) solo llena los campos
      que están vacíos, para no pisar datos históricos ya guardados en esa cotización;
      onlyBlank=false (mientras se escribe/selecciona el cliente) sobrescribe todo, porque
      el usuario acaba de elegir un cliente distinto. */
   function autofillClienteEnCot(nombre, onlyBlank){
+    cotContactosRefresh();
     var c = findClienteByNombre(nombre);
     if(!c) return;
     [['cotClienteNit','nit'],['cotClienteContacto','contacto'],['cotClienteDireccion','direccion'],
@@ -2544,7 +2585,7 @@
     var q = document.getElementById('cliSearch').value.trim().toLowerCase();
     var rows = Array.from(state.clientes.entries()).filter(function(e){
       var c = e[1];
-      if(q && !(passFilter(c.nombre,q) || passFilter(c.contacto,q) || passFilter(c.nit,q))) return false;
+      if(q && !(passFilter(c.nombre,q) || passFilter(c.nit,q) || cliContactos(c).some(function(k){ return passFilter(k.nombre,q) || passFilter(k.email,q) || passFilter(k.telefono,q); }))) return false;
       return true;
     }).sort(function(a,b){ return (a[1].nombre||'').localeCompare(b[1].nombre||''); });
 
@@ -2552,22 +2593,26 @@
 
     var container = document.getElementById('cliContainer');
     if(state.clientes.size === 0){
-      container.innerHTML = emptyState('No hay clientes registrados todavía', 'Registra tus clientes para autocompletar sus datos en cada cotización.', 'btnAddCliEmpty');
+      container.innerHTML = precAdmin() ? emptyState('No hay clientes registrados todavía', 'Registra tus clientes para autocompletar sus datos en cada cotización.', 'btnAddCliEmpty')
+        : '<div class="table-wrap"><div class="empty-state">No hay clientes registrados todavía. Administración los crea.</div></div>';
       var b = document.getElementById('btnAddCliEmpty'); if(b) b.addEventListener('click', function(){ openCliModal(); });
       return;
     }
     if(rows.length === 0){ container.innerHTML = '<div class="table-wrap"><div class="empty-state">Ningún cliente coincide con el filtro.</div></div>'; return; }
 
-    var html = '<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>NIT</th><th>Ciudad</th><th>Contacto</th><th>Teléfono</th><th>Correo</th><th>Cotizaciones</th><th></th></tr></thead><tbody>';
+    var html = '<div class="table-wrap"><table><thead><tr><th>Cliente</th><th>NIT</th><th>Ciudad</th><th>Contactos</th><th>Teléfono</th><th>Correo</th><th>Cotizaciones</th><th></th></tr></thead><tbody>';
     rows.forEach(function(e){
       var id = e[0], c = e[1];
       html += '<tr data-id="'+id+'">'+
         '<td><div class="d-title">'+escapeHtml(c.nombre||'—')+'</div></td>'+
         '<td>'+escapeHtml(c.nit||'—')+'</td>'+
         '<td>'+escapeHtml(c.ciudad||'—')+'</td>'+
-        '<td>'+escapeHtml(c.contacto||'—')+'</td>'+
-        '<td>'+escapeHtml(c.telefono||'—')+'</td>'+
-        '<td>'+escapeHtml(c.email||'—')+'</td>'+
+        (function(){
+          var ks = cliContactos(c), k0 = ks[0] || {};
+          return '<td>'+escapeHtml(k0.nombre||'—')+(ks.length > 1 ? ' <span class="badge" title="'+escapeHtml(ks.slice(1).map(function(k){ return k.nombre + (k.cargo ? ' ('+k.cargo+')' : ''); }).join(', '))+'">+'+(ks.length-1)+' más</span>' : '')+'</td>'+
+            '<td>'+escapeHtml(k0.telefono||'—')+'</td>'+
+            '<td>'+escapeHtml(k0.email||'—')+'</td>';
+        })()+
         '<td class="num">'+cotCountForCliente(c.nombre)+'</td>'+
         '<td><div class="row-actions"><button class="icon-btn edit-cli" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/></svg></button></div></td>'+
         '</tr>';
@@ -2587,13 +2632,57 @@
     document.getElementById('cliNombre').value = c.nombre || '';
     document.getElementById('cliNit').value = c.nit || '';
     document.getElementById('cliCiudad').value = c.ciudad || '';
-    document.getElementById('cliContacto').value = c.contacto || '';
-    document.getElementById('cliTelefono').value = c.telefono || '';
-    document.getElementById('cliEmail').value = c.email || '';
     document.getElementById('cliDireccion').value = c.direccion || '';
     document.getElementById('cliNotas').value = c.notas || '';
-    document.getElementById('cliDelete').style.display = id ? 'inline-flex' : 'none';
+    state.cliContactos = cliContactos(c).map(function(k){ return {nombre:k.nombre||'', cargo:k.cargo||'', telefono:k.telefono||'', email:k.email||''}; });
+    if(!state.cliContactos.length) state.cliContactos.push({nombre:'', cargo:'', telefono:'', email:''});
+    cliPintarContactos();
+    var adm = precAdmin();
+    document.getElementById('cliNombre').disabled = !adm && !!id;
+    document.getElementById('cliNit').disabled = !adm && !!id;
+    document.getElementById('cliNoAdminNota').style.display = adm ? 'none' : 'block';
+    document.getElementById('cliDelete').style.display = (id && adm) ? 'inline-flex' : 'none';
     document.getElementById('cliOverlay').classList.add('open');
+  }
+  function cliPintarContactos(){
+    var box = document.getElementById('cliContactosBox');
+    box.innerHTML = state.cliContactos.map(function(k, i){
+      return '<div class="cli-contacto" data-i="'+i+'" style="border:1px solid var(--border, #dfe3ea); border-radius:10px; padding:10px 12px 4px; margin-bottom:10px;">'+
+        '<div style="display:flex; align-items:center; gap:6px; margin-bottom:6px;"><strong style="font-size:12px;">'+(i===0 ? 'Contacto principal' : 'Contacto '+(i+1))+'</strong>'+
+          '<span style="margin-left:auto; display:flex; gap:4px;">'+
+          (i>0 ? '<button type="button" class="btn sm cli-k-up" title="Pasar a principal">Hacer principal</button>' : '')+
+          '<button type="button" class="btn sm cli-k-del" title="Quitar contacto" style="color:var(--critical);">Quitar</button></span></div>'+
+        '<div class="field-row"><div class="field"><label>Nombre</label><input type="text" data-k="nombre" value="'+escapeHtml(k.nombre)+'" placeholder="Nombre y apellido"></div>'+
+        '<div class="field"><label>Cargo / área</label><input type="text" data-k="cargo" value="'+escapeHtml(k.cargo)+'" placeholder="Ej. Mantenimiento, Sistemas, Compras"></div></div>'+
+        '<div class="field-row"><div class="field"><label>Teléfono</label><input type="text" data-k="telefono" value="'+escapeHtml(k.telefono)+'"></div>'+
+        '<div class="field"><label>Correo</label><input type="text" data-k="email" value="'+escapeHtml(k.email)+'"></div></div>'+
+      '</div>';
+    }).join('');
+    box.querySelectorAll('input[data-k]').forEach(function(inp){
+      inp.addEventListener('input', function(){ state.cliContactos[+inp.closest('.cli-contacto').dataset.i][inp.dataset.k] = inp.value; });
+    });
+    box.querySelectorAll('.cli-k-del').forEach(function(b){ b.addEventListener('click', function(){
+      state.cliContactos.splice(+b.closest('.cli-contacto').dataset.i, 1);
+      if(!state.cliContactos.length) state.cliContactos.push({nombre:'', cargo:'', telefono:'', email:''});
+      cliPintarContactos();
+    }); });
+    box.querySelectorAll('.cli-k-up').forEach(function(b){ b.addEventListener('click', function(){
+      var i = +b.closest('.cli-contacto').dataset.i, k = state.cliContactos.splice(i, 1)[0];
+      state.cliContactos.unshift(k); cliPintarContactos();
+    }); });
+  }
+  document.getElementById('cliAddContacto').addEventListener('click', function(){
+    state.cliContactos.push({nombre:'', cargo:'', telefono:'', email:''}); cliPintarContactos();
+    var ins = document.querySelectorAll('#cliContactosBox input[data-k="nombre"]'); ins[ins.length-1].focus();
+  });
+  /* Arma los campos de contacto que se guardan en el cliente (lista + principal) */
+  function cliCamposContacto(lista){
+    var ks = lista.map(function(k){ return {nombre:(k.nombre||'').trim(), cargo:(k.cargo||'').trim(), telefono:(k.telefono||'').trim(), email:(k.email||'').trim()}; })
+      .filter(function(k){ return k.nombre || k.telefono || k.email; });
+    var vistos = {};   /* la misma persona dos veces: se queda la primera */
+    ks = ks.filter(function(k){ var n = k.nombre.toLowerCase(); if(!n) return true; if(vistos[n]) return false; vistos[n] = 1; return true; });
+    var k0 = ks[0] || {};
+    return {contactos: ks, contacto: k0.nombre || '', telefono: k0.telefono || '', email: k0.email || ''};
   }
   function closeCliModal(){ document.getElementById('cliOverlay').classList.remove('open'); state.editingCliId = null; }
   document.getElementById('cliClose').addEventListener('click', closeCliModal);
@@ -2602,17 +2691,24 @@
 
   document.getElementById('cliSave').addEventListener('click', function(){
     var db = requireDb(); if(!db) return;
-    var data = {
+    var prevCli = state.editingCliId ? (state.clientes.get(state.editingCliId) || {}) : null;
+    if(!prevCli && !precAdmin()){ toast('Solo administración crea clientes nuevos.'); return; }
+    var data = Object.assign({}, prevCli || {}, {
       nombre: document.getElementById('cliNombre').value.trim(),
       nit: document.getElementById('cliNit').value.trim(),
       ciudad: document.getElementById('cliCiudad').value.trim(),
-      contacto: document.getElementById('cliContacto').value.trim(),
-      telefono: document.getElementById('cliTelefono').value.trim(),
-      email: document.getElementById('cliEmail').value.trim(),
       direccion: document.getElementById('cliDireccion').value.trim(),
       notas: document.getElementById('cliNotas').value.trim()
-    };
+    }, cliCamposContacto(state.cliContactos || []));
     if(!data.nombre){ toast('Escribe el nombre del cliente'); return; }
+    /* Evita el cliente repetido: mismo nombre (sin importar mayúsculas) o mismo NIT */
+    var nitN = data.nit.replace(/\D/g, ''), dup = null;
+    var cambiaIdentidad = !prevCli || (prevCli.nombre||'').trim().toLowerCase() !== data.nombre.toLowerCase() || String(prevCli.nit||'').replace(/\D/g, '') !== nitN;
+    if(cambiaIdentidad) state.clientes.forEach(function(c, id){
+      if(dup || id === state.editingCliId) return;
+      if((c.nombre||'').trim().toLowerCase() === data.nombre.toLowerCase() || (nitN.length >= 6 && String(c.nit||'').replace(/\D/g, '').indexOf(nitN.slice(0, 9)) === 0)) dup = c;
+    });
+    if(dup){ toast('Ya existe el cliente "'+dup.nombre+'". Ábrelo y agrega ahí el contacto nuevo.', 5000); return; }
     var col = db.collection('clientes');
     var p = state.editingCliId ? col.doc(state.editingCliId).set(data) : col.add(data);
     p.then(function(){ toast('Cliente guardado'); closeCliModal(); }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
@@ -6432,7 +6528,7 @@
       if(!esAdmin) return;
       fin.admin = true;
       document.querySelectorAll('.fin-admin').forEach(function(el){ el.hidden = false; });
-      renderPrecios(); precSembrar();
+      renderPrecios(); precSembrar(); renderClientes();
       db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
       db.collection('finGastosFijos').onSnapshot(function(snap){ fin.fijos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
       db.collection('finAjustes').onSnapshot(function(snap){ var g = snap.docs.filter(function(d){ return d.id === 'general'; })[0]; fin.ajustes = g ? g.data() : null; renderFinanzas(); });
@@ -6536,6 +6632,9 @@
       document.getElementById('cotProyecto').focus();
       return;
     }
+    if(clienteNoPermitido(document.getElementById('cotCliente').value, prev.cliente)){
+      toast(MSG_CLIENTE_NO_REG, 6000); document.getElementById('cotCliente').focus(); return;
+    }
     var estadoNuevo = document.getElementById('cotEstado').value;
     var fechaAcept = document.getElementById('cotFechaAceptacion').value;
     if(estadoNuevo === 'aprobada' && !fechaAcept) fechaAcept = toISODate(new Date());
@@ -6585,11 +6684,27 @@
     var p = state.editingCotId ? col.doc(state.editingCotId).set(data).then(function(){ return state.editingCotId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
     p.then(function(newId){
       if(newId){ state.cotizaciones.set(newId, data); syncAutoEventsFor('cotizacion', newId); }
+      cotGuardarContactoEnCliente(db, data);
       var dest = (COT_TABS.filter(function(t){ return t.key === cotTabKey(newId || '', data); })[0]||{}).label;
       toast('Cotización '+data.numero+' guardada'+(dest && prev.estado !== data.estado ? ' · pasó a "'+dest+'"' : '')); closeCotModal();
       if(eraEdicion && newId) return propagarCambiosCotizacion(newId, prev, data);
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
+
+  /* Si en la cotización se escribió una persona que el cliente aún no tiene, se agrega
+     sola a sus contactos (así no hace falta crear otro cliente para una persona nueva). */
+  function cotGuardarContactoEnCliente(db, cot){
+    var cid = findClienteIdByNombre(cot.cliente), nom = (cot.clienteContacto||'').trim();
+    if(!cid || !nom) return;
+    var c = state.clientes.get(cid), ks = cliContactos(c);
+    if(ks.some(function(k){ return (k.nombre||'').trim().toLowerCase() === nom.toLowerCase(); })) return;
+    ks.push({nombre: nom, cargo: '', telefono: cot.clienteTelefono || '', email: cot.clienteEmail || ''});
+    var data = Object.assign({}, c, cliCamposContacto(ks));
+    db.collection('clientes').doc(cid).set(data).then(function(){
+      state.clientes.set(cid, data); renderClientes();
+      toast(nom + ' quedó agregado como contacto de ' + c.nombre + '.');
+    }).catch(function(){});
+  }
 
   document.getElementById('cotDelete').addEventListener('click', function(){
     var db = requireDb(); if(!db || !state.editingCotId) return;
@@ -6611,6 +6726,7 @@
     };
     var prev = state.editingProyId && state.proyectos.get(state.editingProyId);
     if(prev && prev.fueraDelTotal) data.fueraDelTotal = prev.fueraDelTotal;
+    if(clienteNoPermitido(data.cliente, prev && prev.cliente)){ toast(MSG_CLIENTE_NO_REG, 6000); document.getElementById('proyCliente').focus(); return; }
     if(!data.nombre){ toast('Ponle un nombre al proyecto.'); return; }
     var col = db.collection('proyectos');
     var p = state.editingProyId ? col.doc(state.editingProyId).set(data).then(function(){ return state.editingProyId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
