@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#173a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Cenova"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Intranet Cenova</title><script>(function(){var t="light";try{t=localStorage.getItem("cenova.theme")||"light";}catch(e){}if(["light","dark","lavanda"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);})();</script><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.classList.add("cenova-locked");</script><script src="/app.js"></script></head><body>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#173a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Cenova"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Intranet Cenova</title><script>(function(){var t="light";try{t=localStorage.getItem("cenova.theme")||"light";}catch(e){}if(["light","dark","lavanda"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);try{if(localStorage.getItem("cenova.menuPlegado")==="1")document.documentElement.classList.add("menu-plegado");}catch(e){}})();</script><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.classList.add("cenova-locked");</script><script src="/app.js"></script></head><body>
 <style>html.cenova-locked .app{visibility:hidden;}
 #cenovaLogin{position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:24px 16px; overflow-y:auto;
   background:radial-gradient(1200px 600px at 10% -10%, var(--accent-soft), transparent 60%), radial-gradient(900px 500px at 110% 110%, var(--accent-soft), transparent 55%), var(--bg);}
@@ -7068,6 +7068,107 @@
   }
   renderAll();
   initDb();
+})();
+</script>
+
+<!-- ================= Menú plegable (2026-10-09) =================
+     En computador (más de 760 px) el menú lateral se puede plegar a una franja
+     de íconos con el botón « / » de arriba (o Ctrl + B). Se recuerda en este
+     navegador (localStorage "cenova.menuPlegado"). En celular no cambia nada. -->
+<style>
+  .sb-toggle{display:none;}
+  @media (min-width:761px){
+    .sidebar{transition:width .2s ease, padding .2s ease;}
+    .brand{position:relative;}
+    .sb-toggle{display:flex; margin-left:auto; width:28px; height:28px; flex:none; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-muted); align-items:center; justify-content:center; cursor:pointer; padding:0;}
+    .sb-toggle:hover{background:var(--surface-2); color:var(--text);}
+    .sb-toggle svg{width:15px; height:15px; transition:transform .2s;}
+    html.menu-plegado .sb-toggle svg{transform:rotate(180deg);}
+
+    html.menu-plegado .sidebar{width:68px; padding:16px 10px; gap:14px; overflow-x:hidden;}
+    html.menu-plegado .brand{flex-direction:column; gap:10px; padding:0;}
+    html.menu-plegado .sb-toggle{margin:0;}
+    html.menu-plegado .brand-text,
+    html.menu-plegado .nav-txt,
+    html.menu-plegado .theme-pick,
+    html.menu-plegado .team-card,
+    html.menu-plegado .pwa-btn{display:none !important;}
+    html.menu-plegado .nav-label{font-size:0; height:1px; margin:8px 6px; background:var(--border);}
+    html.menu-plegado .nav-btn{justify-content:center; padding:10px 0; position:relative;}
+    html.menu-plegado .nav-btn svg{width:19px; height:19px;}
+    html.menu-plegado .nav-btn .count{position:absolute; top:2px; right:2px; margin:0; min-width:16px; height:16px; padding:0 4px; border-radius:8px; background:var(--surface-2); border:1px solid var(--border); font-size:9.5px; line-height:14px; text-align:center;}
+    html.menu-plegado .nav-btn .count:empty, html.menu-plegado .nav-btn .count[data-cero]{display:none;}
+    html.menu-plegado .quicklink{justify-content:center; padding:9px 0;}
+    html.menu-plegado .quicklink svg{width:17px; height:17px;}
+    html.menu-plegado .session-card{padding:6px 0; border:none; background:none; align-items:center; margin-top:auto;}
+    html.menu-plegado .session-card .ses-row{justify-content:center; cursor:pointer;}
+    html.menu-plegado .session-card .ses-row > div:not(.avatar),
+    html.menu-plegado .session-card .ses-actions{display:none;}
+    html.menu-plegado .session-card .avatar{width:30px; height:30px; font-size:11px;}
+  }
+  @media print{ .sb-toggle{display:none !important;} }
+</style>
+<script>
+(function(){
+  'use strict';
+  var root = document.documentElement, sb = document.getElementById('sidebar');
+  if(!sb) return;
+  var mq = window.matchMedia('(min-width:761px)');
+
+  // El texto de cada botón del menú va en <span class="nav-txt"> para poder ocultarlo al plegar.
+  sb.querySelectorAll('.nav-btn, .quicklink').forEach(function(b){
+    var nombre = '';
+    Array.prototype.slice.call(b.childNodes).forEach(function(n){
+      if(n.nodeType === 3 && n.textContent.trim()){
+        var s = document.createElement('span'); s.className = 'nav-txt';
+        s.textContent = n.textContent.trim(); nombre = s.textContent;
+        b.replaceChild(s, n);
+      }
+    });
+    if(nombre && !b.getAttribute('aria-label')) b.setAttribute('aria-label', nombre);
+    b.dataset.nombre = nombre;
+  });
+
+  var btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'sb-toggle'; btn.id = 'sbToggle';
+  btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17l-5-5 5-5M18 17l-5-5 5-5"/></svg>';
+  var brand = sb.querySelector('.brand'); if(brand) brand.appendChild(btn);
+
+  function plegado(){ return root.classList.contains('menu-plegado'); }
+  function pintar(){
+    var p = plegado() && mq.matches;
+    btn.title = p ? 'Desplegar menú (Ctrl + B)' : 'Plegar menú (Ctrl + B)';
+    btn.setAttribute('aria-label', p ? 'Desplegar menú' : 'Plegar menú');
+    btn.setAttribute('aria-expanded', p ? 'false' : 'true');
+    // Con el menú plegado, el nombre de cada sección sale al pasar el mouse.
+    sb.querySelectorAll('.nav-btn, .quicklink').forEach(function(b){
+      var t = b.dataset.nombre || '';
+      var c = b.querySelector('.count');
+      if(c && c.textContent.trim() && c.textContent.trim() !== '0') t += ' (' + c.textContent.trim() + ')';
+      if(c) { if(c.textContent.trim() === '0') c.setAttribute('data-cero',''); else c.removeAttribute('data-cero'); }
+      if(p) b.title = t; else if(!b.classList.contains('fin-admin')) b.removeAttribute('title'); else b.title = 'Solo administración';
+    });
+  }
+  function poner(p){
+    root.classList.toggle('menu-plegado', !!p);
+    try { localStorage.setItem('cenova.menuPlegado', p ? '1' : '0'); } catch(e){}
+    pintar();
+  }
+  btn.addEventListener('click', function(){ poner(!plegado()); });
+  document.addEventListener('keydown', function(e){
+    if((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === 'b' || e.key === 'B') && mq.matches){
+      var t = e.target; if(t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      e.preventDefault(); poner(!plegado());
+    }
+  });
+  // Plegado: tocar la tarjeta de sesión despliega el menú (ahí están "Cambiar contraseña" y "Cerrar sesión").
+  sb.addEventListener('click', function(e){
+    if(plegado() && mq.matches && e.target.closest('.session-card')){ poner(false); }
+  });
+  // Los contadores cambian con la sincronización: actualizar los títulos.
+  new MutationObserver(function(){ if(plegado()) pintar(); }).observe(document.getElementById('primaryNav'), {subtree:true, childList:true, characterData:true});
+  if(mq.addEventListener) mq.addEventListener('change', pintar);
+  pintar();
 })();
 </script>
 
