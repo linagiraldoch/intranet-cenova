@@ -1432,7 +1432,7 @@
       <span class="no-file">Informe interno: tiene costos y márgenes.</span>
       <div style="display:flex; gap:8px; margin-left:auto;">
         <button class="btn" id="infCerrar">Cerrar</button>
-        <button class="btn primary" id="infDescargar">Descargar para imprimir / PDF</button>
+        <button class="btn primary" id="infDescargar">Descargar PDF</button>
       </div>
     </div>
   </div>
@@ -1893,7 +1893,7 @@
       <div></div>
       <div style="display:flex; gap:8px;">
         <button class="btn" id="previewCancel">Cerrar</button>
-        <button class="btn primary" id="previewPrint">Descargar para imprimir</button>
+        <button class="btn primary" id="previewPrint">Descargar PDF</button>
       </div>
     </div>
   </div>
@@ -3464,12 +3464,84 @@
     }
   }
 
+
+  /* ---------- PDF directo (2026-10-09) ----------
+     Arma el documento en un marco oculto, aplica sus estilos de impresión y lo convierte
+     en PDF dentro del navegador (html2pdf.js, servido por la propia intranet).
+     Si algo falla, cae a la descarga del HTML de siempre. */
+  var PDF_LIB = '/html2pdf.bundle.min.js';
+  function pdfPreparar(html){
+    return String(html)
+      .replace(/@media\s+print/g, '@media all')                         /* usar los estilos de impresión */
+      .replace(/<script[\s\S]*?<\/script>/gi, '')                        /* sin el diálogo de imprimir */
+      .replace('</head>', '<style>html,body{background:#fff !important;margin:0 !important;} .print-bar{display:none !important;} .preview-doc,.doc{box-shadow:none !important;margin:0 auto !important;border-radius:0 !important;}</style>' +
+        '<scr' + 'ipt src="' + location.origin + PDF_LIB + '"></scr' + 'ipt></head>');
+  }
+  function generarPdf(html, opciones){
+    opciones = opciones || {};
+    return new Promise(function(resolve, reject){
+      var ifr = document.createElement('iframe');
+      ifr.setAttribute('aria-hidden', 'true'); ifr.tabIndex = -1;
+      ifr.style.cssText = 'position:fixed; left:-12000px; top:0; width:' + (opciones.ancho || 816) + 'px; height:1100px; border:0; visibility:hidden;';
+      var listo = false, limpiar = function(){ setTimeout(function(){ ifr.remove(); }, 500); };
+      var tope = setTimeout(function(){ if(!listo){ limpiar(); reject(new Error('El PDF tardó demasiado.')); } }, 45000);
+      ifr.onload = function(){
+        var w = ifr.contentWindow, d = ifr.contentDocument;
+        var esperar = function(n){
+          if(w.html2pdf) return Promise.resolve();
+          if(n > 100) return Promise.reject(new Error('No cargó el generador de PDF.'));
+          return new Promise(function(r){ setTimeout(r, 100); }).then(function(){ return esperar(n + 1); });
+        };
+        esperar(0).then(function(){ return (d.fonts && d.fonts.ready) ? d.fonts.ready : null; }).then(function(){
+          var el = d.querySelector('.preview-doc, .doc') || d.body;
+          /* Las opciones se crean dentro del marco: html2pdf revisa los arreglos con el Array de su propia ventana. */
+          return w.html2pdf().set(w.JSON.parse(JSON.stringify({
+            margin: opciones.margen || [10, 10, 12, 10],
+            image: {type: 'jpeg', quality: 0.96},
+            html2canvas: {scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false},
+            jsPDF: {unit: 'mm', format: opciones.formato || 'letter', orientation: 'portrait'},
+            pagebreak: {mode: ['css', 'legacy'], avoid: ['tr', '.preview-terms', '.preview-footicons', '.preview-totals-box', '.inf-kpis', '.inf-compra', '.inf-grid', '.inf-p', '.inf-aviso', '.inf-cobro', 'dt', 'dd', 'li', 'h3']}
+          }))).from(el).outputPdf('blob');
+        }).then(function(blob){ listo = true; clearTimeout(tope); limpiar(); resolve(blob); })
+          .catch(function(e){ listo = true; clearTimeout(tope); limpiar(); reject(e); });
+      };
+      ifr.srcdoc = pdfPreparar(html);
+      document.body.appendChild(ifr);
+    });
+  }
+  var _pdfOcupado = false;
+  async function offerPdfDownload(filename, html, okMsg, btn){
+    if(_pdfOcupado){ toast('Ya se está generando un PDF…'); return; }
+    _pdfOcupado = true;
+    var txt = btn ? btn.textContent : '';
+    if(btn){ btn.disabled = true; btn.textContent = 'Generando PDF…'; }
+    toast('Generando el PDF…', 4000);
+    try {
+      var blob = new Blob([await generarPdf(html)], {type: 'application/pdf'});   /* Blob de esta ventana (el del marco es de otra) */
+      var downloads = null;
+      try { downloads = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch(e){ downloads = null; }
+      if(downloads) await downloads.save({filename: filename, data: blob});
+      else { var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+      toast(okMsg || 'PDF descargado.', 4000);
+    } catch(err){
+      if(err && err.code === 'declined'){ /* la persona canceló */ }
+      else {
+        console.error('PDF', err);
+        toast('No se pudo generar el PDF (' + (err && err.message ? err.message : 'error') + '). Te descargo la versión para imprimir.', 6000);
+        await offerHtmlDownload(filename.replace(/\.pdf$/i, '.html'), html);
+      }
+    } finally {
+      _pdfOcupado = false;
+      if(btn){ btn.disabled = false; btn.textContent = txt; }
+    }
+  }
+
   document.getElementById('cotProviderViewBtn').addEventListener('click', function(){
     if(!state.items.length){ toast('Agrega primero los materiales del ítem.'); return; }
     var desc = document.getElementById('cotDescripcion').value.trim();
     var numero = document.getElementById('cotNumero').value.trim();
-    var filename = 'Materiales-' + slugFile(numero || desc || 'Cenova') + '.html';
-    offerHtmlDownload(filename, buildProviderDocument(state.items, desc));
+    var filename = 'Materiales-' + slugFile(numero || desc || 'Cenova') + '.pdf';
+    offerPdfDownload(filename, buildProviderDocument(state.items, desc), 'Lista de materiales descargada en PDF (sin precios, para el proveedor).', document.getElementById('cotProviderViewBtn'));
   });
 
   /* Filas de ítems y cuadro de totales de un documento (cotización o prefactura). */
@@ -3766,13 +3838,13 @@
     if(!docEl || !docEl.innerHTML.trim()){ toast('No hay documento para imprimir.'); return; }
     var pfDoc = state.previewingPfId ? state.prefacturas.get(state.previewingPfId) : null;
     if(pfDoc){
-      var pfName = 'Prefactura-' + slugFile(pfDoc.numero || 'Cenova') + '-' + slugFile((pfDoc.cot && pfDoc.cot.cliente) || '') + '.html';
-      offerHtmlDownload(pfName, buildPrintDocument(docEl.innerHTML).replace('<title>Cotización — Cenova S.A.S.</title>', '<title>Prefactura ' + escapeHtml(pfDoc.numero||'') + ' — Cenova S.A.S.</title>'), 'Prefactura descargada. Ábrela y usa Ctrl+P para imprimir o guardar como PDF.');
+      var pfName = 'Prefactura-' + slugFile(pfDoc.numero || 'Cenova') + '-' + slugFile((pfDoc.cot && pfDoc.cot.cliente) || '') + '.pdf';
+      offerPdfDownload(pfName, buildPrintDocument(docEl.innerHTML).replace('<title>Cotización — Cenova S.A.S.</title>', '<title>Prefactura ' + escapeHtml(pfDoc.numero||'') + ' — Cenova S.A.S.</title>'), 'Prefactura descargada en PDF.', this);
       return;
     }
     var c = state.previewingCotId ? state.cotizaciones.get(state.previewingCotId) : null;
-    var filename = 'Cotizacion-' + slugFile((c && c.numero) || 'Cenova') + '.html';
-    offerHtmlDownload(filename, buildPrintDocument(docEl.innerHTML), 'Cotización descargada. Ábrela y usa Ctrl+P para imprimir o guardar como PDF.');
+    var filename = 'Cotizacion-' + slugFile((c && c.numero) || 'Cenova') + '-' + slugFile((c && c.cliente) || '') + '.pdf';
+    offerPdfDownload(filename, buildPrintDocument(docEl.innerHTML), 'Cotización descargada en PDF.', this);
   });
 
   /* ---------- Calendar / Agenda ---------- */
@@ -8129,7 +8201,7 @@
       '<div class="print-bar">Informe interno de Cenova — tiene costos y márgenes: no lo envíes al cliente. <button id="pb" type="button">Imprimir / Guardar PDF</button></div>' +
       '<div class="doc inf">' + infContenido(inf.pid) + '</div>' +
       '<scr'+'ipt>document.getElementById("pb").addEventListener("click", function(){ window.print(); });</scr'+'ipt></body></html>';
-    offerHtmlDownload('Informe-' + slugFile(p.nombre || 'proyecto') + '.html', html, 'Informe descargado. Ábrelo y usa Ctrl+P para guardarlo en PDF.');
+    offerPdfDownload('Informe-' + slugFile(p.nombre || 'proyecto') + '.pdf', html, 'Informe descargado en PDF.', this);
   });
 
   if(window.claude && window.claude.use){

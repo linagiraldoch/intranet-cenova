@@ -422,6 +422,12 @@ export default {
       if (!s || s.debe_cambiar) return redir('/login');
       if (p === '/' || p === '/index.html') return await pagina(env, req, '/index.html');
       if (p === '/app.js') return await pagina(env, req, '/app.js');
+      // Librería para generar los PDF (cotizaciones, prefacturas, informes) dentro del navegador.
+      if (p === '/html2pdf.bundle.min.js') {
+        const r = await pagina(env, req, p);
+        const h = new Headers(r.headers); h.set('cache-control', 'private, max-age=604800');
+        return new Response(r.body, { status: r.status, headers: h });
+      }
       return redir('/');
     } catch (e) {
       console.log('Error', p, e && e.stack || e);
