@@ -1901,7 +1901,7 @@
    El campo muestra "300.000", pero input.value sigue entregando "300000" al resto del código.
    Decimales con coma (1.500,5). */
 (function(){
-  var SEL = '#finMovMonto,#finFijoMonto,#ocValor,#ocCostoImprevistos,.pit-costo,.it-costo,.it-precio,.nv-costo,.ps-pago,.ps-alm,.ps-trans,.ps-otros,.pg-monto,.fc-saldo,.input-miles';
+  var SEL = '#finMovMonto,#finFijoMonto,#ocValor,#ocCostoImprevistos,.pit-costo,.it-costo,.it-precio,.nv-costo,.ps-pago,.ps-alm,.ps-trans,.ps-otros,.pg-monto,.pg-com,.pg-ret,.fc-saldo,.input-miles';
   var D = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
   function miles(entero){ return entero.replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
   // Texto escrito por la persona (formato colombiano) → número JS en texto
@@ -4781,9 +4781,9 @@
     var extra = (reales!=null && diasPlan) ? Math.max(0, reales - diasPlan) : 0;
     var diasCot = Number(c.diasInstalacion) || diasPlan;
     var tarifa = diasCot ? cotInstalacionSubtotal(c) / diasCot : 0;
-    var mat = novPerdida(o.novedades), otros = Number(o.costoImprevistos)||0;
+    var mat = novPerdida(o.novedades), otros = Number(o.costoImprevistos)||0, pasarela = ocComisiones(o);
     var tram = novTramite(o.novedades).reduce(function(s,n){ return s+(Number(n.costo)||0); }, 0);
-    return {diasCot: Number(c.diasInstalacion)||null, diasPlan: diasPlan||null, reales: reales, extra: extra, tarifa: tarifa, noCobrado: extra * tarifa, materiales: mat, otros: otros, tramite: tram, imprevistos: mat + otros};
+    return {diasCot: Number(c.diasInstalacion)||null, diasPlan: diasPlan||null, reales: reales, extra: extra, tarifa: tarifa, noCobrado: extra * tarifa, materiales: mat, otros: otros, pasarela: pasarela, tramite: tram, imprevistos: mat + otros + pasarela};
   }
   function pct(n){ return (isFinite(n) ? (Math.round(n*1000)/10).toString().replace('.', ',') : '0') + ' %'; }
 
@@ -5317,7 +5317,12 @@
      Pagos del cliente (anticipos y abonos) — la cartera es el saldo
      ===================================================================== */
   var PAGO_CONCEPTOS = {anticipo:'Anticipo', abono:'Abono', saldo:'Pago del saldo', otro:'Otro'};
-  var PAGO_MEDIOS = {transferencia:'Transferencia', efectivo:'Efectivo', cheque:'Cheque', otro:'Otro'};
+  var PAGO_MEDIOS = {transferencia:'Transferencia', pasarela:'Pasarela de pago', efectivo:'Efectivo', cheque:'Cheque', otro:'Otro'};
+  /* Pasarela de pago (2026-10-09): el cliente paga el monto completo (cuenta para su saldo), pero la pasarela
+     descuenta su comisión con IVA (costo de la obra) y una retención (anticipo de renta de Cenova, no es costo). */
+  function pgComision(pg){ return Number(pg && pg.comision) || 0; }
+  function pgRetencion(pg){ return Number(pg && pg.retencion) || 0; }
+  function ocComisiones(o){ return (o.pagos||[]).reduce(function(s,p){ return s + pgComision(p); }, 0); }
   function ocRecibido(o){ return (o.pagos||[]).reduce(function(s,p){ return s + (Number(p.monto)||0); }, 0); }
   function ocSaldo(o){
     if(o.estado === 'anulada') return 0;
@@ -5335,6 +5340,8 @@
       var ant = Math.round(valor*antPct/100);
       html += '<br>Anticipo pactado ('+antPct+' %): '+fmtMoney.format(ant)+' — '+(rec >= ant ? '<span style="color:var(--success); font-weight:600;">recibido</span>' : '<span style="color:var(--warning); font-weight:600;">faltan '+fmtMoney.format(ant-rec)+'</span>');
     }
+    var com = state.ocPagos.reduce(function(s,p){ return s + pgComision(p); }, 0), ret = state.ocPagos.reduce(function(s,p){ return s + pgRetencion(p); }, 0);
+    if(com || ret) html += '<br>Descuentos de la pasarela: comisión con IVA '+fmtMoney.format(com)+' (costo de la obra) · retención '+fmtMoney.format(ret)+' (saldo a favor en renta) · <strong>neto que llegó: '+fmtMoney.format(rec - com - ret)+'</strong>';
     if(valor && saldo === 0 && rec) html += '<br><span style="color:var(--success); font-weight:600;">Orden pagada completa: al guardar queda en estado "Pagada".</span>';
     box.innerHTML = html;
     box.className = 'info-box' + (valor && saldo===0 && rec ? ' ok' : '');
@@ -5348,7 +5355,11 @@
         '<td><select class="pg-concepto">'+opt(PAGO_CONCEPTOS, pg.concepto||'abono')+'</select></td>'+
         '<td><input type="number" class="pg-monto" value="'+(pg.monto!=null?pg.monto:'')+'" min="0" step="1000" placeholder="$"></td>'+
         '<td><select class="pg-medio">'+opt(PAGO_MEDIOS, pg.medio||'transferencia')+'</select></td>'+
-        '<td><input type="text" class="pg-nota" value="'+escapeHtml(pg.nota||'')+'" placeholder="Referencia, banco…"></td>'+
+        '<td><input type="text" class="pg-nota" value="'+escapeHtml(pg.nota||'')+'" placeholder="Referencia, banco…">'+
+          (pg.medio === 'pasarela' || pgComision(pg) || pgRetencion(pg) ? '<div class="pg-pasarela" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">'+
+            '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Comisión + IVA<input type="number" class="pg-com" value="'+(pg.comision!=null?pg.comision:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label>'+
+            '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Retención<input type="number" class="pg-ret" value="'+(pg.retencion!=null?pg.retencion:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label></div>' : '')+
+        '</td>'+
         '<td class="col-rm"><button type="button" class="icon-btn pg-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
     }).join('');
     var bind = function(cls, key, num){
@@ -5359,7 +5370,8 @@
         });
       });
     };
-    bind('pg-fecha','fecha'); bind('pg-concepto','concepto'); bind('pg-monto','monto',true); bind('pg-medio','medio'); bind('pg-nota','nota');
+    bind('pg-fecha','fecha'); bind('pg-concepto','concepto'); bind('pg-monto','monto',true); bind('pg-medio','medio'); bind('pg-nota','nota'); bind('pg-com','comision',true); bind('pg-ret','retencion',true);
+    body.querySelectorAll('.pg-medio').forEach(function(el){ el.addEventListener('change', function(){ renderOcPagos(); }); });
     body.querySelectorAll('.pg-rm').forEach(function(b){ b.addEventListener('click', function(){ state.ocPagos.splice(+b.closest('tr').dataset.i,1); renderOcPagos(); }); });
     renderOcPagosSummary();
   }
@@ -5387,14 +5399,15 @@
     software:'Software y suscripciones', profesionales:'Contador y servicios profesionales', legales:'Trámites legales y notariales',
     nomina:'Nómina y seguridad social', impuestos:'Impuestos', bancarios:'Gastos bancarios y 4x1000',
     herramientas:'Herramientas y equipos propios', marketing:'Publicidad y marketing', oficina:'Arriendo, servicios y oficina',
-    otro:'Otro gasto', prestamo_pago:'Pago de préstamo', retiro:'Retiro de socios / dividendos'
+    otro:'Otro gasto', prestamo_pago:'Pago de préstamo', retiro:'Retiro de socios / dividendos',
+    retencion:'Retención que nos hicieron (anticipo de renta)'
   };
   var FIN_CAT_INGRESO = {
     venta:'Venta sin orden de compra', reintegro:'Reintegro o devolución', rendimientos:'Rendimientos financieros',
     otro:'Otro ingreso', aporte:'Aporte de socios', prestamo:'Préstamo recibido'
   };
   /* Movimientos de capital: mueven caja pero no son ganancia ni gasto del negocio */
-  var FIN_NO_OPERATIVOS = {aporte:1, prestamo:1, prestamo_pago:1, retiro:1};
+  var FIN_NO_OPERATIVOS = {aporte:1, prestamo:1, prestamo_pago:1, retiro:1, retencion:1};
   var FIN_FREC = {mensual:1, bimestral:2, trimestral:3, semestral:6, anual:12};
   var FIN_FREC_LBL = {mensual:'Mensual', bimestral:'Cada 2 meses', trimestral:'Trimestral', semestral:'Semestral', anual:'Anual'};
   var FIN_TIPO_CUENTA = {banco:'Banco', efectivo:'Efectivo / caja menor', billetera:'Nequi / Daviplata', otra:'Otra'};
@@ -5490,6 +5503,12 @@
           tercero: o.cliente || '', monto: monto, iva: monto * ratio, cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '',
           proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: pg.nota || ''
         });
+        var base = {fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'egreso', tercero: 'Pasarela de pago', iva: 0,
+          cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: ''};
+        if(pgComision(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':com', categoria:'bancarios', monto: pgComision(pg),
+          descripcion: 'Comisión de pasarela con IVA · pago ' + (o.numero||'orden'), nota: 'Ya está en el costo de la obra (imprevistos de la orden).'}));
+        if(pgRetencion(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':ret', categoria:'retencion', monto: pgRetencion(pg),
+          descripcion: 'Retención en la fuente · pago ' + (o.numero||'orden'), nota: 'Saldo a favor: se descuenta en la declaración de renta. Pedir el certificado.'}));
       });
     });
     out.sort(function(a,b){ return String(b.fecha).localeCompare(String(a.fecha)); });
@@ -5893,7 +5912,7 @@
       var cuenta = m.tipo === 'transferencia' ? escapeHtml(finCuentaNombre(m.cuentaId))+' → '+escapeHtml(finCuentaNombre(m.cuentaDestinoId)) : escapeHtml(finCuentaNombre(m.cuentaId));
       var attrs = m.fuente === 'orden' ? ' class="from-oc" data-oc="'+escapeHtml(m.ocId)+'" title="Viene de la orden de compra. Se edita allá." style="cursor:pointer;"' : ' data-mov="'+escapeHtml(m._id)+'"';
       h += '<tr'+attrs+'><td class="num">'+fmtShort(m.fecha)+'<div class="d-notes">'+escapeHtml(String(m.fecha||'').slice(0,4))+'</div></td>'+
-        '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">Capital</span></div>':'')+'</td>'+
+        '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">'+(m.categoria==='retencion'?'Saldo a favor':'Capital')+'</span></div>':'')+'</td>'+
         '<td class="desc-cell">'+desc+'</td><td>'+escapeHtml(finProyNombre(m.proyectoId)||'—')+'</td><td>'+cuenta+'</td>'+
         '<td>'+(m.estado === 'pendiente' ? '<span class="fin-badge warn">Pendiente</span>' : '<span class="fin-badge ok">Pagado</span>')+'</td>'+
         '<td class="num '+(signo>0?'pos':signo<0?'neg':'')+'"><strong>'+(signo>0?'+':signo<0?'−':'')+finMoney(v)+'</strong></td></tr>';
@@ -7830,7 +7849,8 @@
     h += l('Personal', r.personalPlan, pr, r.personalReal == null ? 'Aún no se registra lo pagado en la orden' : '');
     if(r.adicionales) h += l('Otros costos de la cotización', r.adicionales, r.adicionales);
     if(r.dv.materiales) h += l('Materiales dañados o repuestos', 0, r.dv.materiales, 'Novedades de la orden');
-    if(r.dv.otros) h += l('Otros imprevistos', 0, r.dv.otros);
+    if(r.dv.otros) h += l('Otros imprevistos', 0, r.dv.otros, escapeHtml(r.o.causaDetalle || ''));
+    if(r.dv.pasarela) h += l('Comisión de pasarela de pago', 0, r.dv.pasarela, 'Con IVA. La retención no es costo: es saldo a favor en renta');
     h += '<div class="cos-linea cos-total"><span>Total</span><span class="num">'+fmtMoney.format(r.plan)+'</span><span class="num">'+fmtMoney.format(r.real)+'</span></div></div>';
     var notas = [];
     if(r.dv.extra) notas.push('Se trabajaron ' + r.dv.extra + ' día(s) más de lo cotizado' + (r.dv.noCobrado ? ' (equivalen a ' + fmtMoney.format(r.dv.noCobrado) + ' que no se cobraron)' : '') + '.');
