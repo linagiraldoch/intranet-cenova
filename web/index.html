@@ -723,6 +723,29 @@
   @media (max-width:1100px){ .fin-grid{grid-template-columns:1fr;} }
   @media (max-width:900px){ .kpis.stats{grid-template-columns:1fr 1fr;} }
   @media (max-width:480px){ .kpis.stats .kpi{padding:12px 12px;} .kpis.stats .kpi .value{font-size:17px; overflow-wrap:anywhere;} }
+  /* Inventario y Costos (2026-10-09) */
+  .nav-btn .count.alerta{color:var(--warning); font-weight:700;}
+  html.menu-plegado .nav-btn .count.alerta{background:var(--warning-soft); border-color:var(--warning);}
+  #view-inventario .filters, #view-costos .filters{flex-wrap:wrap;}
+  #invContainer, #cosContainer{margin-top:12px;}
+  .cos-sug{display:flex; align-items:baseline; gap:6px; font-size:12px; color:var(--text-muted); line-height:1.35; margin:2px 0;}
+  .cos-sug .btn{padding:2px 8px; font-size:11.5px; flex:none;}
+  tr.cos-cambiado td{background:var(--accent-soft);}
+  #view-costos input.cos-costo, #view-costos input.cos-margen, #view-costos input.cos-prov{padding:6px 8px; border:1px solid var(--border); border-radius:7px; background:var(--surface); color:var(--text); font:inherit; font-size:13px;}
+  #view-costos input.cos-costo, #view-costos input.cos-margen{text-align:right; font-family:"IBM Plex Mono",monospace;}
+  tr.cos-detalle td{background:var(--surface-2);}
+  #view-costos tfoot td{padding:12px 14px; font-size:13.3px; background:var(--surface-2);}
+  .cos-det{max-width:560px;}
+  .cos-linea{display:grid; grid-template-columns:1fr 130px 130px; gap:10px; padding:5px 0; border-bottom:1px dashed var(--border); font-size:13px;}
+  .cos-linea small{display:block; color:var(--text-muted); font-size:11.5px;}
+  .cos-linea.cos-head{font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); border-bottom:1px solid var(--border);}
+  .cos-linea.cos-total{font-weight:700; border-bottom:none;}
+  .cos-notas{margin-top:10px; font-size:12.5px; color:var(--text-muted); line-height:1.6;}
+  @media (max-width:760px){
+    .cos-linea{grid-template-columns:1fr 92px 92px; font-size:12.5px;}
+    #view-costos input.cos-costo, #view-costos input.cos-prov{width:100% !important;}
+    #view-costos .filters .btn, #view-inventario .filters .btn{flex:1 1 auto; justify-content:center;}
+  }
 </style>
 
 <div class="app">
@@ -738,38 +761,50 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
         Resumen
       </button>
+      <div class="nav-label">Comercial</div>
       <button class="nav-btn" data-view="cotizaciones">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3h8l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M9 12h6M9 16h6M9 8h3"/></svg>
         Cotizaciones
         <span class="count" id="navCountCot">0</span>
-      </button>
-      <button class="nav-btn" data-view="ordenes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/><path d="M4 4l3-2h10l3 2"/></svg>
-        Órdenes de compra
-        <span class="count" id="navCountOc">0</span>
-      </button>
-      <button class="nav-btn" data-view="proyectos">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
-        Proyectos
-        <span class="count" id="navCountProy">0</span>
       </button>
       <button class="nav-btn" data-view="clientes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"/><circle cx="10" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Clientes
         <span class="count" id="navCountCli">0</span>
       </button>
+      <button class="nav-btn" data-view="proyectos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>
+        Proyectos
+        <span class="count" id="navCountProy">0</span>
+      </button>
+      <div class="nav-label">Operación</div>
+      <button class="nav-btn" data-view="ordenes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/><path d="M4 4l3-2h10l3 2"/></svg>
+        Órdenes de compra
+        <span class="count" id="navCountOc">0</span>
+      </button>
       <button class="nav-btn" data-view="agenda">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
         Agenda
         <span class="count" id="navCountEvt">0</span>
       </button>
-      <button class="nav-btn" data-view="estadisticas">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
-        Estadísticas
+      <button class="nav-btn" data-view="inventario">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 8 12 3 3 8v8l9 5 9-5V8Z"/><path d="m3 8 9 5 9-5M12 13v8"/></svg>
+        Inventario
+        <span class="count" id="navCountInv"></span>
       </button>
+      <div class="nav-label">Administración</div>
       <button class="nav-btn" data-view="precios">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8Z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>
         Precios
+      </button>
+      <button class="nav-btn" data-view="costos">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.5-.8-1.5-1.3-2.8-1.3-1.7 0-2.8.9-2.8 2s1 1.7 2.8 2.1c1.8.4 2.9 1 2.9 2.2s-1.2 2-2.9 2c-1.4 0-2.5-.6-3-1.5M12 6.5v1.4M12 16.6V18"/></svg>
+        Costos
+      </button>
+      <button class="nav-btn" data-view="estadisticas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+        Estadísticas
       </button>
       <button class="nav-btn fin-admin" data-view="finanzas" hidden title="Solo administración">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><path d="M16 15h2.5"/><path d="M6 6V4.5h12V6"/></svg>
@@ -974,6 +1009,40 @@
       </div>
       <div class="info-box" id="precInfo" style="margin-bottom:14px;"></div>
       <div id="precContainer"></div>
+    </section>
+
+    <section class="view" id="view-inventario">
+      <div class="kpis stats" id="invKpis"></div>
+      <div class="subtabs fin-tabs" id="invTabs">
+        <button class="subtab-btn active" data-inv="existencias">Existencias</button>
+        <button class="subtab-btn" data-inv="movimientos">Movimientos</button>
+      </div>
+      <div class="filters">
+        <input type="search" id="invSearch" placeholder="Buscar artículo, obra o proveedor…">
+        <select id="invFiltro"></select>
+        <button class="btn" id="invExportar">Exportar a Excel (CSV)</button>
+        <button class="btn" id="invNuevoArt" hidden>+ Artículo nuevo</button>
+        <button class="btn" id="invAjusteBtn">Conteo / ajuste</button>
+        <button class="btn" id="invSalidaBtn">− Salida a obra</button>
+        <button class="btn primary" id="invEntradaBtn">+ Entrada</button>
+      </div>
+      <div id="invContainer"></div>
+    </section>
+
+    <section class="view" id="view-costos">
+      <div class="subtabs fin-tabs" id="cosTabs">
+        <button class="subtab-btn active" data-cos="cargar">Costos por cargar</button>
+        <button class="subtab-btn" data-cos="proveedores">Precios de proveedores</button>
+        <button class="subtab-btn" data-cos="obras">Costo real por obra</button>
+      </div>
+      <div class="filters" id="cosFilters">
+        <input type="search" id="cosSearch" placeholder="Buscar…">
+        <select id="cosFiltro"></select>
+        <button class="btn" id="cosExportar">Exportar a Excel (CSV)</button>
+        <button class="btn primary" id="cosGuardar" hidden>Guardar costos</button>
+      </div>
+      <div class="info-box" id="cosInfo" style="margin-bottom:14px;"></div>
+      <div id="cosContainer"></div>
     </section>
 
     <section class="view" id="view-finanzas">
@@ -1355,6 +1424,32 @@
 </div>
 
 <!-- Modal: ítem de Precios -->
+<div class="overlay" id="invOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="invTitle">Movimiento de inventario</h3><button class="modal-close" id="invClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="invBody"></div>
+    <div class="modal-foot">
+      <button class="btn" id="invBorrar" style="color:var(--critical); display:none;">Borrar movimiento</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="invCancel">Cerrar</button>
+        <button class="btn primary" id="invSave">Registrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="overlay" id="cosPickOverlay">
+  <div class="modal">
+    <div class="modal-head"><h3 id="cosPickTitle">Usar este costo en Precios</h3><button class="modal-close" id="cosPickClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="cosPickBody"></div>
+    <div class="modal-foot">
+      <span></span>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="cosPickCancel">Cerrar</button>
+        <button class="btn primary" id="cosPickSave">Guardar en Precios</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="precOverlay">
   <div class="modal wide">
     <div class="modal-head"><h3 id="precTitle">Precio</h3><button class="modal-close" id="precClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -1980,11 +2075,13 @@
   document.getElementById('confirmOverlay').addEventListener('click', function(e){ if(e.target===this) _closeConfirm(false); });
 
   /* ---------- Navigation ---------- */
-  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas'];
+  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas','inventario','costos'];
   var titles = {
     resumen:['Resumen','Cotizaciones, proyectos y agenda de Cenova en un solo lugar.'],
     cotizaciones:['Cotizaciones','Arma, edita y da seguimiento a cada cotización.'],
     estadisticas:['Estadísticas','Cuánto deja cada proyecto, qué se dejó de cobrar y cómo va la operación.'],
+    inventario:['Inventario','Lo que Cenova tiene guardado: entradas, salidas a cada obra, conteos y alertas de stock bajo.'],
+    costos:['Costos','Precios de proveedores, costos por cargar en Precios y lo que costó de verdad cada obra frente a lo cotizado.'],
     precios:['Precios','Precios estándar de servicios, personal, materiales, kits y equipos para cotizar sin volver a calcular.'],
     finanzas:['Finanzas','Flujo de caja, gastos de la empresa y rentabilidad real. Solo administración.'],
     ordenes:['Órdenes de compra','Órdenes recibidas, su cotización, plazos de pago e instalación.'],
@@ -2002,6 +2099,8 @@
     if(v==='estadisticas') renderEstadisticas();
     if(v==='finanzas') renderFinanzas();
     if(v==='precios') renderPrecios();
+    if(v==='inventario') renderInventario();
+    if(v==='costos') renderCostos();
   }
   document.getElementById('primaryNav').addEventListener('click', function(e){
     var btn = e.target.closest('.nav-btn'); if(btn) showView(btn.dataset.view);
@@ -2786,7 +2885,7 @@
     renderResumen(); renderCotizaciones(); renderOrdenes(); renderProyectos(); renderProveedores(); renderClientes();
     if(document.getElementById('view-agenda').classList.contains('active')) renderCronograma();
     if(document.getElementById('view-estadisticas').classList.contains('active')) renderEstadisticas();
-    renderFinanzas();
+    renderFinanzas(); invCostRefresh();
     document.getElementById('navCountEvt').textContent = state.eventos.size;
     document.getElementById('navCountProv').textContent = state.cotizacionesProveedor.size;
     if(document.getElementById('view-agenda').classList.contains('active')){ renderCalendar(); renderDayPanel(); }
@@ -6480,7 +6579,12 @@
       db.collection('precios').onSnapshot(function(snap){
         state.precios = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.precios = true;
-        renderPrecios(); precSembrar();
+        renderPrecios(); precSembrar(); invCostRefresh();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
+      db.collection('inventario').onSnapshot(function(snap){
+        state.inventario = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        invCostRefresh();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('clientes').onSnapshot(function(snap){
@@ -6726,7 +6830,9 @@
     } else {
       h += '<div class="field-row">' + precCampo('Costo (sin IVA)', precInput('precCosto', p.costo, {money:1, ro: ro})) + precCampo('Margen (%)', precInput('precMargen', p.margen, {num:1, ro: ro, step:'0.5', max:'95'})) + '</div>';
       if(t === 'material' || t === 'equipo'){
-        h += '<div class="field-row">' + precCampo('Stock (lo que tenemos)', '<input type="number" id="precStock" min="0" step="1" value="'+(precNum(p.stock)==null?'':p.stock)+'" placeholder="Sin contar">') + precCampo('Nota del stock', '<input type="text" id="precStockNota" value="'+escapeHtml(p.stockNota||'')+'" placeholder="Dónde está, de qué obra sobró…">') + '</div>';
+        h += '<div class="field-row">' + precCampo('Stock (lo que tenemos)', '<input type="number" id="precStock" min="0" step="1" value="'+(precNum(p.stock)==null?'':p.stock)+'" placeholder="Sin contar">') + precCampo('Nota del stock', '<input type="text" id="precStockNota" value="'+escapeHtml(p.stockNota||'')+'" placeholder="De qué obra sobró, estado…">') + '</div>';
+        h += '<div class="field-row">' + precCampo('Stock mínimo', '<input type="number" id="precStockMin" min="0" step="1" value="'+(precNum(p.stockMin)==null?'':p.stockMin)+'" placeholder="Sin mínimo">', 'Avisa en Inventario cuando queda en este número o menos.') + precCampo('Ubicación', '<input type="text" id="precUbicacion" value="'+escapeHtml(p.ubicacion||'')+'" placeholder="Bodega, oficina, camioneta…">') + '</div>';
+        h += '<div class="no-file">Las entradas y salidas se registran en <strong>Inventario</strong> (quedan con fecha, obra y quién). Si cambias el stock aquí, se guarda como un ajuste de conteo.</div>';
       }
     }
     if(t !== 'instalacion' && t !== 'personal' && t !== 'logistica' && t !== 'viatico'){
@@ -6795,8 +6901,9 @@
     if(!admin){
       var upd = {editadoEn: hoy, editadoPor: state.userId || null};
       if(t === 'kit') upd.componentes = prec.edit.componentes;
-      else { upd.stock = precNum(v('precStock')); upd.stockNota = (v('precStockNota')||'').trim(); }
-      db.collection('precios').doc(prec.editId).update(upd).then(function(){ toast('Guardado'); closePrecioModal(); })
+      else { upd.stock = precNum(v('precStock')); upd.stockNota = (v('precStockNota')||'').trim(); upd.stockMin = precNum(v('precStockMin')); upd.ubicacion = (v('precUbicacion')||'').trim(); }
+      var antes0 = state.precios.get(prec.editId) || {}, id0 = prec.editId;
+      db.collection('precios').doc(prec.editId).update(upd).then(function(){ if(t !== 'kit') invAjusteDesdePrecios(id0, antes0, upd.stock); toast('Guardado'); closePrecioModal(); })
         .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
       return;
     }
@@ -6819,12 +6926,13 @@
       data.componentes = prec.edit.componentes; data.margen = precNum(v('precMargen'));
     } else {
       data.costo = precNum(v('precCosto')); data.margen = precNum(v('precMargen'));
-      if(t === 'material' || t === 'equipo'){ data.stock = precNum(v('precStock')); data.stockNota = (v('precStockNota')||'').trim(); }
+      if(t === 'material' || t === 'equipo'){ data.stock = precNum(v('precStock')); data.stockNota = (v('precStockNota')||'').trim(); data.stockMin = precNum(v('precStockMin')); data.ubicacion = (v('precUbicacion')||'').trim(); }
     }
     if(data.margen != null && (data.margen < 0 || data.margen >= 95)){ toast('El margen debe estar entre 0 y 95 %.'); return; }
     var col = db.collection('precios');
-    var p = prec.editId ? col.doc(prec.editId).set(data) : col.add(data);
-    p.then(function(){ toast(nombre + ' guardado'); closePrecioModal(); })
+    var antes1 = prec.editId ? (state.precios.get(prec.editId) || {}) : {}, id1 = prec.editId;
+    var p = prec.editId ? col.doc(prec.editId).set(data) : col.add(data).then(function(ref){ id1 = ref && ref.id; return ref; });
+    p.then(function(){ if(id1 && (t === 'material' || t === 'equipo')) invAjusteDesdePrecios(id1, antes1, data.stock); toast(nombre + ' guardado'); closePrecioModal(); })
       .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
   document.getElementById('precDelete').addEventListener('click', function(){
@@ -7062,6 +7170,704 @@
     box.innerHTML = h;
     box.className = 'info-box ' + (r.dif <= -1 ? 'warn' : r.dif >= 1 ? '' : 'ok');
   }
+
+
+  /* =====================================================================
+     INVENTARIO (colección "inventario", 2026-10-09)
+     Los artículos son los materiales y equipos de Precios: ahí viven su
+     stock, stock mínimo, ubicación y costo. Cada entrada, salida a obra,
+     devolución o conteo queda como un movimiento con fecha, obra y quién,
+     y actualiza el stock del artículo en Precios.
+     El equipo registra movimientos; solo administración los borra.
+     ===================================================================== */
+  state.inventario = new Map();
+  var inv = {tab: 'existencias', filtro: '', tipo: 'entrada', articuloId: '', movId: null};
+  var INV_TIPOS = {
+    entrada:    {lbl: 'Entrada', badge: 'ok', signo: 1, ayuda: 'Compra o material que llega a la bodega.'},
+    salida:     {lbl: 'Salida a obra', badge: 'acc', signo: -1, ayuda: 'Material que se lleva a una obra.'},
+    devolucion: {lbl: 'Devolución de obra', badge: 'ok', signo: 1, ayuda: 'Lo que sobró de una obra y vuelve a la bodega.'},
+    ajuste:     {lbl: 'Conteo / ajuste', badge: 'warn', signo: 0, ayuda: 'Escribe cuánto hay de verdad; se guarda la diferencia.'}
+  };
+  function invArticulos(){
+    return precLista('material').concat(precLista('equipo'));
+  }
+  function invEstado(p){
+    var st = precNum(p.stock), min = precNum(p.stockMin);
+    if(st == null) return {k: 'sin', lbl: 'Sin contar', badge: ''};
+    if(st <= 0) return {k: 'agotado', lbl: 'Agotado', badge: 'crit'};
+    if(min != null && st <= min) return {k: 'bajo', lbl: 'Bajo mínimo', badge: 'warn'};
+    return {k: 'ok', lbl: 'Disponible', badge: 'ok'};
+  }
+  function invCant(n){ n = Number(n) || 0; return n.toLocaleString('es-CO', {maximumFractionDigits: 2}); }
+  function invMovs(){
+    var l = []; state.inventario.forEach(function(m, id){ l.push(Object.assign({}, m, {_id: id})); });
+    l.sort(function(a, b){ return String(b.fecha||'').localeCompare(String(a.fecha||'')) || String(b.creadoEn||'').localeCompare(String(a.creadoEn||'')); });
+    return l;
+  }
+  function invOrdenes(){
+    var l = []; state.ordenes.forEach(function(o, id){ if(o.estado !== 'anulada') l.push(Object.assign({}, o, {_id: id})); });
+    l.sort(function(a, b){ return String(b.numero||'').localeCompare(String(a.numero||'')); });
+    return l;
+  }
+  function invObra(m){
+    var o = m.ordenId && state.ordenes.get(m.ordenId);
+    if(o) return (o.numero || 'Orden') + (o.cliente ? ' · ' + o.cliente : '');
+    if(m.ordenNumero) return m.ordenNumero;
+    var p = m.proyectoId && state.proyectos.get(m.proyectoId);
+    return p ? (p.nombre || 'Proyecto') + (p.cliente ? ' · ' + p.cliente : '') : '';
+  }
+  function invUsuario(id){ return ({lmgiraldo: 'Lina', amberrocal: 'Ángel', jlcantillo: 'Jorge'})[id] || id || ''; }
+  /* Cuánto vale lo que sacó una orden de la bodega (salidas menos devoluciones, al costo de ese día) */
+  function invPorOrden(oid){
+    var r = {valor: 0, items: 0};
+    state.inventario.forEach(function(m){
+      if(m.ordenId !== oid || (m.tipo !== 'salida' && m.tipo !== 'devolucion')) return;
+      var q = Number(m.cantidad) || 0, k = Number(m.costoRef) || 0;
+      r.valor += (m.tipo === 'salida' ? 1 : -1) * q * k; r.items++;
+    });
+    return r;
+  }
+
+  function invCostRefresh(){
+    var nav = document.getElementById('navCountInv');
+    if(nav){
+      var alertas = invArticulos().filter(function(p){ var e = invEstado(p).k; return e === 'bajo' || e === 'agotado'; }).length;
+      nav.textContent = alertas ? String(alertas) : '';
+      nav.classList.toggle('alerta', alertas > 0);
+      nav.title = alertas ? alertas + ' artículo(s) agotados o bajo el mínimo' : '';
+    }
+    var vi = document.getElementById('view-inventario'), vc = document.getElementById('view-costos');
+    if(vi && vi.classList.contains('active')) renderInventario();
+    if(vc && vc.classList.contains('active') && !cos.editando) renderCostos();
+  }
+
+  function renderInventario(){
+    var cont = document.getElementById('invContainer'); if(!cont) return;
+    var admin = precAdmin();
+    document.getElementById('invNuevoArt').hidden = !admin;
+    document.querySelectorAll('#invTabs .subtab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.inv === inv.tab); });
+    var arts = invArticulos(), movs = invMovs();
+    var valor = 0, sinCosto = 0, alertas = 0, contados = 0, mes = todayIso().slice(0, 7), movMes = 0;
+    arts.forEach(function(p){
+      var st = precNum(p.stock), k = precNum(p.costo), e = invEstado(p).k;
+      if(st != null){ contados++; if(k != null) valor += st * k; else if(st > 0) sinCosto++; }
+      if(e === 'bajo' || e === 'agotado') alertas++;
+    });
+    movs.forEach(function(m){ if(String(m.fecha||'').slice(0, 7) === mes) movMes++; });
+    document.getElementById('invKpis').innerHTML =
+      '<div class="kpi"><div class="label">Artículos</div><div class="value">'+arts.length+'</div><div class="sub">'+contados+' con stock contado</div></div>' +
+      '<div class="kpi"><div class="label">Valor en bodega</div><div class="value">'+fmtMoney.format(valor)+'</div><div class="sub">'+(sinCosto ? sinCosto+' artículo(s) sin costo no suman' : 'al costo de Precios')+'</div></div>' +
+      '<div class="kpi"><div class="label">Por reponer</div><div class="value" style="'+(alertas?'color:var(--warning);':'')+'">'+alertas+'</div><div class="sub">agotados o bajo el mínimo</div></div>' +
+      '<div class="kpi"><div class="label">Movimientos del mes</div><div class="value">'+movMes+'</div><div class="sub">'+movs.length+' en total</div></div>';
+
+    var sel = document.getElementById('invFiltro');
+    var opciones = inv.tab === 'existencias'
+      ? [['', 'Todos los artículos'], ['alerta', 'Por reponer'], ['sin', 'Sin contar'], ['material', 'Solo materiales'], ['equipo', 'Solo equipos']]
+      : [['', 'Todos los movimientos']].concat(Object.keys(INV_TIPOS).map(function(k){ return [k, INV_TIPOS[k].lbl]; }));
+    if(!opciones.some(function(o){ return o[0] === inv.filtro; })) inv.filtro = '';
+    sel.innerHTML = opciones.map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===inv.filtro?' selected':'')+'>'+o[1]+'</option>'; }).join('');
+    var q = (document.getElementById('invSearch').value || '').trim().toLowerCase();
+
+    if(!arts.length){
+      cont.innerHTML = '<div class="table-wrap"><div class="empty-state">Aún no hay materiales ni equipos. '+(admin ? 'Créalos con "+ Artículo nuevo" (quedan también en Precios).' : 'Administración los crea en Precios.')+'</div></div>';
+      return;
+    }
+    var h = '';
+    if(inv.tab === 'existencias'){
+      var rows = arts.filter(function(p){
+        var e = invEstado(p).k;
+        if(inv.filtro === 'alerta' && e !== 'bajo' && e !== 'agotado') return false;
+        if(inv.filtro === 'sin' && e !== 'sin') return false;
+        if((inv.filtro === 'material' || inv.filtro === 'equipo') && p.tipo !== inv.filtro) return false;
+        return !q || [p.nombre, p.ubicacion, p.proveedor, p.stockNota, p.notas].join(' ').toLowerCase().indexOf(q) !== -1;
+      }).map(function(p){
+        var st = precNum(p.stock), min = precNum(p.stockMin), k = precNum(p.costo), e = invEstado(p);
+        var notas = [p.ubicacion ? '📍 ' + p.ubicacion : '', p.stockNota].filter(Boolean).join(' · ');
+        return '<tr data-art="'+escapeHtml(p._id)+'">' +
+          '<td class="desc-cell"><div class="d-title">'+escapeHtml(p.nombre||'—')+'</div>'+(notas ? '<div class="d-notes">'+escapeHtml(notas)+'</div>' : '')+'</td>' +
+          '<td>'+(p.tipo === 'equipo' ? 'Equipo' : 'Material')+'</td>' +
+          '<td class="num"><strong>'+(st == null ? '<span class="muted">—</span>' : invCant(st))+'</strong> '+escapeHtml(p.unidad||'')+'</td>' +
+          '<td class="num">'+(min == null ? '<span class="muted">—</span>' : invCant(min))+'</td>' +
+          '<td class="num">'+precMoney(k)+'</td>' +
+          '<td class="num">'+(st != null && k != null ? fmtMoney.format(st * k) : '<span class="muted">—</span>')+'</td>' +
+          '<td>'+(e.badge ? '<span class="fin-badge '+e.badge+'">'+e.lbl+'</span>' : '<span class="fin-badge">'+e.lbl+'</span>')+'</td>' +
+          '<td><div class="row-actions">' +
+            '<button class="icon-btn inv-mas" title="Registrar entrada" aria-label="Registrar entrada"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>' +
+            '<button class="icon-btn inv-menos" title="Salida a obra" aria-label="Salida a obra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>' +
+          '</div></td></tr>';
+      });
+      h += '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Tipo</th><th class="num">Stock</th><th class="num">Mínimo</th><th class="num">Costo</th><th class="num">Valor</th><th>Estado</th><th></th></tr></thead><tbody>' +
+        (rows.join('') || '<tr><td colspan="8" class="empty-state">Nada coincide con el filtro.</td></tr>') + '</tbody></table></div>';
+      h += '<div class="info-box" style="margin-top:14px;">Toca un artículo para cambiar su ubicación o su stock mínimo'+(admin ? ', su costo o su margen' : '')+'. El stock solo cambia con movimientos: entradas, salidas a obra, devoluciones o un conteo. Lo que sale a una obra queda ligado a su orden de compra y se ve en <strong>Costos → Costo real por obra</strong>.</div>';
+    } else {
+      var mr = movs.filter(function(m){
+        if(inv.filtro && m.tipo !== inv.filtro) return false;
+        return !q || [m.articulo, m.proveedor, m.nota, invObra(m), m.ordenNumero].join(' ').toLowerCase().indexOf(q) !== -1;
+      }).map(function(m){
+        var t = INV_TIPOS[m.tipo] || {lbl: m.tipo, badge: ''};
+        var d = Number(m.delta) || 0;
+        var det = [invObra(m), m.proveedor ? 'Proveedor: ' + m.proveedor : '', m.costoUnit != null && m.tipo === 'entrada' ? fmtMoney.format(m.costoUnit) + ' c/u' : '', m.nota].filter(Boolean).join(' · ');
+        return '<tr data-mov="'+escapeHtml(m._id)+'"'+(admin ? ' style="cursor:pointer;"' : '')+'>' +
+          '<td>'+escapeHtml(fmtShort(m.fecha))+'</td>' +
+          '<td><span class="fin-badge '+t.badge+'">'+escapeHtml(t.lbl)+'</span></td>' +
+          '<td class="desc-cell"><div class="d-title">'+escapeHtml(m.articulo||'—')+'</div>'+(det ? '<div class="d-notes">'+escapeHtml(det)+'</div>' : '')+'</td>' +
+          '<td class="num" style="color:'+(d > 0 ? 'var(--success)' : d < 0 ? 'var(--critical)' : 'inherit')+';"><strong>'+(d > 0 ? '+' : '')+invCant(d)+'</strong> '+escapeHtml(m.unidad||'')+'</td>' +
+          '<td class="num">'+(m.stockDespues == null ? '—' : invCant(m.stockDespues))+'</td>' +
+          '<td>'+escapeHtml(invUsuario(m.creadoPorId))+'</td></tr>';
+      });
+      h += '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Movimiento</th><th>Artículo</th><th class="num">Cambio</th><th class="num">Quedó</th><th>Quién</th></tr></thead><tbody>' +
+        (mr.join('') || '<tr><td colspan="6" class="empty-state">'+(movs.length ? 'Nada coincide con el filtro.' : 'Aún no hay movimientos. Empieza con "Conteo / ajuste" para registrar lo que hay hoy en la bodega.')+'</td></tr>') + '</tbody></table></div>';
+      if(admin && movs.length) h += '<div class="info-box" style="margin-top:14px;">Toca un movimiento para verlo. Si quedó mal, puedes borrarlo y el stock vuelve a como estaba.</div>';
+    }
+    cont.innerHTML = h;
+    cont.querySelectorAll('tr[data-art]').forEach(function(tr){
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', function(e){
+        var id = tr.dataset.art;
+        if(e.target.closest('.inv-mas')){ openInvModal('entrada', id); return; }
+        if(e.target.closest('.inv-menos')){ openInvModal('salida', id); return; }
+        openPrecioModal(id);
+      });
+    });
+    if(admin) cont.querySelectorAll('tr[data-mov]').forEach(function(tr){ tr.addEventListener('click', function(){ openInvMov(tr.dataset.mov); }); });
+  }
+  document.getElementById('invTabs').addEventListener('click', function(e){
+    var b = e.target.closest('.subtab-btn'); if(!b) return;
+    inv.tab = b.dataset.inv; inv.filtro = ''; renderInventario();
+  });
+  document.getElementById('invSearch').addEventListener('input', renderInventario);
+  document.getElementById('invFiltro').addEventListener('change', function(){ inv.filtro = this.value; renderInventario(); });
+  document.getElementById('invEntradaBtn').addEventListener('click', function(){ openInvModal('entrada'); });
+  document.getElementById('invSalidaBtn').addEventListener('click', function(){ openInvModal('salida'); });
+  document.getElementById('invAjusteBtn').addEventListener('click', function(){ openInvModal('ajuste'); });
+  document.getElementById('invNuevoArt').addEventListener('click', function(){ openPrecioModal(null, 'material'); });
+  document.getElementById('invExportar').addEventListener('click', function(){
+    var filas;
+    if(inv.tab === 'existencias'){
+      filas = [['Artículo','Tipo','Unidad','Stock','Stock mínimo','Ubicación','Costo','Valor','Estado','Proveedor','Nota']];
+      invArticulos().forEach(function(p){
+        var st = precNum(p.stock), k = precNum(p.costo);
+        filas.push([p.nombre, p.tipo === 'equipo' ? 'Equipo' : 'Material', p.unidad||'', st == null ? '' : st, precNum(p.stockMin) == null ? '' : p.stockMin, p.ubicacion||'', k == null ? '' : Math.round(k), st != null && k != null ? Math.round(st*k) : '', invEstado(p).lbl, p.proveedor||'', p.stockNota||'']);
+      });
+    } else {
+      filas = [['Fecha','Movimiento','Artículo','Unidad','Cantidad','Cambio','Stock después','Obra / orden','Proveedor','Costo unitario','Nota','Quién']];
+      invMovs().forEach(function(m){
+        filas.push([m.fecha, (INV_TIPOS[m.tipo]||{}).lbl || m.tipo, m.articulo, m.unidad||'', m.cantidad, m.delta, m.stockDespues == null ? '' : m.stockDespues, invObra(m), m.proveedor||'', m.costoUnit != null ? m.costoUnit : (m.costoRef != null ? m.costoRef : ''), m.nota||'', invUsuario(m.creadoPorId)]);
+      });
+    }
+    csvDescargar(filas, 'cenova-inventario-' + inv.tab + '-' + todayIso() + '.csv');
+  });
+  function csvDescargar(filas, nombre){
+    var q = function(v){ v = String(v==null?'':v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; };
+    var csv = '﻿' + filas.map(function(r){ return r.map(q).join(';'); }).join('\r\n');
+    var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+    var link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = nombre;
+    document.body.appendChild(link); link.click(); setTimeout(function(){ URL.revokeObjectURL(link.href); link.remove(); }, 1500);
+  }
+
+  /* ---------- Ventana para registrar un movimiento ---------- */
+  function openInvModal(tipo, articuloId){
+    inv.tipo = tipo || 'entrada'; inv.articuloId = articuloId || ''; inv.movId = null;
+    var arts = invArticulos();
+    if(!arts.length){ toast(precAdmin() ? 'Primero crea el artículo con "+ Artículo nuevo".' : 'Administración aún no ha creado materiales ni equipos.'); return; }
+    document.getElementById('invBorrar').style.display = 'none';
+    document.getElementById('invSave').style.display = '';
+    var h = '<div class="subtabs" id="invTipoSeg" style="margin-bottom:14px;">' + Object.keys(INV_TIPOS).map(function(k){
+      return '<button type="button" class="subtab-btn'+(k===inv.tipo?' active':'')+'" data-tipo="'+k+'">'+INV_TIPOS[k].lbl+'</button>'; }).join('') + '</div>';
+    h += '<div class="no-file" id="invAyuda" style="margin:-6px 0 12px;"></div>';
+    h += precCampo('Artículo', '<select id="invArt"><option value="">Elige un material o equipo…</option>' + arts.map(function(p){
+      var st = precNum(p.stock);
+      return '<option value="'+escapeHtml(p._id)+'"'+(p._id===inv.articuloId?' selected':'')+'>'+escapeHtml(p.nombre)+' · '+(st == null ? 'sin contar' : 'hay '+invCant(st)+' '+escapeHtml(p.unidad||''))+'</option>'; }).join('') + '</select>');
+    h += '<div class="field-row"><div class="field"><label id="invCantLbl">Cantidad</label><input type="number" id="invCant" min="0" step="any"></div>' + precCampo('Fecha', '<input type="date" id="invFecha" value="'+todayIso()+'">') + '</div>';
+    h += '<div id="invExtra"></div>';
+    h += precCampo('Nota', '<input type="text" id="invNota" placeholder="Opcional: factura, quién lo trajo, estado…">');
+    h += '<div class="info-box" id="invCalc" style="margin-top:6px;"></div>';
+    document.getElementById('invTitle').textContent = 'Movimiento de inventario';
+    document.getElementById('invBody').innerHTML = h;
+    document.getElementById('invTipoSeg').addEventListener('click', function(e){
+      var b = e.target.closest('.subtab-btn'); if(!b) return;
+      inv.tipo = b.dataset.tipo;
+      this.querySelectorAll('.subtab-btn').forEach(function(x){ x.classList.toggle('active', x === b); });
+      invPintarExtra();
+    });
+    document.getElementById('invArt').addEventListener('change', function(){ inv.articuloId = this.value; invPintarExtra(); });
+    document.getElementById('invCant').addEventListener('input', invCalc);
+    invPintarExtra();
+    document.getElementById('invOverlay').classList.add('open');
+    setTimeout(function(){ var el = document.getElementById(inv.articuloId ? 'invCant' : 'invArt'); if(el) el.focus(); }, 50);
+  }
+  function invPintarExtra(){
+    var t = inv.tipo, p = state.precios.get(inv.articuloId) || {}, admin = precAdmin();
+    document.getElementById('invAyuda').textContent = INV_TIPOS[t].ayuda;
+    document.getElementById('invCantLbl').textContent = t === 'ajuste' ? 'Cantidad que hay de verdad' + (p.unidad ? ' ('+p.unidad+')' : '') : 'Cantidad' + (p.unidad ? ' ('+p.unidad+')' : '');
+    var h = '';
+    if(t === 'entrada'){
+      var sinCosto = precNum(p.costo) == null;
+      h += '<div class="field-row">' + precCampo('Costo unitario (sin IVA)', '<input type="number" id="invCosto" class="input-miles" min="0" step="1" value="'+(precNum(p.costo) == null ? '' : p.costo)+'" placeholder="Lo que costó cada unidad">') +
+        precCampo('Proveedor', '<input type="text" id="invProv" list="proveedoresList" value="'+escapeHtml(p.proveedor||'')+'" placeholder="A quién se le compró">') + '</div>';
+      h += precCampo('¿Viene de una obra? (opcional)', invOrdenSelect(''));
+      if(admin) h += '<label style="display:flex; gap:8px; align-items:center; font-size:13px; margin:2px 0 10px;"><input type="checkbox" id="invActCosto"'+(sinCosto ? ' checked' : '')+'> Usar este costo y este proveedor en Precios'+(sinCosto ? ' (hoy no tiene costo)' : ' (hoy: '+fmtMoney.format(p.costo)+')')+'</label>';
+    } else if(t === 'salida' || t === 'devolucion'){
+      h += precCampo(t === 'salida' ? 'Obra (orden de compra)' : '¿De qué obra vuelve?', invOrdenSelect(''), t === 'salida' ? 'Queda ligado a la orden para ver cuánto material de bodega usó.' : '');
+    }
+    document.getElementById('invExtra').innerHTML = h;
+    var c = document.getElementById('invCosto'); if(c) c.addEventListener('input', invCalc);
+    invCalc();
+  }
+  function invOrdenSelect(sel){
+    return '<select id="invOrden"><option value="">'+(inv.tipo === 'salida' ? 'Elige la orden…' : 'Ninguna')+'</option>' + invOrdenes().map(function(o){
+      var abierta = ['finalizada','facturada','pagada'].indexOf(o.estado) === -1;
+      return '<option value="'+escapeHtml(o._id)+'"'+(o._id===sel?' selected':'')+'>'+escapeHtml((o.numero||'Orden')+' · '+(o.cliente||'')+(abierta ? '' : ' (cerrada)'))+'</option>'; }).join('') + '</select>';
+  }
+  function invCalc(){
+    var box = document.getElementById('invCalc'); if(!box) return;
+    var p = state.precios.get(inv.articuloId);
+    if(!p){ box.textContent = 'Elige el artículo.'; box.className = 'info-box'; return; }
+    var st = precNum(p.stock), base = st == null ? 0 : st, cant = precNum(document.getElementById('invCant').value), u = p.unidad || '';
+    var t = inv.tipo, nuevo;
+    if(cant == null){ box.innerHTML = 'Hoy hay <strong>'+(st == null ? 'sin contar' : invCant(st)+' '+escapeHtml(u))+'</strong>.'; box.className = 'info-box'; return; }
+    nuevo = t === 'ajuste' ? cant : base + INV_TIPOS[t].signo * cant;
+    var h = 'Hoy: <strong>'+(st == null ? 'sin contar' : invCant(st))+'</strong> → queda en <strong>'+invCant(nuevo)+' '+escapeHtml(u)+'</strong>';
+    if(t === 'ajuste' && st != null) h += ' (diferencia '+(cant - st > 0 ? '+' : '')+invCant(cant - st)+')';
+    if(t === 'entrada'){ var k = precNum((document.getElementById('invCosto')||{}).value); if(k != null) h += ' · total de la compra '+fmtMoney.format(k * cant); }
+    var malo = nuevo < 0;
+    if(malo) h += '<br><strong>No alcanza:</strong> solo hay '+invCant(base)+'. Si hay más de lo que dice el sistema, registra primero un conteo.';
+    var min = precNum(p.stockMin);
+    if(!malo && min != null && nuevo <= min) h += '<br>Queda en el mínimo o por debajo ('+invCant(min)+'): toca reponer.';
+    box.innerHTML = h; box.className = 'info-box' + (malo ? ' warn' : '');
+  }
+  function closeInvModal(){ document.getElementById('invOverlay').classList.remove('open'); inv.movId = null; }
+  document.getElementById('invClose').addEventListener('click', closeInvModal);
+  document.getElementById('invCancel').addEventListener('click', closeInvModal);
+  document.getElementById('invSave').addEventListener('click', function(){
+    var db = requireDb(); if(!db) return;
+    var p = state.precios.get(inv.articuloId), t = inv.tipo, admin = precAdmin();
+    if(!p){ toast('Elige el artículo.'); return; }
+    var cant = precNum(document.getElementById('invCant').value);
+    if(cant == null || cant < 0 || (cant === 0 && t !== 'ajuste')){ toast('Escribe la cantidad.'); return; }
+    var st = precNum(p.stock), base = st == null ? 0 : st;
+    var nuevo = t === 'ajuste' ? cant : base + INV_TIPOS[t].signo * cant;
+    if(nuevo < 0){ toast('No alcanza: solo hay ' + invCant(base) + '. Registra primero un conteo si hay más.'); return; }
+    var ordenEl = document.getElementById('invOrden'), ordenId = ordenEl ? ordenEl.value : '';
+    if(t === 'salida' && !ordenId){ toast('Elige la orden de la obra a la que sale.'); return; }
+    var o = ordenId ? state.ordenes.get(ordenId) : null;
+    var mov = {
+      fecha: document.getElementById('invFecha').value || todayIso(), tipo: t, articuloId: inv.articuloId, articulo: p.nombre || '', unidad: p.unidad || '',
+      cantidad: cant, delta: nuevo - base, stockAntes: st, stockDespues: nuevo,
+      ordenId: ordenId || null, ordenNumero: o ? (o.numero || '') : '', proyectoId: o ? (o.proyectoId || '') : '',
+      nota: (document.getElementById('invNota').value || '').trim(), costoRef: precNum(p.costo),
+      creadoPorId: state.userId || null, creadoEn: new Date().toISOString()
+    };
+    if(t === 'entrada'){ mov.costoUnit = precNum(document.getElementById('invCosto').value); mov.proveedor = (document.getElementById('invProv').value || '').trim(); }
+    var upd = {stock: nuevo, editadoEn: todayIso(), editadoPor: state.userId || null};
+    var actCosto = admin && t === 'entrada' && document.getElementById('invActCosto') && document.getElementById('invActCosto').checked && mov.costoUnit != null;
+    var btn = this; btn.disabled = true;
+    db.collection('inventario').add(mov).then(function(){
+      var ref = db.collection('precios').doc(inv.articuloId);
+      if(actCosto){
+        var full = Object.assign({}, state.precios.get(inv.articuloId), upd, {costo: mov.costoUnit, actualizado: todayIso()});
+        if(mov.proveedor) full.proveedor = mov.proveedor;
+        return ref.set(full);
+      }
+      return ref.update(upd);
+    }).then(function(){
+      toast(INV_TIPOS[t].lbl + ' registrada: ' + (p.nombre || '') + ' queda en ' + invCant(nuevo) + ' ' + (p.unidad || ''));
+      closeInvModal();
+    }).catch(function(err){ toast('No se pudo registrar: ' + (err && err.message ? err.message : 'error')); })
+      .then(function(){ btn.disabled = false; });
+  });
+  /* Ver (y, si es administración, borrar) un movimiento */
+  function openInvMov(id){
+    var m = state.inventario.get(id); if(!m) return;
+    inv.movId = id;
+    var t = INV_TIPOS[m.tipo] || {lbl: m.tipo};
+    var fila = function(a, b){ return b ? '<div style="display:flex; gap:10px; padding:6px 0; border-bottom:1px dashed var(--border);"><span class="muted" style="min-width:130px;">'+a+'</span><span>'+b+'</span></div>' : ''; };
+    var h = fila('Movimiento', '<span class="fin-badge '+(t.badge||'')+'">'+escapeHtml(t.lbl)+'</span>') + fila('Fecha', escapeHtml(fmtDate(m.fecha))) + fila('Artículo', escapeHtml(m.articulo||'')) +
+      fila('Cantidad', escapeHtml(invCant(m.cantidad)+' '+(m.unidad||''))) + fila('Stock', escapeHtml((m.stockAntes == null ? 'sin contar' : invCant(m.stockAntes)) + ' → ' + invCant(m.stockDespues))) +
+      fila('Obra', escapeHtml(invObra(m))) + fila('Proveedor', escapeHtml(m.proveedor||'')) + fila('Costo unitario', m.costoUnit != null ? fmtMoney.format(m.costoUnit) : '') +
+      fila('Nota', escapeHtml(m.nota||'')) + fila('Registró', escapeHtml(invUsuario(m.creadoPorId)));
+    h += '<div class="info-box" style="margin-top:12px;">Si lo borras, el stock de '+escapeHtml(m.articulo||'')+' se corrige restando este cambio ('+((Number(m.delta)||0) > 0 ? '+' : '')+invCant(m.delta)+').</div>';
+    document.getElementById('invTitle').textContent = 'Movimiento de inventario';
+    document.getElementById('invBody').innerHTML = h;
+    document.getElementById('invSave').style.display = 'none';
+    document.getElementById('invBorrar').style.display = precAdmin() ? 'inline-flex' : 'none';
+    document.getElementById('invOverlay').classList.add('open');
+  }
+  document.getElementById('invBorrar').addEventListener('click', function(){
+    var db = requireDb(); var id = inv.movId, m = id && state.inventario.get(id); if(!db || !m) return;
+    confirmDialog('¿Borrar este movimiento? El stock se corrige solo.').then(function(ok){
+      if(!ok) return;
+      var p = state.precios.get(m.articuloId), st = p ? precNum(p.stock) : null;
+      db.doc('inventario/' + id).delete().then(function(){
+        if(!p) return;
+        var nuevo = Math.max(0, (st == null ? 0 : st) - (Number(m.delta) || 0));
+        return db.collection('precios').doc(m.articuloId).update({stock: nuevo, editadoEn: todayIso(), editadoPor: state.userId || null});
+      }).then(function(){ toast('Movimiento borrado'); closeInvModal(); })
+        .catch(function(err){ toast('No se pudo borrar: ' + (err && err.message ? err.message : 'error')); });
+    });
+  });
+  /* Cuando el stock se cambia a mano en Precios, queda registrado como conteo */
+  function invAjusteDesdePrecios(id, antes, nuevoStock){
+    var db = state.db; if(!db || !id) return;
+    var a = precNum(antes && antes.stock), n = precNum(nuevoStock);
+    if(n == null || a === n) return;
+    var p = state.precios.get(id) || antes || {};
+    db.collection('inventario').add({
+      fecha: todayIso(), tipo: 'ajuste', articuloId: id, articulo: p.nombre || '', unidad: p.unidad || '',
+      cantidad: n, delta: n - (a == null ? 0 : a), stockAntes: a, stockDespues: n, ordenId: null, ordenNumero: '', proyectoId: '',
+      nota: 'Cambio de stock hecho en Precios', costoRef: precNum(p.costo), creadoPorId: state.userId || null, creadoEn: new Date().toISOString()
+    }).catch(function(){});
+  }
+
+  /* =====================================================================
+     COSTOS (2026-10-09)
+     - Costos por cargar: llenar de una vez los costos de Precios, con
+       sugerencias de lo que cotizaron los proveedores y lo que se pagó en obras.
+     - Precios de proveedores: cada ítem de las cotizaciones de proveedor,
+       con antigüedad, y el más barato cuando hay varios.
+     - Costo real por obra: cada orden con lo cotizado frente a lo que costó.
+     ===================================================================== */
+  var cos = {tab: 'cargar', filtro: null, editando: false, abiertas: {}, pick: null};
+  var COS_TIPOS_CARGA = ['personal', 'viatico', 'logistica', 'material', 'equipo', 'servicio'];
+  var COS_DIAS_RECONFIRMAR = 15;
+  function cosNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9 ]+/g, ' '); }
+  var COS_VACIAS = {de:1, la:1, el:1, los:1, las:1, con:1, para:1, por:1, und:1, tipo:1, mts:1, und:1, y:1};
+  function cosTokens(s){ return cosNorm(s).split(/\s+/).filter(function(w){ return w.length >= 3 && !COS_VACIAS[w]; }); }
+  /* Todos los ítems de las cotizaciones de proveedor */
+  function cosItemsProveedor(){
+    var out = [], hoy = todayIso();
+    state.cotizacionesProveedor.forEach(function(c, cid){
+      (c.items || []).forEach(function(it, i){
+        if(!it || !it.descripcion) return;
+        var dias = c.fecha ? Math.round((new Date(hoy+'T00:00:00') - new Date(c.fecha+'T00:00:00')) / 864e5) : null;
+        out.push({key: cid + ':' + i, provId: cid, descripcion: it.descripcion, unidad: it.unidad || '', cantidad: Number(it.cantidad)||0, costo: Number(it.costoUnit)||0,
+          proveedor: c.proveedor || '—', fecha: c.fecha || '', dias: dias, numero: c.numero || '', proyectoId: c.proyectoId || '', tokens: cosTokens(it.descripcion)});
+      });
+    });
+    out.sort(function(a, b){ return String(b.fecha).localeCompare(String(a.fecha)) || a.descripcion.localeCompare(b.descripcion, 'es'); });
+    return out;
+  }
+  /* Parecido entre dos textos: palabras en común sobre las palabras del más corto */
+  function cosParecido(ta, tb){
+    if(!ta.length || !tb.length) return 0;
+    var setB = {}; tb.forEach(function(w){ setB[w] = 1; });
+    var comun = ta.filter(function(w){ return setB[w]; }).length, menor = Math.min(ta.length, tb.length);
+    if(menor > 1 && comun < 2) return 0;   // con una sola palabra en común ("cable") no basta
+    return comun / menor;
+  }
+  /* Lo que se ha pagado en obras (personal y viáticos) según las órdenes */
+  function cosPagadoEnObras(campo){
+    var vals = [];
+    state.ordenes.forEach(function(o){
+      if(o.estado === 'anulada') return;
+      (o.personal || []).forEach(function(r){ var v = Number(r[campo]) || 0; if(v > 0) vals.push({v: v, quien: r.nombre || '', orden: o.numero || ''}); });
+    });
+    return vals;
+  }
+  function cosSugerencias(p){
+    var out = [];
+    if(p.tipo === 'personal' || p.tipo === 'viatico'){
+      var campo = p.tipo === 'personal' ? 'pagoDia' : (/almuer|comid/i.test(p.nombre||'') ? 'almuerzoDia' : (/transp/i.test(p.nombre||'') ? 'transporteDia' : null));
+      if(campo){
+        var vals = cosPagadoEnObras(campo);
+        if(vals.length){
+          var nums = vals.map(function(x){ return x.v; }), min = Math.min.apply(null, nums), max = Math.max.apply(null, nums);
+          var ult = vals[vals.length - 1];
+          out.push({valor: ult.v, texto: 'Pagado en obras: ' + (min === max ? fmtMoney.format(min) : fmtMoney.format(min) + ' a ' + fmtMoney.format(max)) + ' por día' + (ult.quien ? ' (último: ' + ult.quien + ', ' + ult.orden + ')' : '')});
+        }
+      }
+      return out;
+    }
+    var ent = invMovs().filter(function(m){ return m.articuloId === p._id && m.tipo === 'entrada' && Number(m.costoUnit) > 0; })[0];
+    if(ent) out.push({valor: Number(ent.costoUnit), proveedor: ent.proveedor || '', texto: 'Última compra (Inventario): ' + fmtMoney.format(ent.costoUnit) + (p.unidad ? ' / ' + p.unidad : '') + (ent.proveedor ? ' · ' + ent.proveedor : '') + ' (' + fmtShort(ent.fecha) + ', ' + invUsuario(ent.creadoPorId) + ')'});
+    var tp = cosTokens(p.nombre);
+    var cands = cosItemsProveedor().map(function(x){ return {x: x, s: cosParecido(tp, x.tokens)}; })
+      .filter(function(c){ return c.s >= 0.5; })
+      .sort(function(a, b){ return b.s - a.s || String(b.x.fecha).localeCompare(String(a.x.fecha)); }).slice(0, 2);
+    cands.forEach(function(c){
+      out.push({valor: c.x.costo, proveedor: c.x.proveedor, texto: c.x.proveedor + ': ' + fmtMoney.format(c.x.costo) + (c.x.unidad ? ' / ' + c.x.unidad : '') + ' · «' + c.x.descripcion.slice(0, 48) + (c.x.descripcion.length > 48 ? '…' : '') + '» (' + fmtShort(c.x.fecha) + ')'});
+    });
+    return out;
+  }
+  function cosCampoCosto(p){ return p.tipo === 'personal' ? 'dia' : 'costo'; }
+
+  function renderCostos(){
+    var cont = document.getElementById('cosContainer'); if(!cont) return;
+    var admin = precAdmin();
+    document.querySelectorAll('#cosTabs .subtab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.cos === cos.tab); });
+    var q = (document.getElementById('cosSearch').value || '').trim().toLowerCase();
+    var sel = document.getElementById('cosFiltro'), info = document.getElementById('cosInfo');
+    document.getElementById('cosGuardar').hidden = !(admin && cos.tab === 'cargar');
+    document.getElementById('cosExportar').hidden = cos.tab === 'cargar';
+    var opts;
+    if(cos.tab === 'cargar') opts = [['sin', 'Solo los que no tienen costo'], ['', 'Todos']];
+    else if(cos.tab === 'proveedores'){
+      var provs = {}; state.cotizacionesProveedor.forEach(function(c){ if(c.proveedor) provs[c.proveedor] = 1; });
+      opts = [['', 'Todos los proveedores']].concat(Object.keys(provs).sort().map(function(p){ return [p, p]; }));
+    } else opts = [['', 'Todas las órdenes'], ['cerradas', 'Solo terminadas'], ['curso', 'Solo en curso']];
+    if(cos.filtro === null || !opts.some(function(o){ return o[0] === cos.filtro; })) cos.filtro = opts[0][0];
+    sel.innerHTML = opts.map(function(o){ return '<option value="'+escapeHtml(o[0])+'"'+(o[0]===cos.filtro?' selected':'')+'>'+escapeHtml(o[1])+'</option>'; }).join('');
+
+    if(cos.tab === 'cargar') cosRenderCargar(cont, info, q, admin);
+    else if(cos.tab === 'proveedores') cosRenderProveedores(cont, info, q, admin);
+    else cosRenderObras(cont, info, q, admin);
+  }
+
+  function cosRenderCargar(cont, info, q, admin){
+    var todos = [];
+    COS_TIPOS_CARGA.forEach(function(t){ precLista(t).forEach(function(p){ todos.push(p); }); });
+    var sinCosto = todos.filter(function(p){ return precCosto(p) == null; }).length;
+    info.innerHTML = (admin ? 'Escribe el costo de cada ítem y pulsa <strong>Guardar costos</strong>. Al lado tienes lo que cotizaron los proveedores o lo que ya se pagó en obras; con <strong>Usar</strong> lo pasas al campo.' : 'Estos son los costos de Precios. Solo administración los cambia.') +
+      ' Los kits toman su costo de los materiales que llevan y los servicios de instalación se calculan en cada cotización.' + (sinCosto ? ' <strong>Faltan '+sinCosto+' de '+todos.length+'.</strong>' : ' <strong>Todos tienen costo.</strong>');
+    info.className = 'info-box' + (sinCosto ? ' warn' : ' ok');
+    var lista = todos.filter(function(p){
+      if(cos.filtro === 'sin' && precCosto(p) != null) return false;
+      return !q || [p.nombre, p.proveedor, p.notas].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+    if(!lista.length){ cont.innerHTML = '<div class="table-wrap"><div class="empty-state">'+(cos.filtro === 'sin' && !q ? 'Todos los ítems tienen costo. 🎉' : 'Nada coincide con la búsqueda.')+'</div></div>'; return; }
+    var grupos = {}, orden = [];
+    lista.forEach(function(p){ if(!grupos[p.tipo]){ grupos[p.tipo] = []; orden.push(p.tipo); } grupos[p.tipo].push(p); });
+    var h = '';
+    orden.forEach(function(t){
+      var conMargen = t === 'material' || t === 'equipo' || t === 'servicio';
+      var rows = grupos[t].map(function(p){
+        var k = precCosto(p), sug = cosSugerencias(p);
+        var sugH = sug.length ? sug.map(function(s, i){
+          return '<div class="cos-sug">'+(admin ? '<button type="button" class="btn sm cos-usar" data-v="'+s.valor+'"'+(s.proveedor ? ' data-prov="'+escapeHtml(s.proveedor)+'"' : '')+'>Usar</button> ' : '')+'<span>'+escapeHtml(s.texto)+'</span></div>';
+        }).join('') : '<span class="muted">Sin referencias todavía</span>';
+        return '<tr data-cos="'+escapeHtml(p._id)+'">' +
+          '<td class="desc-cell"><div class="d-title">'+escapeHtml(p.nombre||'—')+'</div><div class="d-notes">'+escapeHtml([PREC_TIPOS[p.tipo].lbl, p.tipo === 'logistica' ? PREC_BASES[p.base] : (p.unidad ? 'por ' + p.unidad : '')].filter(Boolean).join(' · '))+'</div></td>' +
+          '<td class="num">'+(admin ? '<input type="number" class="input-miles cos-costo" min="0" step="1" value="'+(k == null ? '' : k)+'" placeholder="Sin costo" style="width:130px;">' : precMoney(k))+'</td>' +
+          (conMargen ? '<td class="num">'+(admin ? '<input type="number" class="cos-margen" min="0" max="95" step="0.5" value="'+(precNum(p.margen) == null ? '' : p.margen)+'" style="width:70px;">' : (precNum(p.margen) == null ? '—' : p.margen + ' %'))+'</td><td class="num cos-precio">'+precMoney(precPrecio(p))+'</td>' : '<td class="num muted">—</td><td class="num muted">—</td>') +
+          '<td>'+(admin ? '<input type="text" class="cos-prov" list="proveedoresList" value="'+escapeHtml(p.proveedor||'')+'" placeholder="Proveedor" style="width:150px;">' : escapeHtml(p.proveedor||''))+'</td>' +
+          '<td class="mc-block" data-label="Referencias">'+sugH+'</td></tr>';
+      });
+      h += '<div class="panel prec-panel"><div class="panel-head"><h3>'+escapeHtml(PREC_TIPOS[t].lbl)+'</h3><span>'+grupos[t].length+' ítem(s)</span></div><div class="table-wrap prec-table"><table><thead><tr><th>Ítem</th><th class="num">'+(t === 'personal' ? 'Tarifa por día' : 'Costo sin IVA')+'</th><th class="num">Margen</th><th class="num">Precio</th><th>Proveedor</th><th>Referencias</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div></div>';
+    });
+    cont.innerHTML = h;
+    if(!admin) return;
+    cont.querySelectorAll('tr[data-cos]').forEach(function(tr){
+      var p = state.precios.get(tr.dataset.cos);
+      var recalcular = function(){
+        cos.editando = true; tr.classList.add('cos-cambiado');
+        var c = tr.querySelector('.cos-costo'), m = tr.querySelector('.cos-margen'), out = tr.querySelector('.cos-precio');
+        if(out && c && m) out.innerHTML = precMoney(precioMargenVenta(c.value, m.value));
+        cosContarCambios();
+      };
+      tr.querySelectorAll('input').forEach(function(el){ el.addEventListener('input', recalcular); });
+      tr.querySelectorAll('.cos-usar').forEach(function(b){ b.addEventListener('click', function(){
+        var c = tr.querySelector('.cos-costo'); c.value = b.dataset.v; c.dispatchEvent(new Event('input', {bubbles: true}));
+        var pv = tr.querySelector('.cos-prov'); if(b.dataset.prov && pv && !pv.value) pv.value = b.dataset.prov;
+        recalcular();
+      }); });
+      void p;
+    });
+    cosContarCambios();
+  }
+  function cosCambios(){
+    var out = [];
+    document.querySelectorAll('#cosContainer tr.cos-cambiado[data-cos]').forEach(function(tr){
+      var id = tr.dataset.cos, p = state.precios.get(id); if(!p) return;
+      var c = tr.querySelector('.cos-costo'), m = tr.querySelector('.cos-margen'), pv = tr.querySelector('.cos-prov');
+      var campo = cosCampoCosto(p), nuevo = {};
+      var k = precNum(c && c.value); if(k !== precNum(p[campo])) nuevo[campo] = k;
+      if(m){ var mm = precNum(m.value); if(mm !== precNum(p.margen)) nuevo.margen = mm; }
+      if(pv){ var pp = (pv.value || '').trim(); if(pp !== (p.proveedor || '')) nuevo.proveedor = pp; }
+      if(Object.keys(nuevo).length) out.push({id: id, p: p, cambios: nuevo});
+    });
+    return out;
+  }
+  function cosContarCambios(){
+    var b = document.getElementById('cosGuardar'); if(!b) return;
+    var n = cosCambios().length;
+    b.textContent = n ? 'Guardar costos (' + n + ')' : 'Guardar costos';
+    b.disabled = !n;
+    if(!n) cos.editando = false;
+  }
+  document.getElementById('cosGuardar').addEventListener('click', function(){
+    var db = requireDb(); if(!db) return;
+    var cambios = cosCambios(); if(!cambios.length) return;
+    var malo = cambios.filter(function(x){ return x.cambios.margen != null && (x.cambios.margen < 0 || x.cambios.margen >= 95); });
+    if(malo.length){ toast('El margen de ' + malo[0].p.nombre + ' debe estar entre 0 y 95 %.'); return; }
+    var btn = this; btn.disabled = true;
+    var hoy = todayIso();
+    Promise.all(cambios.map(function(x){
+      return db.collection('precios').doc(x.id).set(Object.assign({}, x.p, x.cambios, {actualizado: hoy}));
+    })).then(function(){
+      cos.editando = false; toast(cambios.length + ' costo(s) guardados en Precios'); renderCostos();
+    }).catch(function(err){ btn.disabled = false; toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+
+  function cosRenderProveedores(cont, info, q, admin){
+    var items = cosItemsProveedor();
+    if(!items.length){ info.className = 'info-box'; info.textContent = 'Aún no hay cotizaciones de proveedor. Se registran en Cotizaciones → De proveedores.'; cont.innerHTML = ''; return; }
+    var viejos = 0;
+    var lista = items.filter(function(x){
+      if(cos.filtro && x.proveedor !== cos.filtro) return false;
+      return !q || [x.descripcion, x.proveedor, x.numero].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+    var provs = {}; items.forEach(function(x){ provs[x.proveedor] = 1; if(x.dias != null && x.dias > COS_DIAS_RECONFIRMAR) viejos++; });
+    info.innerHTML = items.length + ' precios de ' + Object.keys(provs).length + ' proveedor(es), sacados de sus cotizaciones. Los de más de ' + COS_DIAS_RECONFIRMAR + ' días hay que reconfirmarlos antes de cotizar.' +
+      (admin ? ' Con <strong>→ Precios</strong> pasas un costo a la lista de Precios (o creas el material).' : '') + (viejos ? ' <strong>' + viejos + ' por reconfirmar.</strong>' : '');
+    info.className = 'info-box' + (viejos ? ' warn' : '');
+    var rows = lista.map(function(x){
+      var otros = items.filter(function(y){ return y.provId !== x.provId && y.unidad.toUpperCase().slice(0,2) === x.unidad.toUpperCase().slice(0,2) && cosParecido(x.tokens, y.tokens) >= 0.75; });
+      var mejor = otros.filter(function(y){ return y.costo > 0 && y.costo < x.costo; }).sort(function(a, b){ return a.costo - b.costo; })[0];
+      var comp = mejor ? '<span class="fin-badge warn">Más barato en '+escapeHtml(mejor.proveedor)+': '+fmtMoney.format(mejor.costo)+'</span>' : (otros.length ? '<span class="fin-badge ok">El más barato</span>' : '');
+      var proy = x.proyectoId && state.proyectos.get(x.proyectoId);
+      return '<tr data-pi="'+escapeHtml(x.key)+'">' +
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml(x.descripcion)+'</div><div class="d-notes">'+escapeHtml(['Cot. ' + (x.numero || '—'), proy ? proy.nombre : ''].filter(Boolean).join(' · '))+'</div></td>' +
+        '<td>'+escapeHtml(x.proveedor)+'</td>' +
+        '<td>'+escapeHtml(fmtShort(x.fecha))+(x.dias != null ? '<div class="d-notes">'+(x.dias > COS_DIAS_RECONFIRMAR ? '<span class="fin-badge warn">hace '+x.dias+' días</span>' : 'hace '+x.dias+' días')+'</div>' : '')+'</td>' +
+        '<td>'+escapeHtml(x.unidad)+'</td>' +
+        '<td class="num"><strong>'+fmtMoney.format(x.costo)+'</strong></td>' +
+        '<td>'+comp+'</td>' +
+        '<td>'+(admin ? '<button type="button" class="btn sm cos-a-precios">→ Precios</button>' : '')+'</td></tr>';
+    });
+    cont.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Producto</th><th>Proveedor</th><th>Fecha</th><th>Unidad</th><th class="num">Costo sin IVA</th><th>Comparación</th><th></th></tr></thead><tbody>' +
+      (rows.join('') || '<tr><td colspan="7" class="empty-state">Nada coincide con la búsqueda.</td></tr>') + '</tbody></table></div>';
+    if(admin) cont.querySelectorAll('.cos-a-precios').forEach(function(b){ b.addEventListener('click', function(){
+      var key = b.closest('tr').dataset.pi; var x = items.filter(function(y){ return y.key === key; })[0]; if(x) openCosPick(x);
+    }); });
+  }
+  /* Pasar un precio de proveedor a Precios */
+  function openCosPick(x){
+    cos.pick = x;
+    var arts = [];
+    ['material', 'equipo', 'servicio', 'logistica'].forEach(function(t){ precLista(t).forEach(function(p){ arts.push(p); }); });
+    var sugerido = arts.map(function(p){ return {p: p, s: cosParecido(cosTokens(p.nombre), x.tokens)}; }).filter(function(c){ return c.s >= 0.5; }).sort(function(a, b){ return b.s - a.s; })[0];
+    var h = '<div class="info-box" style="margin-bottom:12px;"><strong>'+escapeHtml(x.descripcion)+'</strong><br>'+escapeHtml(x.proveedor)+' · '+fmtMoney.format(x.costo)+(x.unidad ? ' / '+escapeHtml(x.unidad) : '')+' · '+escapeHtml(fmtShort(x.fecha))+'</div>';
+    h += precCampo('¿A qué ítem de Precios va este costo?', '<select id="cosPickArt"><option value="__nuevo">+ Crear material nuevo con este nombre</option><option value="__equipo">+ Crear equipo nuevo con este nombre</option>' +
+      arts.map(function(p){ return '<option value="'+escapeHtml(p._id)+'"'+(sugerido && sugerido.p._id === p._id ? ' selected' : '')+'>'+escapeHtml(PREC_TIPOS[p.tipo].lbl+' · '+p.nombre)+(precCosto(p) != null ? ' (hoy '+fmtMoney.format(precCosto(p))+')' : ' (sin costo)')+'</option>'; }).join('') + '</select>');
+    h += '<div class="field-row">' + precCampo('Nombre (si es nuevo)', '<input type="text" id="cosPickNombre" value="'+escapeHtml(x.descripcion.slice(0, 80))+'">') + precCampo('Unidad', '<input type="text" id="cosPickUnidad" value="'+escapeHtml(x.unidad || 'UND')+'">') + '</div>';
+    h += '<div class="field-row">' + precCampo('Costo sin IVA', '<input type="number" id="cosPickCosto" class="input-miles" min="0" step="1" value="'+x.costo+'">', 'Si el proveedor vende por caja o rollo y en Precios va por metro o unidad, divídelo antes de guardar.') + precCampo('Margen (%)', '<input type="number" id="cosPickMargen" min="0" max="95" step="0.5" value="'+precMetaMargen()+'">', 'Solo para ítems nuevos; en los existentes se mantiene su margen.') + '</div>';
+    document.getElementById('cosPickBody').innerHTML = h;
+    document.getElementById('cosPickOverlay').classList.add('open');
+  }
+  function closeCosPick(){ document.getElementById('cosPickOverlay').classList.remove('open'); cos.pick = null; }
+  document.getElementById('cosPickClose').addEventListener('click', closeCosPick);
+  document.getElementById('cosPickCancel').addEventListener('click', closeCosPick);
+  document.getElementById('cosPickSave').addEventListener('click', function(){
+    var db = requireDb(), x = cos.pick; if(!db || !x) return;
+    var dest = document.getElementById('cosPickArt').value, costo = precNum(document.getElementById('cosPickCosto').value), hoy = todayIso();
+    if(costo == null){ toast('Escribe el costo.'); return; }
+    var nota = 'Costo de ' + x.proveedor + (x.numero ? ' (cot. ' + x.numero + ')' : '') + ' del ' + fmtShort(x.fecha);
+    var pr;
+    if(dest === '__nuevo' || dest === '__equipo'){
+      var nombre = (document.getElementById('cosPickNombre').value || '').trim(); if(!nombre){ toast('Ponle un nombre.'); return; }
+      var tipo = dest === '__equipo' ? 'equipo' : 'material';
+      pr = db.collection('precios').add({tipo: tipo, orden: precLista(tipo).length + 1, nombre: nombre, unidad: (document.getElementById('cosPickUnidad').value || 'UND').trim().toUpperCase(),
+        costo: costo, margen: precNum(document.getElementById('cosPickMargen').value), proveedor: x.proveedor, notas: nota, stock: null, actualizado: hoy});
+    } else {
+      var p = state.precios.get(dest); if(!p){ toast('Elige el ítem.'); return; }
+      var upd = Object.assign({}, p, {proveedor: x.proveedor, notas: p.notas ? p.notas : nota, actualizado: hoy});
+      upd[cosCampoCosto(p)] = costo;
+      pr = db.collection('precios').doc(dest).set(upd);
+    }
+    pr.then(function(){ toast('Costo guardado en Precios'); closeCosPick(); })
+      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+
+  /* Costo real por obra: lo cotizado frente a lo que costó de verdad */
+  function cosObra(o, oid){
+    var c = state.cotizaciones.get(o.cotizacionId) || {};
+    var venta = finVentaSinIva(c), plan = cotCostoInfo(c), real = ocCostoInfo(o), dv = ocDesvio(o);
+    var adicionales = (c.costosAdicionales||[]).reduce(function(s, x){ return s + (Number(x.monto)||0); }, 0);
+    var materiales = plan.costo - plan.personalPlan - adicionales;
+    var costoReal = real.costo + dv.imprevistos;
+    var gastosFin = 0;
+    if(precAdmin() && fin.movs){
+      var pid = o.proyectoId || c.proyectoId;
+      if(pid) fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.proyectoId === pid && m.estado !== 'pendiente') gastosFin += Number(m.monto)||0; });
+    }
+    return {id: oid, o: o, c: c, venta: venta, plan: plan.costo, real: costoReal, materiales: materiales, adicionales: adicionales,
+      personalPlan: plan.personalPlan, personalReal: real.personalReal, dv: dv, bodega: invPorOrden(oid), gastosFin: gastosFin,
+      completo: plan.completo, faltan: plan.faltan,
+      mPlan: venta > 0 ? (venta - plan.costo) / venta : null, mReal: venta > 0 ? (venta - costoReal) / venta : null,
+      cerrada: ['finalizada','facturada','pagada'].indexOf(o.estado) !== -1};
+  }
+  function cosRenderObras(cont, info, q, admin){
+    var obras = invOrdenes().map(function(o){ return cosObra(o, o._id); }).filter(function(r){
+      if(cos.filtro === 'cerradas' && !r.cerrada) return false;
+      if(cos.filtro === 'curso' && r.cerrada) return false;
+      return !q || [r.o.numero, r.o.cliente, r.o.cotizacionNumero, r.c.titulo].join(' ').toLowerCase().indexOf(q) !== -1;
+    });
+    info.innerHTML = 'Cotizado = el costo de la cotización. Real = lo mismo, pero con lo que de verdad se le pagó al personal y sumando los imprevistos y materiales dañados registrados en la orden. Toca una orden para ver el detalle.' +
+      (admin ? ' Los gastos ligados al proyecto en Finanzas se muestran aparte para comparar.' : '');
+    info.className = 'info-box';
+    if(!obras.length){ cont.innerHTML = '<div class="table-wrap"><div class="empty-state">No hay órdenes de compra'+(cos.filtro || q ? ' con ese filtro' : '')+'.</div></div>'; return; }
+    var tv = 0, tp = 0, tr = 0, tvC = 0, sinC = 0;
+    var sem = function(m, costo){ if(costo != null && costo <= 0) return '<span class="fin-badge" title="No hay costos registrados: el margen no se puede medir">sin costos</span>'; var k = finSemaforo(m); return k ? '<span class="fin-badge '+k+'">'+pct(m)+'</span>' : '—'; };
+    var rows = obras.map(function(r){
+      tv += r.venta; tp += r.plan; tr += r.real;
+      if(r.plan > 0 || r.real > 0) tvC += r.venta; else sinC++;
+      var dif = r.real - r.plan;
+      var h = '<tr data-obra="'+escapeHtml(r.id)+'" style="cursor:pointer;">' +
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml((r.o.numero||'Orden') + ' · ' + (r.o.cliente||''))+'</div><div class="d-notes">'+escapeHtml([r.o.cotizacionNumero, r.cerrada ? 'terminada' : 'en curso'].filter(Boolean).join(' · '))+(r.completo ? '' : ' · <span style="color:var(--warning);">'+r.faltan+' ítem(s) sin costo</span>')+'</div></td>' +
+        '<td class="num">'+fmtMoney.format(r.venta)+'</td>' +
+        '<td class="num">'+fmtMoney.format(r.plan)+'</td>' +
+        '<td class="num"><strong>'+fmtMoney.format(r.real)+'</strong></td>' +
+        '<td class="num" style="color:'+(dif > 0.5 ? 'var(--critical)' : dif < -0.5 ? 'var(--success)' : 'inherit')+';">'+(Math.abs(dif) < 0.5 ? '—' : (dif > 0 ? '+' : '−') + fmtMoney.format(Math.abs(dif)))+'</td>' +
+        '<td class="num">'+sem(r.mPlan, r.plan)+'</td><td class="num">'+sem(r.mReal, r.real)+'</td></tr>';
+      if(cos.abiertas[r.id]) h += '<tr class="mc-sub cos-detalle"><td colspan="7">'+cosDetalleObra(r, admin)+'</td></tr>';
+      return h;
+    });
+    var mT = tvC > 0 ? (tvC - tr) / tvC : null, mP = tvC > 0 ? (tvC - tp) / tvC : null;
+    cont.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Orden</th><th class="num">Vendido sin IVA</th><th class="num">Costo cotizado</th><th class="num">Costo real</th><th class="num">Diferencia</th><th class="num">Margen cotizado</th><th class="num">Margen real</th></tr></thead><tbody>' + rows.join('') + '</tbody>' +
+      '<tfoot><tr><td><strong>Total</strong></td><td class="num"><strong>'+fmtMoney.format(tv)+'</strong></td><td class="num">'+fmtMoney.format(tp)+'</td><td class="num"><strong>'+fmtMoney.format(tr)+'</strong></td><td class="num">'+(Math.abs(tr - tp) < 0.5 ? '—' : (tr > tp ? '+' : '−') + fmtMoney.format(Math.abs(tr - tp)))+'</td><td class="num">'+sem(mP)+'</td><td class="num">'+sem(mT)+'</td></tr></tfoot></table></div>' +
+      (sinC ? '<div class="no-file" style="margin-top:8px;">El margen total no cuenta '+sinC+' orden(es) sin costos registrados.</div>' : '');
+    cont.querySelectorAll('tr[data-obra]').forEach(function(trEl){ trEl.addEventListener('click', function(){
+      var id = trEl.dataset.obra; cos.abiertas[id] = !cos.abiertas[id]; renderCostos();
+    }); });
+  }
+  function cosDetalleObra(r, admin){
+    var l = function(a, plan, real, nota){
+      return '<div class="cos-linea"><span>'+a+(nota ? '<small>'+nota+'</small>' : '')+'</span><span class="num">'+(plan == null ? '—' : fmtMoney.format(plan))+'</span><span class="num">'+(real == null ? '—' : fmtMoney.format(real))+'</span></div>';
+    };
+    var pr = r.personalReal == null ? r.personalPlan : r.personalReal;
+    var h = '<div class="cos-det"><div class="cos-linea cos-head"><span></span><span class="num">Cotizado</span><span class="num">Real</span></div>';
+    h += l('Materiales y equipos', r.materiales, r.materiales, r.completo ? '' : r.faltan + ' ítem(s) sin costo: el real es mayor');
+    h += l('Personal', r.personalPlan, pr, r.personalReal == null ? 'Aún no se registra lo pagado en la orden' : '');
+    if(r.adicionales) h += l('Otros costos de la cotización', r.adicionales, r.adicionales);
+    if(r.dv.materiales) h += l('Materiales dañados o repuestos', 0, r.dv.materiales, 'Novedades de la orden');
+    if(r.dv.otros) h += l('Otros imprevistos', 0, r.dv.otros);
+    h += '<div class="cos-linea cos-total"><span>Total</span><span class="num">'+fmtMoney.format(r.plan)+'</span><span class="num">'+fmtMoney.format(r.real)+'</span></div></div>';
+    var notas = [];
+    if(r.dv.extra) notas.push('Se trabajaron ' + r.dv.extra + ' día(s) más de lo cotizado' + (r.dv.noCobrado ? ' (equivalen a ' + fmtMoney.format(r.dv.noCobrado) + ' que no se cobraron)' : '') + '.');
+    if(r.dv.tramite) notas.push('Hay ' + fmtMoney.format(r.dv.tramite) + ' en garantías en trámite.');
+    if(r.bodega.items) notas.push('Material sacado de la bodega para esta obra: ' + fmtMoney.format(r.bodega.valor) + ' al costo (ya está dentro de lo cotizado, no se suma aparte).');
+    if(admin && r.gastosFin) notas.push('En Finanzas hay ' + fmtMoney.format(r.gastosFin) + ' en gastos pagados ligados a este proyecto.');
+    if(r.plan <= 0 && r.real <= 0) notas.push('<strong>Esta obra no tiene costos registrados</strong> (la cotización no trae costos y no se le pagó a personal externo), así que su margen no se puede medir. Si hubo gastos, regístralos en la orden o en Finanzas.');
+    else if(r.venta > 0) notas.push('Utilidad real: <strong>' + fmtMoney.format(r.venta - r.real) + '</strong> de ' + fmtMoney.format(r.venta) + ' vendidos sin IVA.');
+    return h + (notas.length ? '<div class="cos-notas">' + notas.join('<br>') + '</div>' : '');
+  }
+  document.getElementById('cosTabs').addEventListener('click', function(e){
+    var b = e.target.closest('.subtab-btn'); if(!b) return;
+    if(cos.editando && cosCambios().length){
+      confirmDialog('Tienes costos sin guardar. ¿Salir sin guardarlos?', 'Salir sin guardar').then(function(ok){ if(ok){ cos.editando = false; cos.tab = b.dataset.cos; cos.filtro = null; renderCostos(); } });
+      return;
+    }
+    cos.editando = false; cos.tab = b.dataset.cos; cos.filtro = null; renderCostos();
+  });
+  document.getElementById('cosSearch').addEventListener('input', function(){ if(cos.tab === 'cargar' && cos.editando && cosCambios().length) return; renderCostos(); });
+  document.getElementById('cosFiltro').addEventListener('change', function(){
+    var v = this.value;
+    if(cos.tab === 'cargar' && cos.editando && cosCambios().length){ this.value = cos.filtro; toast('Guarda los costos antes de cambiar el filtro.'); return; }
+    cos.filtro = v; renderCostos();
+  });
+  document.getElementById('cosExportar').addEventListener('click', function(){
+    var filas;
+    if(cos.tab === 'proveedores'){
+      filas = [['Producto','Proveedor','Fecha','Días','Unidad','Cantidad cotizada','Costo unitario sin IVA','Cotización proveedor']];
+      cosItemsProveedor().forEach(function(x){ filas.push([x.descripcion, x.proveedor, x.fecha, x.dias == null ? '' : x.dias, x.unidad, x.cantidad, Math.round(x.costo), x.numero]); });
+    } else {
+      filas = [['Orden','Cliente','Cotización','Estado','Vendido sin IVA','Costo cotizado','Costo real','Diferencia','Margen cotizado %','Margen real %','Personal cotizado','Personal pagado','Imprevistos','Material de bodega']];
+      invOrdenes().forEach(function(o){ var r = cosObra(o, o._id);
+        filas.push([o.numero, o.cliente, o.cotizacionNumero || '', o.estado, Math.round(r.venta), Math.round(r.plan), Math.round(r.real), Math.round(r.real - r.plan),
+          r.mPlan == null ? '' : Math.round(r.mPlan*1000)/10, r.mReal == null ? '' : Math.round(r.mReal*1000)/10, Math.round(r.personalPlan), r.personalReal == null ? '' : Math.round(r.personalReal), Math.round(r.dv.imprevistos), Math.round(r.bodega.valor)]); });
+    }
+    csvDescargar(filas, 'cenova-costos-' + cos.tab + '-' + todayIso() + '.csv');
+  });
 
   if(window.claude && window.claude.use){
     window.claude.use('user').then(function(u){ if(u && u.id) return u.id(); return null; }).then(function(uid){ state.userId = uid || null; }).catch(function(){});

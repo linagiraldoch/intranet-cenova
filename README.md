@@ -51,6 +51,12 @@ Menú **Precios**, visible para todo el equipo (colección `precios`). Administr
 
 El margen es sobre el precio de venta, igual que en Finanzas: precio = costo ÷ (1 − margen). En la cotización, "+ Desde Precios" agrega el ítem con su costo y margen ya calculados (el costo y el precio quedan bloqueados; solo se ajusta el margen). Los servicios de instalación abren una calculadora (personal, logística, kits y materiales + administración + imprevistos) y salen como una sola línea. En modo AIU el servicio queda a costo directo y la administración, los imprevistos y la utilidad van en la línea del AIU. Cada cotización compara el margen fijado en Precios con el cotizado. Las cotizaciones creadas desde el 2026-10-02 usan margen sobre la venta (`margenSobreVenta`); las anteriores conservan el recargo sobre el costo.
 
+## Menú, Inventario y Costos (2026-10-09)
+
+- **Menú** agrupado en Comercial (Cotizaciones, Clientes, Proyectos), Operación (Órdenes de compra, Agenda, Inventario) y Administración (Precios, Costos, Estadísticas, Finanzas). En computador se pliega a íconos con el botón « / » o Ctrl + B (se recuerda en el navegador).
+- **Inventario** (colección `inventario`): los artículos son los materiales y equipos de Precios, donde viven `stock`, `stockMin`, `ubicacion` y `costo`. Cada entrada, salida a obra (ligada a una orden de compra), devolución o conteo se guarda como movimiento (`tipo`, `cantidad`, `delta`, `stockAntes`, `stockDespues`, `ordenId`, `costoUnit`/`costoRef`, quién y cuándo) y actualiza el stock en Precios. El equipo registra movimientos; el servidor solo deja a administración cambiarlos o borrarlos (al borrar, el stock se corrige). Un cambio de stock hecho a mano en Precios queda como conteo.
+- **Costos**: *Costos por cargar* (llenar costos de Precios de una vez, con referencias de proveedores, de lo pagado en obras y de la última compra en Inventario), *Precios de proveedores* (todos los ítems de las cotizaciones de proveedor, antigüedad, el más barato y "→ Precios") y *Costo real por obra* (cotizado frente a real por orden: personal pagado, imprevistos y novedades; material de bodega como dato).
+
 ## Usuarios
 
 | Usuario | Correo | Rol |

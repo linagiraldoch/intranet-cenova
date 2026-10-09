@@ -8,13 +8,14 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'precios'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'precios', 'inventario'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
 // Precios: todos los ven; costos, márgenes y precios solo los cambia administración.
 // El equipo solo puede actualizar el stock y el contenido de los kits.
-const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'componentes', 'editadoPor', 'editadoEn'];
+const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'stockMin', 'ubicacion', 'componentes', 'editadoPor', 'editadoEn'];
+// Inventario: todos registran movimientos (entradas, salidas, conteos); solo administración los cambia o borra.
 const COOKIE = 'cenova_sesion';
 const MAX_INTENTOS = 5;
 const BLOQUEO_MS = 15 * 60 * 1000;
@@ -203,6 +204,9 @@ async function escribir(req, env, s, col, id, metodo) {
 
   if (col === 'precios' && !s.admin) {
     if (metodo === 'DELETE' || !previo) return err(403, 'regla', 'Solo administración crea o borra ítems de Precios.');
+  }
+  if (col === 'inventario' && !s.admin && (metodo === 'DELETE' || previo)) {
+    return err(403, 'regla', 'Los movimientos de inventario no se cambian ni se borran: registra un conteo para corregir.');
   }
   if (metodo === 'DELETE') {
     if (col === 'ordenesCompra' && !s.admin) return err(403, 'regla', 'Las órdenes de compra no se borran: cámbiala a "Anulada".');
