@@ -984,7 +984,7 @@
     <section class="view" id="view-estadisticas">
       <div class="kpis stats" id="statsKpis"></div>
       <h3 class="stats-h">Rentabilidad por proyecto</h3>
-      <div class="stats-note">Venta y costo salen de las cotizaciones que tienen orden de compra (valores sin IVA). Utilidad = venta − costo directo de los ítems − costos imprevistos. "Dejado de cobrar" = días de instalación extra × tarifa diaria de instalación cotizada. <strong>"Ítems sin costo"</strong> quiere decir que en esa cotización falta escribir cuánto le costó cada ítem a Cenova (columna "Costo"); mientras falte, la utilidad y el margen salen inflados. Haz clic para abrir la cotización y completarlos.</div>
+      <div class="stats-note">Venta y costo salen de las cotizaciones que tienen orden de compra (valores sin IVA). Utilidad = venta − costo directo de los ítems − costos imprevistos. "Dejado de cobrar" = días de instalación extra × tarifa diaria de instalación cotizada. <strong>"Ítems sin costo"</strong> quiere decir que en esa cotización falta escribir cuánto le costó cada ítem a Cenova (columna "Costo"); mientras falte, la utilidad y el margen salen inflados. Haz clic en el aviso de ítems sin costo para completarlos, o en el proyecto para ver su informe: en qué se fue el dinero fuera de la cotización, margen por ítem, qué se compró, quién instaló y las notas.</div>
       <div id="statsProyectos"></div>
       <h3 class="stats-h">Desvíos de ejecución</h3>
       <div class="stats-note">Órdenes con días reales distintos a los cotizados, materiales dañados o repuestos, u otros costos que no estaban previstos. Lo que está "en garantía" cuenta como pérdida hasta que marques que se recuperó.</div>
@@ -1424,6 +1424,19 @@
 </div>
 
 <!-- Modal: ítem de Precios -->
+<div class="overlay" id="infOverlay">
+  <div class="modal xwide">
+    <div class="modal-head"><h3 id="infTitle">Informe de la obra</h3><button class="modal-close" id="infClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+    <div class="modal-body" id="infBody"></div>
+    <div class="modal-foot">
+      <span class="no-file">Informe interno: tiene costos y márgenes.</span>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="infCerrar">Cerrar</button>
+        <button class="btn primary" id="infDescargar">Descargar para imprimir / PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="overlay" id="invOverlay">
   <div class="modal">
     <div class="modal-head"><h3 id="invTitle">Movimiento de inventario</h3><button class="modal-close" id="invClose" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
@@ -4850,8 +4863,8 @@
     rows.sort(function(a,b){ return b.venta - a.venta || b.cotizado - a.cotizado; });
     var html = '<div class="table-wrap"><table><thead><tr><th>Proyecto</th><th>Cotizado</th><th>Órdenes</th><th>Venta (sin IVA)</th><th>Costo directo</th><th>Imprevistos</th><th>Utilidad</th><th>Margen</th><th>Días extra</th><th>Dejado de cobrar</th></tr></thead><tbody>';
     rows.forEach(function(r){
-      html += '<tr>'+
-        '<td class="desc-cell"><div class="d-title">'+escapeHtml(r.p.nombre||'—')+'</div><div class="d-notes">'+escapeHtml(r.p.cliente||'')+' · '+(PROY_ESTADOS[r.p.estado]||r.p.estado||'')+'</div></td>'+
+      html += '<tr data-inf="'+escapeHtml(r.pid)+'" style="cursor:pointer;" title="Ver el informe de la obra">'+
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml(r.p.nombre||'—')+'</div><div class="d-notes">'+escapeHtml(r.p.cliente||'')+' · '+(PROY_ESTADOS[r.p.estado]||r.p.estado||'')+'</div><div class="d-notes" style="color:var(--accent);">Ver informe →</div></td>'+
         '<td class="num">'+fmtMoney.format(r.cotizado)+'</td>'+
         '<td class="num">'+r.nOrd+'</td>'+
         '<td class="num">'+(r.nOrd?fmtMoney.format(r.venta):'—')+'</td>'+
@@ -4865,7 +4878,8 @@
     });
     html += '</tbody></table></div>';
     document.getElementById('statsProyectos').innerHTML = rows.length ? html : '<div class="table-wrap"><div class="empty-state">Aún no hay proyectos con cotizaciones.</div></div>';
-    document.querySelectorAll('#statsProyectos .open-cot-costo').forEach(function(b){ b.addEventListener('click', function(){ if(b.dataset.cot) openCotModal(b.dataset.cot); }); });
+    document.querySelectorAll('#statsProyectos .open-cot-costo').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); if(b.dataset.cot) openCotModal(b.dataset.cot); }); });
+    document.querySelectorAll('#statsProyectos tr[data-inf]').forEach(function(tr){ tr.addEventListener('click', function(){ openInforme(tr.dataset.inf); }); });
 
     // Desvíos de ejecución
     var dev = ords.filter(function(e){ return e[1].diasReales!=null && e[1].diasReales!=='' || Number(e[1].costoImprevistos)>0 || (e[1].novedades||[]).length || (e[1].personal||[]).length; });
@@ -7835,6 +7849,7 @@
     cont.innerHTML = '<div class="table-wrap"><table><thead><tr><th>Orden</th><th class="num">Vendido sin IVA</th><th class="num">Costo cotizado</th><th class="num">Costo real</th><th class="num">Diferencia</th><th class="num">Margen cotizado</th><th class="num">Margen real</th></tr></thead><tbody>' + rows.join('') + '</tbody>' +
       '<tfoot><tr><td><strong>Total</strong></td><td class="num"><strong>'+fmtMoney.format(tv)+'</strong></td><td class="num">'+fmtMoney.format(tp)+'</td><td class="num"><strong>'+fmtMoney.format(tr)+'</strong></td><td class="num">'+(Math.abs(tr - tp) < 0.5 ? '—' : (tr > tp ? '+' : '−') + fmtMoney.format(Math.abs(tr - tp)))+'</td><td class="num">'+sem(mP)+'</td><td class="num">'+sem(mT)+'</td></tr></tfoot></table></div>' +
       (sinC ? '<div class="no-file" style="margin-top:8px;">El margen total no cuenta '+sinC+' orden(es) sin costos registrados.</div>' : '');
+    cont.querySelectorAll('.cos-informe').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); openInforme(b.dataset.pid); }); });
     cont.querySelectorAll('tr[data-obra]').forEach(function(trEl){ trEl.addEventListener('click', function(){
       var id = trEl.dataset.obra; cos.abiertas[id] = !cos.abiertas[id]; renderCostos();
     }); });
@@ -7859,7 +7874,8 @@
     if(admin && r.gastosFin) notas.push('En Finanzas hay ' + fmtMoney.format(r.gastosFin) + ' en gastos pagados ligados a este proyecto.');
     if(r.plan <= 0 && r.real <= 0) notas.push('<strong>Esta obra no tiene costos registrados</strong> (la cotización no trae costos y no se le pagó a personal externo), así que su margen no se puede medir. Si hubo gastos, regístralos en la orden o en Finanzas.');
     else if(r.venta > 0) notas.push('Utilidad real: <strong>' + fmtMoney.format(r.venta - r.real) + '</strong> de ' + fmtMoney.format(r.venta) + ' vendidos sin IVA.');
-    return h + (notas.length ? '<div class="cos-notas">' + notas.join('<br>') + '</div>' : '');
+    var pidInf = r.o.proyectoId || r.c.proyectoId;
+    return h + (notas.length ? '<div class="cos-notas">' + notas.join('<br>') + '</div>' : '') + (pidInf && state.proyectos.get(pidInf) ? '<div style="margin-top:10px;"><button type="button" class="btn sm cos-informe" data-pid="'+escapeHtml(pidInf)+'">Ver informe completo de la obra →</button></div>' : '');
   }
   document.getElementById('cosTabs').addEventListener('click', function(e){
     var b = e.target.closest('.subtab-btn'); if(!b) return;
@@ -7887,6 +7903,233 @@
           r.mPlan == null ? '' : Math.round(r.mPlan*1000)/10, r.mReal == null ? '' : Math.round(r.mReal*1000)/10, Math.round(r.personalPlan), r.personalReal == null ? '' : Math.round(r.personalReal), Math.round(r.dv.imprevistos), Math.round(r.bodega.valor)]); });
     }
     csvDescargar(filas, 'cenova-costos-' + cos.tab + '-' + todayIso() + '.csv');
+  });
+
+
+  /* =====================================================================
+     INFORME DE LA OBRA (2026-10-09)
+     Al tocar un proyecto en Estadísticas (o "Ver informe" en Costos) se abre
+     un informe con: resumen y margen, en qué se fue el dinero fuera de la
+     cotización, margen ítem por ítem, qué se compró, qué se instaló, quién
+     instaló y todas las notas. Se puede descargar para imprimir o guardar en PDF.
+     ===================================================================== */
+  var inf = {pid: null};
+  var INF_NO_ENTREGADO = /no se (compr|instal|suministr)/i;
+  function infOrdenesDeProyecto(pid, p){
+    var cotIds = cotizacionesDeProyecto(pid, p && p.cliente).map(function(e){ return e[0]; });
+    var l = [];
+    state.ordenes.forEach(function(o, id){
+      if(o.estado === 'anulada') return;
+      if(o.proyectoId === pid || cotIds.indexOf(o.cotizacionId) !== -1) l.push(Object.assign({}, o, {_id: id}));
+    });
+    l.sort(function(a, b){ return String(a.numero||'').localeCompare(String(b.numero||'')); });
+    return l;
+  }
+  function infPct(m){ return m == null || !isFinite(m) ? '—' : (Math.round(m * 1000) / 10).toLocaleString('es-CO') + ' %'; }
+  function infSem(m){ var k = finSemaforo(m); return k === 'crit' ? 'crit' : k === 'warn' ? 'warn' : k === 'ok' ? 'ok' : ''; }
+  function infMoney(v){ return fmtMoney.format(Math.round((Number(v) || 0) * 100) / 100); }
+  function infFecha(iso){ return iso ? fmtDate(iso) : '—'; }
+
+  /* Arma el contenido del informe (sirve igual para la ventana y para el archivo descargado) */
+  function infContenido(pid){
+    var p = state.proyectos.get(pid) || {};
+    var ords = infOrdenesDeProyecto(pid, p);
+    var cots = cotizacionesDeProyecto(pid, p.cliente).map(function(e){ return Object.assign({}, e[1], {_id: e[0]}); });
+    var admin = precAdmin();
+    var h = '';
+    h += '<div class="inf-cab"><div><div class="inf-kicker">Informe de la obra</div><h2>'+escapeHtml(p.nombre || 'Proyecto')+'</h2>' +
+      '<div class="inf-meta">'+escapeHtml([p.cliente, PROY_ESTADOS[p.estado] || p.estado, p.responsable ? 'Responsable: ' + p.responsable : ''].filter(Boolean).join(' · '))+'</div></div>' +
+      '<div class="inf-meta" style="text-align:right;">Generado el '+escapeHtml(fmtDate(todayIso()))+'<br>Cenova S.A.S.</div></div>';
+
+    if(!ords.length){
+      h += '<div class="inf-aviso">Este proyecto aún no tiene orden de compra, así que no hay costos reales ni instalación para mostrar.</div>';
+      if(cots.length) h += '<h3>Cotizaciones del proyecto</h3><table class="inf-t"><thead><tr><th>Cotización</th><th>Estado</th><th>Fecha</th><th class="num">Valor</th></tr></thead><tbody>' +
+        cots.map(function(c){ return '<tr><td>'+escapeHtml((c.numero||'—')+' · '+(c.descripcion||c.titulo||'').slice(0, 80))+'</td><td>'+escapeHtml(c.estado||'')+'</td><td>'+escapeHtml(fmtShort(c.fecha))+'</td><td class="num">'+infMoney(cotTotal(c))+'</td></tr>'; }).join('') + '</tbody></table>';
+      return h;
+    }
+
+    var tot = {venta: 0, plan: 0, real: 0, cobrado: 0, valor: 0, com: 0, ret: 0};
+    var obras = ords.map(function(o){
+      var r = cosObra(o, o._id);
+      tot.venta += r.venta; tot.plan += r.plan; tot.real += r.real; tot.cobrado += ocRecibido(o); tot.valor += Number(o.valor) || 0;
+      (o.pagos||[]).forEach(function(pg){ tot.com += pgComision(pg); tot.ret += pgRetencion(pg); });
+      return r;
+    });
+    var util = tot.venta - tot.real, mPlan = tot.venta > 0 ? (tot.venta - tot.plan) / tot.venta : null, mReal = tot.venta > 0 ? util / tot.venta : null;
+    var sinCostos = tot.plan <= 0 && tot.real <= 0;
+
+    /* 1. Resumen */
+    h += '<div class="inf-kpis">' +
+      '<div class="inf-kpi"><span>Vendido sin IVA</span><strong>'+infMoney(tot.venta)+'</strong></div>' +
+      '<div class="inf-kpi"><span>Costo real</span><strong>'+infMoney(tot.real)+'</strong><em>cotizado '+infMoney(tot.plan)+'</em></div>' +
+      '<div class="inf-kpi"><span>Utilidad</span><strong class="'+(util < 0 ? 'neg' : '')+'">'+(sinCostos ? '—' : infMoney(util))+'</strong></div>' +
+      '<div class="inf-kpi"><span>Margen</span><strong class="sem-'+infSem(mReal)+'">'+(sinCostos ? 'sin costos' : infPct(mReal))+'</strong><em>cotizado '+(sinCostos ? '—' : infPct(mPlan))+'</em></div>' +
+      '</div>';
+    h += '<div class="inf-cobro">Cobrado al cliente: <strong>'+infMoney(tot.cobrado)+'</strong> de '+infMoney(tot.valor)+' · por cobrar <strong>'+infMoney(Math.max(0, tot.valor - tot.cobrado))+'</strong>' +
+      (tot.com || tot.ret ? ' · la pasarela descontó '+infMoney(tot.com)+' de comisión y '+infMoney(tot.ret)+' de retención (neto recibido '+infMoney(tot.cobrado - tot.com - tot.ret)+')' : '') + '</div>';
+    if(sinCostos) h += '<div class="inf-aviso">Este proyecto no tiene costos registrados (la cotización no trae costos y no se le pagó a personal externo), así que la utilidad y el margen no se pueden medir.</div>';
+
+    obras.forEach(function(r){
+      var o = r.o, c = r.c, dv = r.dv;
+      if(obras.length > 1) h += '<h2 class="inf-orden">'+escapeHtml((o.numero||'Orden') + ' · ' + (o.cotizacionNumero || c.numero || ''))+'</h2>';
+
+      /* 2. Fuera de la cotización */
+      var fuera = [];
+      var pReal = r.personalReal, pPlan = r.personalPlan;
+      if(pReal != null && Math.abs(pReal - pPlan) >= 1) fuera.push({c: pReal - pPlan, t: 'Personal', d: pPlan ? 'Se cotizaron '+infMoney(pPlan)+' y se pagaron '+infMoney(pReal)+'.' : 'La cotización no tenía mano de obra; se pagaron '+infMoney(pReal)+' al personal (detalle abajo).'});
+      (o.novedades||[]).forEach(function(n){
+        var costo = Number(n.costo) || 0; if(!costo) return;
+        var rec = n.garantia === 'recuperada';
+        fuera.push({c: rec ? 0 : costo, t: (n.cantidad > 1 ? n.cantidad + ' × ' : '') + (n.material || 'Material'), d: [NOV_MOTIVOS[n.motivo] || n.motivo, n.garantia === 'tramite' ? 'garantía en trámite' : rec ? 'recuperado por garantía (no cuenta)' : '', n.nota].filter(Boolean).join(' · ')});
+      });
+      if(dv.otros) fuera.push({c: dv.otros, t: 'Otros imprevistos', d: [CAUSAS_DESVIO[o.causaDesvio], o.causaDetalle].filter(Boolean).join(' · ')});
+      (o.pagos||[]).forEach(function(pg){ if(pgComision(pg)) fuera.push({c: pgComision(pg), t: 'Comisión de pasarela de pago (con IVA)', d: 'Pago del '+fmtShort(pg.fecha)+' por '+infMoney(pg.monto)+'. La retención ('+infMoney(pgRetencion(pg))+') no es costo: es saldo a favor en renta.'}); });
+      var extraTot = fuera.reduce(function(s, x){ return s + x.c; }, 0);
+      h += '<h3>En qué se fue el dinero fuera de la cotización</h3>';
+      if(fuera.length){
+        h += '<table class="inf-t"><thead><tr><th>Concepto</th><th>Detalle</th><th class="num">Valor</th></tr></thead><tbody>' +
+          fuera.map(function(x){ return '<tr><td><strong>'+escapeHtml(x.t)+'</strong></td><td class="inf-det">'+escapeHtml(x.d)+'</td><td class="num '+(x.c > 0 ? 'neg' : x.c < 0 ? 'pos' : '')+'">'+(x.c > 0 ? '+' : x.c < 0 ? '−' : '')+infMoney(Math.abs(x.c))+'</td></tr>'; }).join('') +
+          '</tbody><tfoot><tr><td colspan="2"><strong>Total fuera de la cotización</strong></td><td class="num neg"><strong>'+(extraTot >= 0 ? '+' : '−')+infMoney(Math.abs(extraTot))+'</strong></td></tr></tfoot></table>';
+      } else h += '<p class="inf-p">Nada: la obra costó lo que se cotizó.</p>';
+      var avisos = [];
+      if(dv.extra) avisos.push('Se trabajaron ' + dv.extra + ' día(s) más de lo cotizado' + (dv.noCobrado ? '; equivalen a ' + infMoney(dv.noCobrado) + ' que no se cobraron' : '') + '.');
+      if(admin && r.gastosFin) avisos.push('En Finanzas hay ' + infMoney(r.gastosFin) + ' en gastos pagados ligados a este proyecto (compárelos con lo de arriba para no contarlos dos veces).');
+      if(avisos.length) h += '<div class="inf-aviso">'+avisos.map(escapeHtml).join('<br>')+'</div>';
+
+      /* 3. Margen ítem por ítem (lo cotizado y lo que se entregó) */
+      var items = (c.items || []);
+      h += '<h3>Margen ítem por ítem y qué se entregó</h3>';
+      if(items.length){
+        var vT = 0, kT = 0;
+        h += '<table class="inf-t"><thead><tr><th>Ítem</th><th class="num">Cant.</th><th class="num">Precio</th><th class="num">Costo</th><th class="num">Margen</th><th class="num">Utilidad</th><th>Proveedor / estado</th></tr></thead><tbody>' +
+          items.map(function(it){
+            var q = Number(it.cantidad) || 0, pr = Number(it.precioUnit) || 0, sinK = it.costoUnit == null || it.costoUnit === '', k = sinK ? null : Number(it.costoUnit) || 0;
+            var venta = q * pr, costo = k == null ? null : q * k; vT += venta; kT += costo || 0;
+            var m = venta > 0 && costo != null ? (venta - costo) / venta : null;
+            var noEnt = INF_NO_ENTREGADO.test(it.costoProveedor || '');
+            var estado = noEnt ? '<span class="inf-chip warn">No se compró · se cobró</span>' : (k == null ? '<span class="inf-chip">sin costo registrado</span>' : (k > pr ? '<span class="inf-chip crit">vendido bajo el costo</span>' : (k === pr ? '<span class="inf-chip warn">sin margen</span>' : '')));
+            return '<tr><td>'+escapeHtml(it.descripcion||'—')+'</td><td class="num">'+escapeHtml(String(q))+'</td><td class="num">'+infMoney(pr)+'</td><td class="num">'+(k == null ? '—' : infMoney(k))+'</td>' +
+              '<td class="num sem-'+infSem(m)+'">'+infPct(m)+'</td><td class="num '+(costo != null && venta - costo < 0 ? 'neg' : '')+'">'+(costo == null ? '—' : infMoney(venta - costo))+'</td>' +
+              '<td class="inf-det">'+(noEnt ? '' : escapeHtml(it.costoProveedor || ''))+' '+estado+'</td></tr>';
+          }).join('') +
+          (r.adicionales ? (c.costosAdicionales||[]).map(function(x){ return '<tr><td>'+escapeHtml(x.descripcion||'Costo adicional')+'</td><td class="num">—</td><td class="num">—</td><td class="num">'+infMoney(x.monto)+'</td><td class="num">—</td><td class="num neg">−'+infMoney(x.monto)+'</td><td class="inf-det">'+escapeHtml(x.proveedor||'')+' <span class="inf-chip">no se cobró al cliente</span></td></tr>'; }).join('') : '') +
+          '</tbody></table>';
+      } else h += '<p class="inf-p">La cotización no tiene ítems.</p>';
+
+      /* 4. Qué se compró */
+      var provs = [];
+      state.cotizacionesProveedor.forEach(function(pc){ if(pc.cotizacionId === o.cotizacionId || (pc.proyectoId && pc.proyectoId === (o.proyectoId || c.proyectoId))) provs.push(pc); });
+      var bodega = []; state.inventario.forEach(function(m){ if(m.ordenId === o._id && (m.tipo === 'salida' || m.tipo === 'devolucion')) bodega.push(m); });
+      h += '<h3>Qué se compró</h3>';
+      if(provs.length){
+        h += provs.map(function(pc){
+          return '<div class="inf-compra"><div class="inf-compra-cab"><strong>'+escapeHtml(pc.proveedor || 'Proveedor')+'</strong> · cotización '+escapeHtml(pc.numero || '—')+' · '+escapeHtml(fmtShort(pc.fecha))+'<span class="num">'+infMoney(pc.monto)+'</span></div>' +
+            '<ul>'+(pc.items||[]).map(function(it){ return '<li>'+escapeHtml((it.cantidad ? it.cantidad + ' × ' : '') + (it.descripcion || ''))+' <span class="inf-det">('+infMoney(it.costoUnit)+(it.unidad ? ' / ' + escapeHtml(it.unidad) : '')+')</span></li>'; }).join('')+'</ul>' +
+            (pc.notas ? '<div class="inf-det">'+escapeHtml(pc.notas)+'</div>' : '') + '</div>';
+        }).join('');
+      } else h += '<p class="inf-p">No hay cotización de proveedor ligada a esta obra.</p>';
+      var repuestos = (o.novedades||[]).filter(function(n){ return Number(n.costo) > 0; });
+      if(repuestos.length) h += '<p class="inf-p"><strong>Compras extra (repuestos):</strong> '+repuestos.map(function(n){ return escapeHtml((n.cantidad > 1 ? n.cantidad + ' × ' : '') + n.material) + ' ' + infMoney(n.costo); }).join(' · ')+'</p>';
+      if(dv.otros) h += '<p class="inf-p"><strong>Otros:</strong> '+escapeHtml(o.causaDetalle || 'Imprevistos')+' '+infMoney(dv.otros)+'</p>';
+      if(bodega.length) h += '<p class="inf-p"><strong>Sacado de la bodega:</strong> '+bodega.map(function(m){ return (m.tipo === 'devolucion' ? 'devolvió ' : '') + escapeHtml(invCant(m.cantidad) + ' ' + (m.unidad||'') + ' de ' + m.articulo); }).join(' · ')+' (valor al costo '+infMoney(r.bodega.valor)+', ya incluido en lo cotizado).</p>';
+
+      /* 5. Instalación y quién instaló */
+      var k2 = ocCalc(o);
+      h += '<h3>Instalación y quién instaló</h3>';
+      h += '<div class="inf-grid">' +
+        '<div><span>Orden</span>'+escapeHtml((o.numero||'—') + ' · ' + (OC_ESTADOS[o.estado] || o.estado || ''))+'</div>' +
+        '<div><span>Responsable</span>'+escapeHtml(o.responsable || p.responsable || '—')+'</div>' +
+        '<div><span>Inicio</span>'+escapeHtml(infFecha(o.fechaInicio))+'</div>' +
+        '<div><span>Fin</span>'+escapeHtml(infFecha(k2.fin))+'</div>' +
+        '<div><span>Días cotizados</span>'+(dv.diasCot != null ? dv.diasCot : '—')+'</div>' +
+        '<div><span>Días programados</span>'+(dv.diasPlan != null ? dv.diasPlan + (o.modalidad ? ' (' + (o.modalidad === 'intercalados' ? 'intercalados' : 'seguidos') + ')' : '') : '—')+'</div>' +
+        '<div><span>Días reales</span>'+(dv.reales != null ? dv.reales : '—')+'</div>' +
+        '<div><span>Días extra</span>'+(dv.extra || 0)+'</div>' +
+        '</div>';
+      var pers = o.personal || [];
+      if(pers.length){
+        var pt = 0;
+        h += '<table class="inf-t"><thead><tr><th>Persona</th><th>Tipo</th><th class="num">Días</th><th class="num">Pago / día</th><th class="num">Almuerzo / día</th><th class="num">Transporte / día</th><th class="num">Otros</th><th class="num">Total</th></tr></thead><tbody>' +
+          pers.map(function(x){ var t = personalRowTotal(x); pt += t; return '<tr><td><strong>'+escapeHtml(x.nombre || '—')+'</strong></td><td>'+escapeHtml(PERS_TIPOS[x.tipo] || x.tipo || '')+'</td><td class="num">'+(Number(x.dias)||0)+'</td><td class="num">'+infMoney(x.pagoDia)+'</td><td class="num">'+infMoney(x.almuerzoDia)+'</td><td class="num">'+infMoney(x.transporteDia)+'</td><td class="num">'+infMoney(x.otros)+'</td><td class="num"><strong>'+infMoney(t)+'</strong></td></tr>'; }).join('') +
+          '</tbody><tfoot><tr><td colspan="7"><strong>Total pagado al personal</strong></td><td class="num"><strong>'+infMoney(pt)+'</strong></td></tr></tfoot></table>';
+        var gratis = pers.filter(function(x){ return !(Number(x.pagoDia) > 0); }).map(function(x){ return x.nombre; }).filter(Boolean);
+        if(gratis.length) h += '<p class="inf-p inf-det">Sin pago por día: '+escapeHtml(gratis.join(', '))+' (socio o solo se le pagó el almuerzo).</p>';
+      } else h += '<p class="inf-p">No se registró el personal en la orden.</p>';
+      var entregados = (c.items||[]).filter(function(it){ return !INF_NO_ENTREGADO.test(it.costoProveedor || ''); });
+      var noEnt = (c.items||[]).filter(function(it){ return INF_NO_ENTREGADO.test(it.costoProveedor || ''); });
+      h += '<p class="inf-p"><strong>Se instaló / entregó:</strong> '+(entregados.length ? entregados.map(function(it){ return escapeHtml((Number(it.cantidad) > 1 ? it.cantidad + ' × ' : '') + String(it.descripcion||'').replace(/\s*\(.*?\)\s*$/, '')); }).join(' · ') : '—')+'</p>';
+      if(noEnt.length) h += '<p class="inf-p"><strong>No se instaló (se cobró igual):</strong> '+noEnt.map(function(it){ return escapeHtml((Number(it.cantidad) > 1 ? it.cantidad + ' × ' : '') + it.descripcion); }).join(' · ')+'</p>';
+
+      /* 6. Notas */
+      var notas = [];
+      if(p.notas) notas.push(['Proyecto', p.notas]);
+      if(c.notas) notas.push(['Cotización ' + (c.numero || ''), c.notas]);
+      if(c.descripcion) notas.push(['Alcance cotizado', c.descripcion]);
+      if(o.notas) notas.push(['Orden ' + (o.numero || ''), o.notas]);
+      if(o.causaDesvio || o.causaDetalle) notas.push(['Causa del desvío', [CAUSAS_DESVIO[o.causaDesvio], o.causaDetalle].filter(Boolean).join(' · ')]);
+      (o.pagos||[]).forEach(function(pg){ if(pg.nota) notas.push(['Pago del ' + fmtShort(pg.fecha), pg.nota]); });
+      h += '<h3>Notas</h3>' + (notas.length ? '<dl class="inf-notas">'+notas.map(function(n){ return '<dt>'+escapeHtml(n[0])+'</dt><dd>'+escapeHtml(n[1]).replace(/\n/g, '<br>')+'</dd>'; }).join('')+'</dl>' : '<p class="inf-p">Sin notas.</p>');
+    });
+    return h;
+  }
+  var INF_CSS_DOC = 'body{margin:0;background:#e7ebf2;font-family:ui-sans-serif,system-ui,"Segoe UI",sans-serif;color:#16233a;-webkit-print-color-adjust:exact;print-color-adjust:exact;}' +
+    '.doc{background:#fff;max-width:900px;margin:18px auto;padding:30px 34px;border-radius:8px;box-shadow:0 10px 28px -14px rgba(20,32,52,.22);}' +
+    '.print-bar{position:sticky;top:0;display:flex;justify-content:center;gap:12px;align-items:center;background:#173a73;color:#fff;padding:10px;font-size:12.5px;}' +
+    '.print-bar button{background:#fff;color:#173a73;border:none;border-radius:7px;padding:7px 16px;font-weight:700;cursor:pointer;}' +
+    '@media print{.print-bar{display:none}body{background:#fff}.doc{box-shadow:none;margin:0;max-width:100%;padding:0}}' +
+    ':root{--b:#e4e9f1;--m:#5b6b80;--s2:#f3f6fb;--crit:#b93b3b;--warn:#a86a0c;--ok:#1c7f57;--acc:#173a73;}';
+  var INF_CSS = '.inf h2{font-size:19px;margin:2px 0 4px;color:var(--acc,var(--accent-2));}' +
+    '.inf h2.inf-orden{font-size:16px;margin:26px 0 0;padding-top:14px;border-top:2px solid var(--b,var(--border));}' +
+    '.inf h3{font-size:13px;text-transform:uppercase;letter-spacing:.05em;margin:24px 0 8px;color:var(--m,var(--text-muted));}' +
+    '.inf-cab{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;border-bottom:1px solid var(--b,var(--border));padding-bottom:12px;margin-bottom:14px;}' +
+    '.inf-kicker{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--m,var(--text-muted));}' +
+    '.inf-meta{font-size:12.5px;color:var(--m,var(--text-muted));}' +
+    '.inf-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}' +
+    '.inf-kpi{border:1px solid var(--b,var(--border));border-radius:10px;padding:10px 12px;}' +
+    '.inf-kpi span{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--m,var(--text-muted));}' +
+    '.inf-kpi strong{display:block;font-size:19px;margin-top:3px;font-variant-numeric:tabular-nums;}' +
+    '.inf-kpi em{display:block;font-style:normal;font-size:11.5px;color:var(--m,var(--text-muted));margin-top:2px;}' +
+    '.inf-cobro{font-size:13px;margin:10px 0 0;}' +
+    '.inf-aviso{background:var(--s2,var(--surface-2));border-left:3px solid var(--warn,var(--warning));padding:9px 12px;border-radius:6px;font-size:13px;margin:10px 0;}' +
+    '.inf-t{width:100%;border-collapse:collapse;font-size:12.8px;}' +
+    '.inf-t th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--m,var(--text-muted));padding:7px 8px;border-bottom:1px solid var(--b,var(--border));background:var(--s2,var(--surface-2));}' +
+    '.inf-t td{padding:7px 8px;border-bottom:1px solid var(--b,var(--border));vertical-align:top;}' +
+    '.inf-t tfoot td{background:var(--s2,var(--surface-2));}' +
+    '.inf .num{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums;}' +
+    '.inf .neg{color:var(--crit,var(--critical));} .inf .pos{color:var(--ok,var(--success));}' +
+    '.inf .sem-crit{color:var(--crit,var(--critical));} .inf .sem-warn{color:var(--warn,var(--warning));} .inf .sem-ok{color:var(--ok,var(--success));}' +
+    '.inf-det{color:var(--m,var(--text-muted));font-size:12px;}' +
+    '.inf-chip{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 7px;border-radius:20px;background:var(--s2,var(--surface-2));color:var(--m,var(--text-muted));white-space:nowrap;}' +
+    '.inf-chip.warn{color:var(--warn,var(--warning));} .inf-chip.crit{color:var(--crit,var(--critical));}' +
+    '.inf-p{font-size:13px;margin:8px 0;line-height:1.5;}' +
+    '.inf-compra{border:1px solid var(--b,var(--border));border-radius:8px;padding:9px 12px;margin-bottom:8px;font-size:13px;}' +
+    '.inf-compra-cab{display:flex;gap:6px;align-items:baseline;flex-wrap:wrap;} .inf-compra-cab .num{margin-left:auto;font-weight:700;}' +
+    '.inf-compra ul{margin:6px 0 4px;padding-left:18px;line-height:1.5;}' +
+    '.inf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 14px;font-size:13px;margin-bottom:10px;}' +
+    '.inf-grid span{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--m,var(--text-muted));}' +
+    '.inf-notas{margin:0;font-size:13px;} .inf-notas dt{font-weight:700;margin-top:8px;} .inf-notas dd{margin:2px 0 0;color:var(--m,var(--text-muted));line-height:1.5;}' +
+    '@media (max-width:760px){.inf-kpis,.inf-grid{grid-template-columns:1fr 1fr;} .inf-cab{flex-direction:column;} .inf-cab .inf-meta{text-align:left !important;} .inf-t{display:block;overflow-x:auto;}}';
+  (function(){ var st = document.createElement('style'); st.textContent = INF_CSS; document.head.appendChild(st); })();
+
+  function openInforme(pid){
+    if(!pid || !state.proyectos.get(pid)){ toast('No encontré el proyecto.'); return; }
+    inf.pid = pid;
+    document.getElementById('infTitle').textContent = 'Informe · ' + (state.proyectos.get(pid).nombre || 'Proyecto');
+    document.getElementById('infBody').innerHTML = '<div class="inf">' + infContenido(pid) + '</div>';
+    document.getElementById('infOverlay').classList.add('open');
+  }
+  function closeInforme(){ document.getElementById('infOverlay').classList.remove('open'); inf.pid = null; }
+  document.getElementById('infClose').addEventListener('click', closeInforme);
+  document.getElementById('infCerrar').addEventListener('click', closeInforme);
+  document.getElementById('infOverlay').addEventListener('click', function(e){ if(e.target === this) closeInforme(); });
+  document.getElementById('infDescargar').addEventListener('click', function(){
+    if(!inf.pid) return;
+    var p = state.proyectos.get(inf.pid) || {};
+    var html = '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Informe · '+escapeHtml(p.nombre || 'Proyecto')+'</title><style>'+INF_CSS_DOC+INF_CSS+'</style></head><body>' +
+      '<div class="print-bar">Informe interno de Cenova — tiene costos y márgenes: no lo envíes al cliente. <button id="pb" type="button">Imprimir / Guardar PDF</button></div>' +
+      '<div class="doc inf">' + infContenido(inf.pid) + '</div>' +
+      '<scr'+'ipt>document.getElementById("pb").addEventListener("click", function(){ window.print(); });</scr'+'ipt></body></html>';
+    offerHtmlDownload('Informe-' + slugFile(p.nombre || 'proyecto') + '.html', html, 'Informe descargado. Ábrelo y usa Ctrl+P para guardarlo en PDF.');
   });
 
   if(window.claude && window.claude.use){
