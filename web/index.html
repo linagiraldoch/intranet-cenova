@@ -9062,10 +9062,23 @@
     body.menu-abierto{overflow:hidden;}
     .sb-close{display:flex; position:absolute; top:calc(14px + env(safe-area-inset-top)); right:12px; width:34px; height:34px; border:none; border-radius:9px; background:var(--surface-2); color:var(--text-muted); align-items:center; justify-content:center; cursor:pointer;}
     .nav-btn{padding:12px 10px; font-size:15px;}
-    /* ---- Pestañas en una sola línea que se desliza ---- */
-    .subtabs{width:auto; max-width:100%; overflow-x:auto; flex-wrap:nowrap !important; scrollbar-width:none; -webkit-overflow-scrolling:touch;}
-    .subtabs::-webkit-scrollbar{display:none;}
-    .subtabs > *{flex:none; white-space:nowrap;}
+    /* ---- Pestañas: pasan a varias líneas para que todas se vean (2026-10-09; antes se deslizaban y quedaban cortadas) ---- */
+    .subtabs{width:auto; max-width:100%; flex-wrap:wrap !important; overflow:visible;}
+    .subtabs > *{flex:0 1 auto; white-space:nowrap;}
+    /* ---- Listas desplegables y contenidos que no deben ensanchar la página ---- */
+    select{max-width:100%; min-width:0;}
+    .filters > *, .section-head > *{min-width:0; max-width:100%;}
+    .overlay .modal-body > *{min-width:0; max-width:100%;}
+    /* ---- Encabezados de grupo (Precios, Costos): título arriba, explicación abajo ---- */
+    .prec-panel .panel-head{flex-wrap:wrap; row-gap:2px; justify-content:flex-start;}
+    .prec-panel .panel-head > span{flex-basis:100%; text-align:left !important; margin-left:0 !important;}
+    /* ---- Vista previa de la cotización: la tabla de ítems se desliza sola, sin cortar valores ---- */
+    #previewDoc .preview-table, #infOverlay .inf-t{min-width:0 !important; display:block; overflow-x:auto; max-width:100%; -webkit-overflow-scrolling:touch;}
+    #previewDoc .preview-table td, #previewDoc .preview-table th{padding:7px 4px; font-size:11px;}
+    #previewDoc .preview-table th{white-space:normal; font-size:9px; letter-spacing:0;}
+    #previewDoc .preview-table td:last-child, #previewDoc .preview-table th:last-child, #previewDoc .preview-table td.num{white-space:nowrap;}
+    #previewDoc .preview-cols{grid-template-columns:1fr !important; display:grid; gap:14px;}
+    #previewDoc .pv-field{overflow-wrap:anywhere;}
     /* ---- Tablas como tarjetas ---- */
     .table-wrap.mc{overflow:visible; background:none; border:none; box-shadow:none; border-radius:0;}
     .table-wrap.mc .empty-state{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);}
@@ -9193,7 +9206,9 @@
     ths.forEach(function(th){ labels.push(txt(th)); spans.push(th.colSpan || 1); });
     var titleIdx = -1;
     if(!esItems){ for(var k = 0; k < labels.length; k++){ if(labels[k]){ titleIdx = k; break; } } }
-    Array.prototype.forEach.call(table.tBodies, function(tb){
+    var grupos = Array.prototype.slice.call(table.tBodies); if(table.tFoot) grupos.push(table.tFoot);
+    var esFmt = esItems && !!table.closest('.fmt-tabla');
+    grupos.forEach(function(tb){
       Array.prototype.forEach.call(tb.rows, function(tr){
         if(tr.dataset.mcHecho === String(tr.cells.length) + ':' + (tr.innerHTML.length)) return;
         var cells = tr.cells;
@@ -9209,6 +9224,8 @@
           var vacia = !txt(td) && !td.querySelector('input,select,textarea,button,svg,img,a');
           if(esItems){
             if(td.querySelector('textarea')) td.classList.add('mc-ancha');
+            /* Formatos llenables: la primera columna de texto (descripción, actividad, prueba…) va a todo el ancho */
+            if(esFmt && !tr.querySelector('td.mc-ancha') && td.querySelector('input[type=text], input:not([type])')) td.classList.add('mc-ancha');
             if(!lab && td.querySelector('button')) td.classList.add('mc-actions');
             return;
           }
@@ -9222,7 +9239,15 @@
           if(td.classList.contains('desc-cell') || txt(td).length > 46 || td.querySelector('textarea, .list-row, table')) td.classList.add('mc-block');
         });
         var act = tr.querySelector('td.mc-actions'), tit = tr.querySelector('td.mc-title');
-        if(tit) tit.style.setProperty('--mc-pad', act ? (act.querySelectorAll('button,a').length * 40 + 6) + 'px' : '0');
+        if(tit){
+          /* Espacio a la derecha del título para los botones de la esquina: se mide el texto de cada
+             botón ("→ Precios", "Registrar pago"…) para que no tapen el título. */
+          var pad = 0;
+          if(act) Array.prototype.forEach.call(act.querySelectorAll('button,a'), function(bt){
+            var t = txt(bt); pad += (bt.classList.contains('icon-btn') || !t) ? 40 : Math.round(t.length * 7.4 + 30);
+          });
+          tit.style.setProperty('--mc-pad', act ? (pad + 6) + 'px' : '0');
+        }
         tr.dataset.mcHecho = String(tr.cells.length) + ':' + (tr.innerHTML.length);
       });
     });
