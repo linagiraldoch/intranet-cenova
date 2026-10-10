@@ -68,7 +68,14 @@
         });
       }
       if(d.debeCambiar){ claveIngresada = c; mostrarCambio(true, d.nombre); listo(); return; }
-      location.replace('/');
+      /* Comprueba que el navegador guardó la sesión antes de entrar; si no, lo dice en vez de volver aquí en silencio. */
+      return api('/api/me', {}, true).then(function(me){
+        if(me._status === 401){
+          msg('lgError', 'La contraseña es correcta, pero este navegador no guardó la sesión (bloquea las cookies de este sitio). Permite las cookies para intranet.cenovasas.com, quita el modo privado o el bloqueador para este sitio, o ingresa desde Safari o Chrome.');
+          listo(); return;
+        }
+        location.replace('/');
+      });
     }).catch(function(){ msg('lgError', 'Sin conexión con el servidor.'); listo(); });
   });
 

@@ -110,7 +110,10 @@ async function sesionDe(req, env, { exigirPestana = true, contarActividad = fals
   s.token_hash = th;
   return s;
 }
-function cookieSesion(token) { return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict`; }
+// Max-Age explícito: algunos navegadores de iPhone (Opera, Edge, etc., sobre WKWebView) descartan
+// las cookies de sesión sin vencimiento y el ingreso se quedaba en un bucle. La sesión sigue
+// cerrándose en el servidor por inactividad (15 min) y exige la marca de la pestaña.
+function cookieSesion(token) { return `${COOKIE}=${token}; Path=/; Max-Age=${SESION_MAX_MS / 1000}; HttpOnly; Secure; SameSite=Strict`; }
 function cookieBorrar() { return `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`; }
 
 /* ======================= ingreso ======================= */
