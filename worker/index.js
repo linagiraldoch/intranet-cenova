@@ -88,6 +88,26 @@ async function auditar(env, usuario, accion, col, id, detalle, req) {
       .bind(Date.now(), usuario || null, accion, col || null, id || null, detalle ? String(detalle).slice(0, 500) : null, req ? ip(req) : null).run();
   } catch (e) { /* la auditoría nunca debe tumbar la operación */ }
 }
+/* ======================= lectura para la Agenda MH de Lina =======================
+   Solo lectura de las colecciones que usa el radar de la agenda (sin archivos adjuntos).
+   Se entra únicamente con la llave secreta AGENDA_TOKEN (la misma que tiene la agenda como
+   INTRANET_TOKEN). Sin esa llave configurada, la ruta no existe. */
+const AGENDA_COLS = ['cotizaciones', 'ordenesCompra', 'proyectos', 'clientes', 'cotizacionesProveedor', 'eventos', 'prefacturas', 'finGastosFijos', 'finMovimientos', 'finAjustes'];
+async function agendaCenova(req, env) {
+  if (!env.AGENDA_TOKEN || env.AGENDA_TOKEN.length < 32) return err(404, 'ruta', 'No encontrado.');
+  const m = (req.headers.get('authorization') || '').match(/^Bearer\s+(\S+)$/);
+  const dado = m ? await sha256(m[1]) : '', esperado = await sha256(env.AGENDA_TOKEN);
+  let dif = dado.length ^ esperado.length;
+  for (let i = 0; i < esperado.length; i++) dif |= (dado.charCodeAt(i) || 0) ^ esperado.charCodeAt(i);
+  if (dif !== 0) {
+    await auditar(env, null, 'agenda_llave_incorrecta', null, null, null, req);
+    return err(401, 'llave', 'No autorizado.');
+  }
+  const r = await env.DB.prepare(`SELECT col, id, actualizado, json_remove(data, '$.archivoDatos') AS data FROM docs WHERE col IN (${AGENDA_COLS.map(() => '?').join(',')})`)
+    .bind(...AGENDA_COLS).all();
+  return json({ results: r.results || [] });
+}
+
 function inactividadMs(env) { return (Number(env.INACTIVIDAD_MIN) || 15) * 60000; }
 
 /* ======================= sesión ======================= */
@@ -384,6 +404,7 @@ export default {
           // Protección CSRF: el navegador solo permite este encabezado desde la propia página.
           if (req.headers.get('x-cenova') !== '1') return err(403, 'origen', 'Solicitud no permitida.');
         }
+        if (p === '/api/agenda/cenova' && req.method === 'GET') return await agendaCenova(req, env);
         if (p === '/api/login' && req.method === 'POST') return await login(req, env);
         if (p === '/api/logout' && req.method === 'POST') {
           const t = leerCookie(req, COOKIE);

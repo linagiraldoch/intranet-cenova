@@ -64,6 +64,10 @@ El margen es sobre el precio de venta, igual que en Finanzas: precio = costo ÷ 
 - 01, 02, 04, 07 y 08 se llenan en la intranet con los datos de una orden de compra (07 y 08 por persona del personal de la orden) y bajan en PDF. Se guardan en la colección `documentos` con consecutivo por tipo (INF, ACT, CON, LIQ, CC). Solo administración borra documentos.
 - Los PDF se generan en el navegador con html2pdf.js (`web/html2pdf.bundle.min.js`, servido solo con sesión).
 
+## Lectura para la Agenda MH (2026-10-10)
+
+`GET /api/agenda/cenova` entrega, solo lectura, las colecciones que usa el radar de la agenda personal de Lina (cotizaciones, órdenes, proyectos, clientes, cotizaciones de proveedor, eventos, prefacturas y las de finanzas), sin archivos adjuntos. Exige `Authorization: Bearer <AGENDA_TOKEN>`; si el secreto `AGENDA_TOKEN` no está configurado, la ruta no existe (404). Una llave equivocada queda en la auditoría. La agenda vive en otra cuenta de Cloudflare y guarda la misma llave como `INTRANET_TOKEN`.
+
 ## Usuarios
 
 | Usuario | Correo | Rol |
