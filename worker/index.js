@@ -362,6 +362,8 @@ async function resumenDiario(env) {
   const usuarios = (await env.DB.prepare('SELECT id, nombre, email, admin FROM usuarios WHERE activo = 1').all()).results;
   let enviados = 0;
   for (const u of usuarios) {
+    // Desde el 2026-10-11 administración (Lina) no recibe el resumen: lo lleva en la Agenda MH.
+    if (u.admin) continue;
     const mios = eventos.filter((e) => u.admin || e.creadoPorId === u.id || (Array.isArray(e.apoyo) && e.apoyo.indexOf(u.nombre) !== -1));
     const hoyL = mios.filter((e) => e.fecha === hoy).sort((a, b) => String(a.hora || '').localeCompare(String(b.hora || '')));
     const venc = mios.filter((e) => e.auto && e.fecha < hoy && e.tipo !== 'instalacion').sort((a, b) => a.fecha.localeCompare(b.fecha));

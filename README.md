@@ -8,7 +8,7 @@ Todo corre en **Cloudflare**, con plan gratuito:
 |---|---|
 | Servidor + página | Cloudflare Worker `intranet-cenova` (`worker/index.js` + carpeta `web/`) |
 | Base de datos | Cloudflare D1 `intranet-cenova` (esquema en `migrations/`) |
-| Correos (apoyo y resumen diario 6:45 a. m.) | Resend, desde `notificaciones@intranet.cenovasas.com` |
+| Correos (apoyo y resumen diario 6:45 a. m. para los coordinadores; administración no lo recibe) | Resend, desde `notificaciones@intranet.cenovasas.com` |
 | Lectura de PDFs con IA | API de Anthropic |
 
 ## Seguridad
