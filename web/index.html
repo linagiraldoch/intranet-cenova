@@ -355,6 +355,16 @@
   @media (max-width:760px){ .rs-grid{grid-template-columns:minmax(0,1fr);} .rs-span2{grid-column:auto;} .rs-emb{grid-template-columns:78px minmax(0,1fr) 28px 66px; gap:6px;} }
   @media (prefers-reduced-motion:reduce){ .rs-kpi{transition:none;} }
 
+  /* Prefacturas desde la orden (2026-10-13) */
+  .oc-pf{border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:10px; background:var(--surface-2);}
+  .oc-pf-h{display:flex; flex-wrap:wrap; gap:4px 12px; align-items:baseline;}
+  .oc-pf-item{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center; justify-content:space-between; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px 12px; font-size:13px;}
+  .oc-pf-item b{font-family:"IBM Plex Mono",monospace;}
+  .oc-pf-form{align-items:end;}
+  .pf-pagos .pt-row.menos span:last-child{color:var(--success);}
+  .pf-pagos .pt-row.cobrar{font-weight:700; font-size:15px; border-top:2px solid currentColor; padding-top:6px;}
+  .pf-link{word-break:break-all;}
+  .pf-pagos .num{white-space:nowrap;}
   /* ---------- Vista visual de Operación y Administración (2026-10-13) ---------- */
   .vk-strip{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-bottom:12px;}
   .vk-stat{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; position:relative; overflow:hidden;}
@@ -1664,7 +1674,6 @@
       <div style="display:flex; gap:8px; margin-left:auto;">
         <button class="btn" id="cotRegistrarOcBtn" style="display:none;">Registrar orden de compra</button>
         <button class="btn" id="cotProviderViewBtn">Descargar lista proveedor</button>
-        <button class="btn" id="cotPrefacturaBtn" style="display:none;">Generar prefactura</button>
         <button class="btn" id="cotPreviewBtn" style="display:none;">Vista previa / Imprimir</button>
         <button class="btn" id="cotCancel">Cancelar</button>
         <button class="btn primary" id="cotSave">Guardar</button>
@@ -2065,6 +2074,16 @@
       </table></div>
       <button type="button" class="btn sm" id="ocPagoAdd" style="align-self:flex-start;">+ Registrar pago recibido</button>
       <div class="info-box" id="ocPagosSummary"></div>
+      <div class="oc-pf" id="ocPfWrap">
+        <div class="oc-pf-h"><strong>Prefacturas de cobro</strong><span class="no-file">Se arma con el valor de la orden y los pagos ya recibidos: cobra lo que realmente falta.</span></div>
+        <div id="ocPfLista"></div>
+        <div class="field-row three oc-pf-form">
+          <div class="field"><label>Valor a cobrar</label><input type="number" id="ocPfMonto" min="0" step="1"></div>
+          <div class="field"><label>Link de pago (opcional)</label><input type="url" id="ocPfLink" placeholder="https://checkout.wompi.co/l/…"></div>
+          <div class="field" style="justify-content:flex-end;"><button type="button" class="btn primary" id="ocPfGenerar">Generar prefactura</button></div>
+        </div>
+        <div class="no-file" id="ocPfNota"></div>
+      </div>
 
       <div class="fieldset-label">Instalación</div>
       <div class="field-row three">
@@ -4437,8 +4456,10 @@
 
   /* ---------- Prefacturas ----------
      Documento de cobro previo a la factura electrónica (Cenova aún no factura ante la DIAN).
-     Cada una recibe un número PF-xxxx automático que no se puede cambiar, guarda una copia de la
-     cotización tal como estaba al generarla y queda ligada a ella (una prefactura por cotización). */
+     Cada una recibe un número PF-xxxx automático que no se puede cambiar.
+     Desde el 2026-10-13 se generan desde la ORDEN de compra (no desde la cotización): toman el valor real de la
+     orden y descuentan los pagos ya recibidos, así cobran lo que de verdad falta. Una orden puede tener varias
+     (anticipo, abonos, saldo final). Las antiguas, ligadas solo a la cotización, se siguen pudiendo ver. */
   var PF_ESTADOS_OK = ['enviada', 'aprobada'];
   function nextPfNumero(){
     var max = 0;
@@ -4454,6 +4475,7 @@
     return out;
   }
   function refreshPrefacturaBtn(){
+    renderOcPrefacturas();
     var btn = document.getElementById('cotPrefacturaBtn'); if(!btn) return;
     var id = state.editingCotId;
     var c = id ? state.cotizaciones.get(id) : null;
@@ -4462,6 +4484,86 @@
     btn.textContent = 'Generar prefactura';
     btn.style.display = (c && PF_ESTADOS_OK.indexOf(c.estado) !== -1) ? 'inline-flex' : 'none';
   }
+
+  /* ---- Prefacturas desde la orden de compra ---- */
+  function prefacturasDeOrden(oid){
+    var out = [];
+    state.prefacturas.forEach(function(p, id){ if(p.ordenId === oid) out.push({id: id, data: p}); });
+    return out.sort(function(a, b){ return String(a.data.numero).localeCompare(String(b.data.numero)); });
+  }
+  var PF_CONCEPTO_LBL = {anticipo:'Anticipo', abono:'Abono', saldo:'Pago final (saldo)'};
+  /* ¿Lo que hay en el formulario de la orden es igual a lo guardado? (la prefactura sale de lo guardado) */
+  function ocPfSinGuardar(o){
+    var firma = function(v, pagos){ return JSON.stringify([Math.round(Number(v)||0), (pagos||[]).map(function(x){ return [x.fecha||'', Math.round(Number(x.monto)||0)]; })]); };
+    return firma(document.getElementById('ocValor').value, state.ocPagos) !== firma(o.valor, o.pagos);
+  }
+  function ocPfSugerido(o){
+    var saldo = ocSaldo(o), rec = ocRecibido(o), antPct = Number(o.anticipoPct)||0;
+    if(!rec && antPct) return {monto: Math.min(saldo, Math.round((Number(o.valor)||0)*antPct/100)), concepto:'anticipo'};
+    return {monto: saldo, concepto:'saldo'};
+  }
+  function renderOcPrefacturas(){
+    var wrap = document.getElementById('ocPfWrap'); if(!wrap) return;
+    var oid = state.editingOcId, o = oid ? state.ordenes.get(oid) : null;
+    var lista = document.getElementById('ocPfLista'), nota = document.getElementById('ocPfNota'), btn = document.getElementById('ocPfGenerar'), monto = document.getElementById('ocPfMonto');
+    var pfs = oid ? prefacturasDeOrden(oid) : [];
+    lista.innerHTML = pfs.map(function(it){
+      var d = it.data;
+      return '<div class="oc-pf-item"><span><b>'+escapeHtml(d.numero||'')+'</b> · '+fmtDate(d.fecha)+' · '+escapeHtml(PF_CONCEPTO_LBL[d.concepto]||'Cobro')+'</span>'+
+        '<span><b>'+fmtMoney.format(Number(d.valor)||0)+'</b></span>'+
+        '<button type="button" class="btn sm" data-pf-ver="'+escapeHtml(it.id)+'">Ver / descargar</button></div>';
+    }).join('');
+    if(!o){ btn.disabled = true; monto.value = ''; nota.textContent = 'Guarda la orden primero para poder generar su prefactura.'; return; }
+    if(o.estado === 'anulada'){ btn.disabled = true; nota.textContent = 'La orden está anulada.'; return; }
+    var saldo = ocSaldo(o);
+    if(saldo <= 0){ btn.disabled = true; monto.value = ''; nota.textContent = 'La orden ya está pagada completa: no hay nada por cobrar.'; return; }
+    btn.disabled = false;
+    if(document.activeElement !== monto && !monto.dataset.tocado) monto.value = ocPfSugerido(o).monto;
+    nota.innerHTML = 'Valor de la orden '+fmtMoney.format(Number(o.valor)||0)+' · recibido '+fmtMoney.format(ocRecibido(o))+' · saldo <strong>'+fmtMoney.format(saldo)+'</strong>.';
+  }
+  document.getElementById('ocPfMonto').addEventListener('input', function(){ this.dataset.tocado = '1'; });
+  document.getElementById('ocPfLista').addEventListener('click', function(e){
+    var b = e.target.closest('[data-pf-ver]'); if(!b) return;
+    openPrefacturaPreview(b.dataset.pfVer);
+  });
+  document.getElementById('ocPfGenerar').addEventListener('click', function(){
+    var oid = state.editingOcId, o = oid ? state.ordenes.get(oid) : null;
+    if(!o){ toast('Guarda la orden primero.'); return; }
+    if(ocPfSinGuardar(o)){ toast('Hay cambios sin guardar en el valor o en los pagos de la orden. Guárdala primero para que la prefactura salga con los datos reales.', 5000); return; }
+    var db = requireDb(); if(!db) return;
+    var saldo = ocSaldo(o);
+    var monto = Math.round(Number(document.getElementById('ocPfMonto').value)||0);
+    if(monto <= 0){ toast('Escribe el valor a cobrar.'); return; }
+    if(monto > saldo){ toast('El valor a cobrar no puede ser mayor que el saldo de la orden ('+fmtMoney.format(saldo)+').', 5000); return; }
+    var link = document.getElementById('ocPfLink').value.trim();
+    if(link && !/^https:\/\//i.test(link)){ toast('El link de pago debe empezar por https://'); return; }
+    var c = o.cotizacionId ? state.cotizaciones.get(o.cotizacionId) : null;
+    var concepto = monto >= saldo ? 'saldo' : (ocRecibido(o) ? 'abono' : 'anticipo');
+    var numero = nextPfNumero();
+    confirmDialog('Se generará la prefactura '+numero+' de '+(o.numero||'la orden')+' por '+fmtMoney.format(monto)+' ('+(PF_CONCEPTO_LBL[concepto]||'cobro').toLowerCase()+
+      '). Valor de la orden '+fmtMoney.format(Number(o.valor)||0)+', ya recibido '+fmtMoney.format(ocRecibido(o))+'. El número queda registrado y no se puede cambiar. ¿Continuar?', 'Generar prefactura').then(function(ok){
+      if(!ok) return;
+      var k = ocCalc(o);
+      var data = {
+        numero: numero, fecha: todayIso(), creadoPorId: state.userId || null,
+        ordenId: oid, ordenNumero: o.numero || '',
+        cotizacionId: o.cotizacionId || null, cotizacionNumero: o.cotizacionNumero || (c && c.numero) || '',
+        concepto: concepto, valor: monto, valorOrden: Math.round(Number(o.valor)||0),
+        recibido: Math.round(ocRecibido(o)), saldoAntes: Math.round(saldo),
+        pagos: (o.pagos||[]).map(function(x){ return {fecha: x.fecha||'', concepto: x.concepto||'', monto: Math.round(Number(x.monto)||0)}; }),
+        vence: k.pago || null, linkPago: link || '',
+        cot: c ? JSON.parse(JSON.stringify(c)) : {cliente: o.cliente || '', descripcion: '', items: []}
+      };
+      db.collection('prefacturas').add(data).then(function(ref){
+        var pfId = ref && ref.id;
+        if(pfId) state.prefacturas.set(pfId, data);
+        toast('Prefactura '+numero+' generada');
+        document.getElementById('ocPfMonto').dataset.tocado = ''; document.getElementById('ocPfLink').value = '';
+        renderOcPrefacturas();
+        if(pfId) openPrefacturaPreview(pfId);
+      }).catch(function(err){ toast('No se pudo generar la prefactura: '+(err && err.message ? err.message : 'error')); });
+    });
+  });
 
   /* Valor en letras (pesos colombianos, enteros) */
   function numeroALetras(n){
@@ -4496,38 +4598,23 @@
     return t.charAt(0).toUpperCase() + t.slice(1) + de + ' pesos M/CTE.';
   }
 
-  document.getElementById('cotPrefacturaBtn').addEventListener('click', function(){
-    var id = state.editingCotId; if(!id) return;
-    var existente = prefacturaDeCot(id);
-    if(existente){ closeCotModal(); openPrefacturaPreview(existente.id); return; }
-    var db = requireDb(); if(!db) return;
-    var c = state.cotizaciones.get(id); if(!c) return;
-    if(PF_ESTADOS_OK.indexOf(c.estado) === -1){ toast('La prefactura se genera cuando la cotización está Enviada o Aprobada.'); return; }
-    var numero = nextPfNumero();
-    var tt = cotTablaTotales(c);
-    confirmDialog('Se generará la prefactura ' + numero + ' de ' + (c.numero||'la cotización') + ' por ' + fmtMoney.format(tt.totalVal) +
-      ', con los datos guardados de la cotización. El número queda registrado y no se puede cambiar. ¿Continuar?', 'Generar prefactura').then(function(ok){
-      if(!ok) return;
-      var cot = JSON.parse(JSON.stringify(c));
-      var data = {
-        numero: numero,
-        cotizacionId: id,
-        cotizacionNumero: c.numero || '',
-        fecha: toISODate(new Date()),
-        creadoPorId: state.userId || null,
-        valor: Math.round(tt.totalVal),
-        cot: cot
-      };
-      db.collection('prefacturas').add(data).then(function(ref){
-        var pfId = ref && ref.id;
-        if(pfId) state.prefacturas.set(pfId, data);
-        toast('Prefactura ' + numero + ' generada');
-        closeCotModal();
-        if(pfId) openPrefacturaPreview(pfId);
-      }).catch(function(err){ toast('No se pudo generar la prefactura: ' + (err && err.message ? err.message : 'error')); });
+  /* Cuadro de cobro de una prefactura de orden: valor de la orden, pagos recibidos y lo que se cobra ahora */
+  function pfResumenOrden(pf, tt){
+    var filas = '<div class="pt-row"><span>Valor total de la orden'+(pf.ordenNumero ? ' '+escapeHtml(pf.ordenNumero) : '')+'</span><span class="num">'+fmtMoney.format(Number(pf.valorOrden)||0)+'</span></div>';
+    var difCot = Math.round(Number(pf.valorOrden)||0) - Math.round(tt.totalVal||0);
+    if((pf.cot.items||[]).length && difCot) filas += '<div class="pt-row"><span><small>Ajuste acordado frente a la cotización</small></span><span class="num">'+(difCot>0?'+':'−')+fmtMoney.format(Math.abs(difCot))+'</span></div>';
+    (pf.pagos||[]).forEach(function(x){
+      filas += '<div class="pt-row menos"><span>'+escapeHtml(PAGO_CONCEPTOS[x.concepto]||'Pago')+' recibido'+(x.fecha ? ' · '+fmtDate(x.fecha) : '')+'</span><span class="num">−'+fmtMoney.format(Number(x.monto)||0)+'</span></div>';
     });
-  });
-
+    filas += '<div class="pt-row"><span>Saldo pendiente</span><span class="num">'+fmtMoney.format(Number(pf.saldoAntes)||0)+'</span></div>';
+    filas += '<div class="pt-row total cobrar"><span>Valor a pagar · '+escapeHtml((PF_CONCEPTO_LBL[pf.concepto]||'cobro').toLowerCase())+'</span><span class="num">'+fmtMoney.format(Number(pf.valor)||0)+'</span></div>';
+    var resto = Math.max(0, (Number(pf.saldoAntes)||0) - (Number(pf.valor)||0));
+    if(resto) filas += '<div class="pt-row"><span><small>Quedará pendiente después de este pago</small></span><span class="num">'+fmtMoney.format(resto)+'</span></div>';
+    return '<div class="pf-summary">'+
+      '<div class="pf-words"><strong>Valor a pagar en letras</strong>'+escapeHtml(valorEnLetras(pf.valor))+'</div>'+
+      '<div class="preview-totals-box pf-pagos">'+filas+'</div>'+
+    '</div>';
+  }
   function openPrefacturaPreview(pfId){
     var pf = state.prefacturas.get(pfId); if(!pf) return;
     var c = pf.cot || {};
@@ -4537,7 +4624,8 @@
     var correoPago = emisor.email || 'gerencia@cenovasas.com';
     var formaPago = 'Forma de pago: Transferencia bancaria / Efectivo.';
     String(c.condiciones||'').split('\n').forEach(function(l){ if(/^\s*forma de pago/i.test(l)) formaPago = l.trim(); });
-    var terminos = 'Servicios según la cotización ' + (c.numero||pf.cotizacionNumero||'') + (c.fecha ? ' del ' + fmtDate(c.fecha) : '') + '.\n' +
+    var terminos = (pf.ordenId ? (PF_CONCEPTO_LBL[pf.concepto]||'Cobro') + ' de la orden de compra ' + (pf.ordenNumero||'') + ', servicios según la cotización ' : 'Servicios según la cotización ') + (c.numero||pf.cotizacionNumero||'') + (c.fecha ? ' del ' + fmtDate(c.fecha) : '') + '.\n' +
+      (pf.vence && pf.ordenId ? 'Fecha límite de pago: ' + fmtDate(pf.vence) + '.\n' : '') +
       formaPago + '\n' +
       'Por favor enviar el soporte de pago a ' + correoPago + ' indicando el número ' + (pf.numero||'') + '.';
     var html = ''+
@@ -4546,9 +4634,10 @@
         '<div class="pv-brand"><div class="pv-mark"><img src="'+CENOVA_LOGO_B64+'" alt="Cenova"></div><div><div class="pv-brandname">CENOVA</div><div class="pv-sub">Tecnología que transforma</div></div></div>'+
         '<div class="doc-info-box">'+
           '<div class="di-row"><span>Prefactura N°</span><span>'+escapeHtml(pf.numero||'—')+'</span></div>'+
+          (pf.ordenNumero ? '<div class="di-row"><span>Orden de compra</span><span>'+escapeHtml(pf.ordenNumero)+'</span></div>' : '')+
           '<div class="di-row"><span>Cotización ref.</span><span>'+escapeHtml(c.numero||pf.cotizacionNumero||'—')+'</span></div>'+
           '<div class="di-row"><span>Fecha</span><span>'+fmtDate(pf.fecha)+'</span></div>'+
-          '<div class="di-row"><span>Moneda</span><span>COP</span></div>'+
+          (pf.vence ? '<div class="di-row"><span>Fecha límite de pago</span><span>'+fmtDate(pf.vence)+'</span></div>' : '<div class="di-row"><span>Moneda</span><span>COP</span></div>')+
         '</div>'+
       '</div>'+
       '<div class="preview-title-row pf-title-row"><h2>Prefactura de Servicio</h2><span class="pf-tag">Documento no válido como factura</span></div>'+
@@ -4575,12 +4664,14 @@
           '</div>'+
         '</div>'+
         '<table class="preview-table"><thead><tr><th style="width:26px;">Ítem</th><th>Descripción del servicio</th><th>Cant.</th><th>Unidad</th><th>Valor unitario</th><th>Valor total</th></tr></thead><tbody>'+tt.rowsHtml+'</tbody></table>'+
+        (pf.ordenId ? pfResumenOrden(pf, tt) :
         '<div class="pf-summary">'+
           '<div class="pf-words"><strong>Valor total en letras</strong>'+escapeHtml(valorEnLetras(tt.totalVal))+'</div>'+
           tt.totalsHtml.replace(/<div class="preview-note[\s\S]*$/, '')+
-        '</div>'+
+        '</div>')+
         '<div class="pf-pay"><h4>Datos para el pago</h4><div class="pf-pay-grid">'+
-          '<div class="pv-field"><span>Forma:</span>'+escapeHtml(formaPago.replace(/^\s*forma de pago:\s*/i, '').replace(/\.$/, ''))+'</div>'+
+          '<div class="pv-field"><span>Forma:</span>'+escapeHtml(pf.ordenId ? (pf.linkPago ? 'Pago en línea con el enlace de abajo (tarjeta, PSE u otros medios) o transferencia bancaria' : 'Transferencia bancaria / Efectivo') : formaPago.replace(/^\s*forma de pago:\s*/i, '').replace(/\.$/, ''))+'</div>'+
+          (pf.linkPago ? '<div class="pv-field" style="grid-column:1 / -1;"><span>Pago en línea:</span><a class="pf-link" href="'+escapeHtml(pf.linkPago)+'">'+escapeHtml(pf.linkPago)+'</a></div>' : '')+
           '<div class="pv-field"><span>Banco:</span><span class="pf-blank">&nbsp;</span></div>'+
           '<div class="pv-field"><span>Titular:</span><span class="pf-blank">&nbsp;</span></div>'+
           '<div class="pv-field"><span>Cuenta N°:</span><span class="pf-blank">&nbsp;</span></div>'+
@@ -5334,6 +5425,8 @@
     renderOcPersonalSummary();
     renderOcPagos();
     renderOcRetraso();
+    document.getElementById('ocPfMonto').dataset.tocado = ''; document.getElementById('ocPfLink').value = '';
+    renderOcPrefacturas();
     document.getElementById('ocOverlay').classList.add('open');
   }
   function closeOcModal(){ document.getElementById('ocOverlay').classList.remove('open'); state.editingOcId = null; }
@@ -7758,10 +7851,10 @@
   /* ---------- DB wiring ---------- */
   function requireDb(){ if(!state.db){ toast('Sin conexión con el almacenamiento todavía — intenta de nuevo en unos segundos.'); return null; } return state.db; }
 
-  /* Al editar una cotización, lleva los cambios a su orden de compra y a su prefactura.
+  /* Al editar una cotización, lleva los cambios a su orden de compra.
      - Orden: si su valor era el de la cotización (no se cambió a mano), se actualiza solo; si era distinto, se pregunta.
        También cliente, proyecto, número y días de instalación (si no se habían cambiado en la orden).
-     - Prefactura: guarda una copia de la cotización; si sus valores cambiaron, se pregunta si se actualiza (conserva su número).
+     - Las prefacturas ya no se tocan: salen de la orden y son la foto del cobro del día en que se generaron.
      Los costos, márgenes y Finanzas ya leen la cotización en vivo, así que no hay nada más que copiar. */
   function propagarCambiosCotizacion(cotId, prev, nueva){
     var db = requireDb(); if(!db) return Promise.resolve();
@@ -7808,28 +7901,9 @@
         });
       });
     });
-    cadena = cadena.then(function(){
-      var pf = prefacturaDeCot(cotId); if(!pf) return;
-      var nuevoPf = Math.round(cotTablaTotales(nueva).totalVal);
-      var firma = function(c){ return JSON.stringify([c.items||[], c.costingMode||'', Number(c.ivaPct)||0, Number(c.aiuAdministracionPct)||0, Number(c.aiuImprevistosPct)||0, Number(c.aiuUtilidadPct)||0, c.ivaBase||'',
-        c.cliente||'', c.clienteNit||'', c.clienteContacto||'', c.clienteDireccion||'', c.clienteCiudad||'', c.clienteTelefono||'', c.clienteEmail||'', c.descripcion||'', c.condiciones||'']); };
-      if(firma(pf.data.cot || {}) === firma(nueva)) return;
-      var actual = JSON.stringify(nueva);
-      var cambiaValor = nuevoPf !== Math.round(Number(pf.data.valor)||0);
-      return confirmDialog('La prefactura '+(pf.data.numero||'')+' se generó con los datos anteriores de la cotización'+
-        (cambiaValor ? ' (valor '+fmtMoney.format(Number(pf.data.valor)||0)+'; ahora sería '+fmtMoney.format(nuevoPf)+')' : '')+
-        '. ¿Actualizarla con los cambios? Conserva su número '+(pf.data.numero||'')+'.', 'Actualizar prefactura').then(function(ok){
-        if(!ok) return;
-        var data = Object.assign({}, pf.data, {cot: JSON.parse(actual), valor: nuevoPf, cotizacionNumero: nueva.numero || pf.data.cotizacionNumero || '', actualizadaEn: new Date().toISOString()});
-        return db.collection('prefacturas').doc(pf.id).set(data).then(function(){
-          state.prefacturas.set(pf.id, data);
-          hechos.push('prefactura '+(pf.data.numero||''));
-        });
-      });
-    });
     return cadena.then(function(){
       if(hechos.length) toast('También se actualizó: '+hechos.join(' · '), 5000);
-    }).catch(function(err){ toast('La cotización se guardó, pero no se pudo actualizar su orden o prefactura: '+(err && err.message ? err.message : 'error'), 6000); });
+    }).catch(function(err){ toast('La cotización se guardó, pero no se pudo actualizar su orden: '+(err && err.message ? err.message : 'error'), 6000); });
   }
 
   document.getElementById('cotSave').addEventListener('click', function(){
