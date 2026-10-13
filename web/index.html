@@ -132,6 +132,20 @@
   .nav-btn svg{width:17px; height:17px; flex:none; opacity:.8;}
   .nav-btn:hover{background:var(--surface-2); color:var(--text);}
   .nav-btn.active{background:var(--accent-soft); color:var(--accent-2); font-weight:600;}
+  /* Íconos por área (2026-10-13): cada sección con su color. Claro y oscuro: solo el ícono; Rosa: ficha pastel. */
+  .nav-btn{--ic:var(--text-muted);}
+  .nav-btn[data-view="resumen"]{--ic:#5b5fc7;} .nav-btn[data-view="cotizaciones"]{--ic:#d17a0a;}
+  .nav-btn[data-view="clientes"]{--ic:#0f9488;} .nav-btn[data-view="proyectos"]{--ic:#2f74d6;}
+  .nav-btn[data-view="ordenes"]{--ic:#7c4dcc;} .nav-btn[data-view="agenda"]{--ic:#d6407a;}
+  .nav-btn[data-view="inventario"]{--ic:#a86a2c;} .nav-btn[data-view="precios"]{--ic:#1f9d55;}
+  .nav-btn[data-view="costos"]{--ic:#c2930a;} .nav-btn[data-view="estadisticas"]{--ic:#0b8bb0;}
+  .nav-btn[data-view="finanzas"]{--ic:#0e8f6a;} .nav-btn[data-view="formatos"]{--ic:#5f6f86;}
+  .nav-btn svg{color:var(--ic); opacity:1;}
+  :root[data-theme="dark"] .nav-btn svg{color:color-mix(in srgb, var(--ic) 62%, #ffffff);}
+  :root[data-theme="lavanda"] .nav-btn svg{box-sizing:content-box; padding:6px; border-radius:10px;
+    background:color-mix(in srgb, var(--ic) 15%, #ffffff); color:color-mix(in srgb, var(--ic) 82%, #ffffff);
+    box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--ic) 18%, #ffffff);}
+  :root[data-theme="lavanda"] .nav-btn.active svg{background:color-mix(in srgb, var(--ic) 26%, #ffffff); color:var(--ic);}
   .nav-btn .count{margin-left:auto; font-size:11.5px; color:var(--text-muted); font-family:"IBM Plex Mono",monospace;}
   .nav-btn.active .count{color:var(--accent-2);}
 
@@ -263,6 +277,83 @@
   .pausa-line.due{color:var(--critical); font-weight:600;}
   .pausa-acts{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
   .cot-tabs{flex-wrap:wrap; width:auto; max-width:100%;}
+
+  /* ---------- Resumen compartido (2026-10-13) ---------- */
+  .rs{--rs-c1:#8a94a6; --rs-c2:#3d6fd0; --rs-c3:#c88a1a; --rs-c4:#1f8a57; --rs-c5:#6b7685; --rs-bar:var(--accent); display:flex; flex-direction:column; gap:16px;}
+  :root[data-theme="dark"] .rs{--rs-c1:#8f9bb0; --rs-c2:#79a6ee; --rs-c3:#e3b257; --rs-c4:#5cc58d; --rs-c5:#9aa6b6;}
+  :root[data-theme="lavanda"] .rs{--rs-c1:#b3a4b0; --rs-c2:#8f8be0; --rs-c3:#e0a65a; --rs-c4:#5fb08a; --rs-c5:#a495a2; --rs-bar:#d07aa3;}
+  .rs button{font:inherit; color:inherit; text-align:left; cursor:pointer;}
+  .rs-hero{display:flex; flex-wrap:wrap; gap:12px 20px; align-items:flex-end; justify-content:space-between;}
+  .rs-hero h2{margin:2px 0 0; font-size:24px;}
+  .rs-fecha{margin:0; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--text-muted);}
+  .rs-sub{margin:4px 0 0; color:var(--text-muted);}
+  .rs-kpis{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px;}
+  .rs-kpi{display:flex; flex-direction:column; gap:4px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; position:relative; overflow:hidden; transition:transform .15s, box-shadow .15s;}
+  .rs-kpi::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--k);}
+  .rs-kpi:hover, .rs-obra:hover, .rs-t:hover, .rs-ev:hover, .rs-emb:hover{box-shadow:0 8px 22px -14px rgba(20,30,60,.35);}
+  .rs-kpi:hover{transform:translateY(-1px);}
+  .rs-kpi-ring{flex-direction:row; align-items:center; gap:14px;}
+  .rs-kpi-ring > span{display:flex; flex-direction:column; gap:4px;}
+  .rs-kpi-l{font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted);}
+  .rs-kpi-v{font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .rs-kpi-s{font-size:12.5px; color:var(--text-muted);}
+  .rs-fin{background:var(--surface); border:1px dashed var(--border); border-radius:14px; padding:12px 16px;}
+  .rs-fin-h{display:flex; gap:10px; align-items:baseline; margin-bottom:8px;}
+  .rs-fin-h span{font-size:12px; color:var(--text-muted);}
+  .rs-fin-h .rs-link{margin-left:auto;}
+  .rs-fin-g{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px;}
+  .rs-fin-g small{display:block; font-size:12px; color:var(--text-muted);}
+  .rs-fin-g b{font-family:"IBM Plex Mono",monospace; font-size:16px;}
+  .rs-fin-g b.neg{color:var(--critical);}
+  .rs-grid{display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:14px;}
+  .rs-span2{grid-column:span 2;}
+  .rs-card{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; min-width:0;}
+  .rs-card-h{display:flex; align-items:center; gap:10px; margin-bottom:10px;}
+  .rs-card-h h3{margin:0; font-size:15px;}
+  .rs-card-h > :last-child{margin-left:auto;}
+  .rs-link{border:0; background:none; color:var(--accent); font-weight:600; font-size:12.5px; padding:2px 0;}
+  .rs-count{font-family:"IBM Plex Mono",monospace; font-size:12px; background:var(--surface-2); border-radius:99px; padding:1px 8px; color:var(--text-muted);}
+  .rs-vacio{color:var(--text-muted); font-size:13px; margin:6px 0;}
+  .rs-emb-wrap{display:flex; flex-direction:column; gap:6px;}
+  .rs-emb{display:grid; grid-template-columns:96px minmax(0,1fr) 34px 80px; gap:10px; align-items:center; border:0; background:none; padding:6px 8px; border-radius:10px;}
+  .rs-emb:hover{background:var(--surface-2); box-shadow:none;}
+  .rs-emb-l{font-size:13px;}
+  .rs-emb-bar{height:12px; background:var(--surface-2); border-radius:99px; overflow:hidden;}
+  .rs-emb-bar i{display:block; height:100%; border-radius:99px;}
+  .rs-emb-n{font-family:"IBM Plex Mono",monospace; font-weight:600; text-align:right;}
+  .rs-emb-v{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--text-muted); text-align:right;}
+  .rs-emb-lado{display:flex; gap:8px; flex-wrap:wrap; padding:4px 8px 0;}
+  .rs-chip{border:1px solid var(--border); background:var(--surface-2); border-radius:99px; padding:4px 12px; font-size:12.5px;}
+  .rs-toca{display:flex; flex-direction:column; gap:6px;}
+  .rs-t{display:flex; gap:10px; align-items:flex-start; border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:8px 10px;}
+  .rs-t-d{flex:none; min-width:58px; font-size:11.5px; font-weight:700; color:var(--text-muted); padding-top:1px;}
+  .rs-t.warn .rs-t-d{color:var(--warning);} .rs-t.crit .rs-t-d{color:var(--critical);}
+  .rs-t.crit{border-color:color-mix(in srgb, var(--critical) 35%, var(--border));}
+  .rs-t-x{display:flex; flex-direction:column; min-width:0;}
+  .rs-t-x b{font-size:13px; font-weight:600;}
+  .rs-t-x small, .rs-ev-t small{color:var(--text-muted); font-size:12px; overflow:hidden; text-overflow:ellipsis;}
+  .rs-mas{margin:2px 0 0; font-size:12px; color:var(--text-muted);}
+  .rs-obras{display:flex; flex-direction:column; gap:8px;}
+  .rs-obra{display:flex; align-items:center; gap:12px; border:1px solid var(--border); background:var(--surface); border-radius:12px; padding:8px 10px; position:relative;}
+  .rs-obra-pc{position:absolute; left:10px; width:52px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600;}
+  .rs-obra-t{display:flex; flex-direction:column; gap:3px; min-width:0;}
+  .rs-obra-t b{font-size:13px; font-weight:600;}
+  .rs-obra-t small{font-size:12px; color:var(--text-muted);}
+  .rs-pasos{display:flex; gap:4px;}
+  .rs-pasos i{width:18px; height:5px; border-radius:99px; background:var(--surface-2);}
+  .rs-pasos i.on{background:var(--success);}
+  .rs-chart{width:100%; height:auto; display:block;}
+  .rs-chart-v{font:600 10px "IBM Plex Mono",monospace; fill:var(--text);}
+  .rs-chart-m{font:12px "IBM Plex Sans",sans-serif; fill:var(--text-muted);}
+  .rs-evs{display:flex; flex-direction:column; gap:6px;}
+  .rs-ev{display:flex; gap:10px; align-items:center; border:1px solid var(--border); background:var(--surface); border-radius:10px; padding:6px 10px;}
+  .rs-ev-d{flex:none; width:40px; text-align:center; font-size:11px; color:var(--text-muted); text-transform:uppercase; line-height:1.1;}
+  .rs-ev-d b{display:block; font-size:18px; color:var(--text); font-family:"IBM Plex Mono",monospace;}
+  .rs-ev-t{display:flex; flex-direction:column; min-width:0; font-size:13px; font-weight:600;}
+  :root[data-theme="lavanda"] .rs-kpi, :root[data-theme="lavanda"] .rs-card{border-radius:18px;}
+  @media (max-width:1100px){ .rs-grid{grid-template-columns:repeat(2, minmax(0,1fr));} }
+  @media (max-width:760px){ .rs-grid{grid-template-columns:minmax(0,1fr);} .rs-span2{grid-column:auto;} .rs-emb{grid-template-columns:78px minmax(0,1fr) 28px 66px; gap:6px;} }
+  @media (prefers-reduced-motion:reduce){ .rs-kpi{transition:none;} }
   .cot-prox{margin-top:6px; font-size:12.5px; color:var(--text-muted); display:inline-block; border-radius:6px;}
   .cot-prox.warn{color:var(--warning); font-weight:600;}
   .cot-prox.crit{color:var(--critical); font-weight:600;}
@@ -897,27 +988,8 @@
 
     <!-- RESUMEN -->
     <section class="view active" id="view-resumen">
-      <div class="kpis">
-        <div class="kpi"><div class="label">Cotizaciones enviadas</div><div class="value" id="kpiEnviadas">0</div><div class="sub" id="kpiEnviadasSub">$0 en total</div></div>
-        <div class="kpi"><div class="label">Por armar</div><div class="value" id="kpiPorArmar">0</div><div class="sub">sin cotización formal aún</div></div>
-        <div class="kpi"><div class="label">Proyectos activos</div><div class="value" id="kpiProyectos">0</div><div class="sub" id="kpiProyectosSub">de 0 en total</div></div>
-        <div class="kpi"><div class="label">Vigencia vencida</div><div class="value" id="kpiVencidas">0</div><div class="sub">cotizaciones a reenviar</div></div>
-      </div>
-
-      <div class="panels">
-        <div class="panel">
-          <div class="panel-head"><h3>Vigencia de cotizaciones</h3><span>según cada cotización</span></div>
-          <div class="panel-body" id="panelVigencia"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>Pendientes por armar</h3><span id="panelPendCount">0</span></div>
-          <div class="panel-body" id="panelPendientes"></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><h3>Próximos en la agenda</h3><span id="panelEvtCount">0</span></div>
-          <div class="panel-body" id="panelEventos"></div>
-        </div>
-      </div>
+      <!-- Resumen compartido (2026-10-13): lo que nos concierne a los tres. Finanzas solo para administración. -->
+      <div class="rs" id="resumenRoot"></div>
     </section>
 
     <!-- COTIZACIONES -->
@@ -2384,51 +2456,137 @@
   }
 
   /* ---------- Resumen ---------- */
-  function renderResumen(){
-    var cots = Array.from(state.cotizaciones.values());
-    var proys = Array.from(state.proyectos.values());
-
-    var enviadas = cots.filter(function(c){ return c.estado==='enviada'; });
-    var totalEnviadas = enviadas.reduce(function(s,c){ return s + cotTotal(c); }, 0);
-    document.getElementById('kpiEnviadas').textContent = enviadas.length;
-    document.getElementById('kpiEnviadasSub').textContent = fmtMoney.format(totalEnviadas) + ' en total';
-
-    var porArmar = cots.filter(function(c){ return c.estado==='pendiente_armar'; });
-    document.getElementById('kpiPorArmar').textContent = porArmar.length;
-
-    var activos = proys.filter(function(p){ return p.estado!=='finalizado'; });
-    document.getElementById('kpiProyectos').textContent = activos.length;
-    document.getElementById('kpiProyectosSub').textContent = 'de ' + proys.length + ' en total';
-
-    var vencidas = enviadas.filter(function(c){ return c.fecha && cotDiasVence(c) < 0; });
-    document.getElementById('kpiVencidas').textContent = vencidas.length;
-
-    var vigenciaHtml = enviadas.filter(function(c){ return c.fecha; })
-      .map(function(c){ return {c:c, d: cotDiasVence(c)}; })
-      .sort(function(a,b){ return a.d - b.d; })
-      .map(function(x){
-        var flag = '';
-        if(x.d < 0) flag = '<span class="flag critical">Vencida hace '+Math.abs(x.d)+' d</span>';
-        else if(x.d <= 3) flag = '<span class="flag warning">Vence en '+x.d+' d</span>';
-        return '<div class="list-row"><div class="main-txt"><div class="title">'+escapeHtml(x.c.numero||'Sin N°')+' · '+escapeHtml(x.c.cliente||'—')+'</div><div class="meta">Enviada '+fmtDate(x.c.fecha)+'</div></div>'+flag+'</div>';
-      }).join('');
-    document.getElementById('panelVigencia').innerHTML = vigenciaHtml || '<div class="panel-empty">Aún no hay cotizaciones enviadas.</div>';
-
-    document.getElementById('panelPendCount').textContent = porArmar.length;
-    var pendHtml = porArmar.map(function(c){
-      return '<div class="list-row"><div class="main-txt"><div class="title">'+escapeHtml(c.cliente||'—')+' · '+escapeHtml(c.descripcion||'Sin descripción')+'</div><div class="meta">Responsable: '+escapeHtml(c.responsable||'sin asignar')+'</div></div></div>';
-    }).join('');
-    document.getElementById('panelPendientes').innerHTML = pendHtml || '<div class="panel-empty">No hay cotizaciones pendientes por armar.</div>';
-
-    var todayIso = toISODate(new Date());
-    var upcoming = Array.from(state.eventos.values()).filter(function(e){ return e.fecha && e.fecha >= todayIso && e.estado!=='cancelado' && e.estado!=='cumplido'; })
-      .sort(function(a,b){ return (a.fecha+((a.hora)||'00:00')).localeCompare(b.fecha+((b.hora)||'00:00')); }).slice(0,6);
-    document.getElementById('panelEvtCount').textContent = upcoming.length;
-    var evtHtml = upcoming.map(function(e){
-      return '<div class="list-row"><div class="main-txt"><div class="title">'+escapeHtml(e.titulo||'Evento')+'</div><div class="meta">'+fmtDate(e.fecha)+(e.hora?' · '+e.hora:'')+(e.cliente?' · '+escapeHtml(e.cliente):'')+'</div></div></div>';
-    }).join('');
-    document.getElementById('panelEventos').innerHTML = evtHtml || '<div class="panel-empty">No tienes eventos próximos.</div>';
+  /* Resumen compartido (2026-10-13): métricas visuales y accesos directos. Todo es tocable:
+     abre la cotización, la orden, el evento o la sección. Finanzas solo si eres administración. */
+  var _rsNombre = '';
+  try { window.claude.use('user').me().then(function(u){ _rsNombre = (u && u.name || '').split(' ')[0]; renderResumen(); }); } catch(e){}
+  function rsRing(pct, color, size){
+    size = size || 56; var r = size/2 - 5, c = 2*Math.PI*r, v = Math.max(0, Math.min(1, pct||0));
+    return '<svg class="rs-ring" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true">'+
+      '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="var(--surface-2)" stroke-width="6"/>'+
+      '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+(c*v).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/></svg>';
   }
+  function rsCompact(n){ n = Math.round(Number(n)||0); if(Math.abs(n) >= 1e6) return '$ '+(n/1e6).toFixed(1).replace('.', ',')+' M'; if(Math.abs(n) >= 1e3) return '$ '+Math.round(n/1e3)+' mil'; return fmtMoney.format(n); }
+  function renderResumen(){
+    var root = document.getElementById('resumenRoot'); if(!root) return;
+    var hoy = todayIso(), en7 = isoAdd(hoy, 7);
+    var cots = Array.from(state.cotizaciones.entries());
+    var ords = Array.from(state.ordenes.entries()).filter(function(e){ return e[1].estado !== 'anulada'; });
+    var porTab = {}; COT_TABS.forEach(function(t){ porTab[t.key] = {n:0, v:0}; });
+    cots.forEach(function(e){ var k = cotTabKey(e[0], e[1]); if(porTab[k]){ porTab[k].n++; porTab[k].v += cotTotal(e[1]); } });
+    var abiertas = ['pendiente_armar','en_proceso','enviada'].reduce(function(s,k){ return {n:s.n+porTab[k].n, v:s.v+porTab[k].v}; }, {n:0, v:0});
+    var anio = hoy.slice(0,4), aprob = {n:0, v:0};
+    cots.forEach(function(e){ var c = e[1]; if(c.estado === 'aprobada' && String(c.fechaAceptacion||c.fecha||'').slice(0,4) === anio){ aprob.n++; aprob.v += cotTotal(c); } });
+    var vendido = 0, cobrado = 0, porCobrar = 0;
+    ords.forEach(function(e){ var o = e[1], v = Number(o.valor)||0; vendido += v; var sal = ocSaldo(o); porCobrar += sal; cobrado += Math.max(0, v - sal); });
+    var dec = 0, apr = 0; cots.forEach(function(e){ var c = e[1]; if(['enviada','aprobada','rechazada'].indexOf(c.estado) !== -1 && c.rechazoMotivo !== 'descartada'){ dec++; if(c.estado === 'aprobada') apr++; } });
+    var tasa = dec ? apr/dec : null;
+
+    /* Lo que toca en los próximos 7 días */
+    var toca = [];
+    cots.forEach(function(e){
+      var id = e[0], c = e[1], num = c.numero || 'Cotización', cli = c.cliente || '';
+      if(c.estado === 'enviada' && c.fecha){
+        var seg = cotSegFecha(c), fin = cotVigFin(c);
+        if(fin < hoy) toca.push({f:fin, t:'Vigencia vencida · '+num, s:cli, cls:'crit', go:'cot:'+id});
+        else if(seg <= en7) toca.push({f:seg, t:'Seguimiento · '+num, s:cli+' · vence '+fmtShort(fin), cls: seg <= hoy ? 'warn' : '', go:'cot:'+id});
+      } else if(c.estado === 'en_proceso'){
+        var d0 = c.procesoDesde || c.fecha, dd = d0 ? -daysUntil(d0, 0) : 0;
+        if(dd >= 3) toca.push({f:hoy, t:'Verificar avance · '+num, s:cli+' · '+dd+' d en proceso', cls: dd >= 9 ? 'crit' : 'warn', go:'cot:'+id});
+      } else if(c.estado === 'aprobada' && !cotOrdenActiva(id)){
+        toca.push({f:c.inicioEstimado || hoy, t:'Pedir orden de compra · '+num, s:cli+(c.inicioEstimado ? ' · inicio estimado '+fmtShort(c.inicioEstimado) : ''), cls:'warn', go:'cot:'+id});
+      }
+    });
+    ords.forEach(function(e){
+      var id = e[0], o = e[1], sal = ocSaldo(o), k = ocCalc(o);
+      if(sal > 0 && k.pago && k.pago <= en7) toca.push({f:k.pago, t:'Cobrar '+fmtMoney.format(sal)+' · '+(o.numero||'OC'), s:(o.cliente||'')+' · '+(k.pago < hoy ? 'venció el ' : 'vence el ')+fmtShort(k.pago), cls: k.pago < hoy ? 'crit' : 'warn', go:'oc:'+id});
+      if(!sal && (o.estado === 'pagada' || ocRecibido(o) > 0)){ var falta = ocPendientesObra(o); if(falta.length) toca.push({f:hoy, t:'Saldar para cerrar · '+(o.numero||'OC'), s:falta.join(', '), cls:'warn', go:'oc:'+id}); }
+    });
+    toca.sort(function(a,b){ return a.f.localeCompare(b.f); });
+
+    /* Ventas aprobadas por mes (6 meses) */
+    var meses = []; for(var i = 5; i >= 0; i--){ var d = new Date(); d.setDate(1); d.setMonth(d.getMonth()-i); meses.push(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')); }
+    var porMes = meses.map(function(ym){ return cots.reduce(function(s,e){ var c = e[1]; return s + ((c.estado === 'aprobada' && String(c.fechaAceptacion||'').slice(0,7) === ym) ? cotTotal(c) : 0); }, 0); });
+    var maxMes = Math.max.apply(null, porMes.concat([1]));
+    var MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    var chart = '<svg class="rs-chart" viewBox="0 0 320 150" role="img" aria-label="Ventas aprobadas por mes">'+
+      [0.5,1].map(function(g){ var y = 120 - 100*g; return '<line x1="0" x2="320" y1="'+y+'" y2="'+y+'" stroke="var(--border)" stroke-dasharray="3 4"/>'; }).join('')+
+      porMes.map(function(v, i){ var h = Math.max(v ? 3 : 0, 100*v/maxMes), x = 12 + i*52, last = i === porMes.length-1;
+        return '<rect x="'+x+'" y="'+(120-h)+'" width="32" height="'+h+'" rx="6" fill="var(--rs-bar)" opacity="'+(last ? 1 : .55)+'"/>'+
+          (v ? '<text x="'+(x+16)+'" y="'+(114-h)+'" text-anchor="middle" class="rs-chart-v">'+rsCompact(v).replace('$ ','')+'</text>' : '')+
+          '<text x="'+(x+16)+'" y="140" text-anchor="middle" class="rs-chart-m">'+MES[Number(meses[i].slice(5))-1]+'</text>'; }).join('')+'</svg>';
+
+    /* Embudo */
+    var EMB = [['pendiente_armar','Por armar','--rs-c1'],['en_proceso','En proceso','--rs-c2'],['enviada','Enviadas','--rs-c3'],['aprobada','En curso','--rs-c4'],['cerrada','Cerradas','--rs-c5']];
+    var maxN = Math.max.apply(null, EMB.map(function(x){ return porTab[x[0]].n; }).concat([1]));
+    var embudo = EMB.map(function(x){ var p = porTab[x[0]];
+      return '<button type="button" class="rs-emb" data-rs-go="tab:'+x[0]+'"><span class="rs-emb-l">'+x[1]+'</span>'+
+        '<span class="rs-emb-bar"><i style="width:'+Math.max(p.n ? 8 : 0, 100*p.n/maxN)+'%;background:var('+x[2]+')"></i></span>'+
+        '<span class="rs-emb-n">'+p.n+'</span><span class="rs-emb-v">'+(p.v ? rsCompact(p.v) : '—')+'</span></button>'; }).join('')+
+      '<div class="rs-emb-lado"><button type="button" class="rs-chip" data-rs-go="tab:en_pausa">En pausa · '+porTab.en_pausa.n+'</button>'+
+      '<button type="button" class="rs-chip" data-rs-go="tab:rechazada">Rechazadas · '+porTab.rechazada.n+'</button></div>';
+
+    /* Obras en curso */
+    var PASOS = ['recibida','programada','en_ejecucion','finalizada','facturada','pagada'];
+    var obras = ords.filter(function(e){ return !(e[1].estado === 'pagada' && !ocPendientesObra(e[1]).length && ocSaldo(e[1]) === 0); }).map(function(e){
+      var o = e[1], v = Number(o.valor)||0, sal = ocSaldo(o), pc = v ? (v-sal)/v : 0, paso = PASOS.indexOf(o.estado);
+      return '<button type="button" class="rs-obra" data-rs-go="oc:'+e[0]+'">'+rsRing(pc, 'var(--success)', 52)+
+        '<span class="rs-obra-pc">'+Math.round(pc*100)+'%</span>'+
+        '<span class="rs-obra-t"><b>'+escapeHtml((o.numero||'Orden')+' · '+(o.cliente||''))+'</b>'+
+        '<small>'+(OC_ESTADOS[o.estado]||o.estado)+(sal ? ' · por cobrar '+fmtMoney.format(sal) : ' · cobrada')+'</small>'+
+        '<span class="rs-pasos">'+PASOS.map(function(x, j){ return '<i class="'+(j <= paso ? 'on' : '')+'" title="'+OC_ESTADOS[x]+'"></i>'; }).join('')+'</span></span></button>';
+    }).join('');
+
+    var upcoming = Array.from(state.eventos.entries()).filter(function(e){ var x = e[1]; return x.fecha && x.fecha >= hoy && x.estado !== 'cancelado' && x.estado !== 'cumplido'; })
+      .sort(function(a,b){ return (a[1].fecha+(a[1].hora||'00:00')).localeCompare(b[1].fecha+(b[1].hora||'00:00')); }).slice(0,5);
+    var agenda = upcoming.map(function(e){ var x = e[1], d = new Date(x.fecha+'T00:00:00');
+      return '<button type="button" class="rs-ev" data-rs-go="evt:'+e[0]+'"><span class="rs-ev-d"><b>'+d.getDate()+'</b>'+MES[d.getMonth()]+'</span><span class="rs-ev-t">'+escapeHtml(x.titulo||'Evento')+'<small>'+(x.hora ? x.hora+' · ' : '')+escapeHtml(x.cliente||'')+'</small></span></button>'; }).join('');
+
+    var hora = new Date().getHours(), saludo = hora < 12 ? 'Buenos días' : (hora < 19 ? 'Buenas tardes' : 'Buenas noches');
+    var fechaTxt = new Date().toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long'});
+    var urg = toca.filter(function(x){ return x.cls === 'crit' || x.f <= hoy; }).length;
+
+    var h = '<div class="rs-hero"><div><p class="rs-fecha">'+escapeHtml(fechaTxt)+'</p><h2>'+saludo+(_rsNombre ? ', '+escapeHtml(_rsNombre) : '')+'</h2>'+
+      '<p class="rs-sub">'+(toca.length ? toca.length+' cosas por hacer esta semana'+(urg ? ', '+urg+' para hoy' : '')+'.' : 'Todo al día esta semana.')+'</p></div>'+
+      '<button type="button" class="btn primary" data-rs-go="nueva">+ Nueva cotización</button></div>';
+    h += '<div class="rs-kpis">'+
+      '<button type="button" class="rs-kpi" data-rs-go="tab:enviada" style="--k:var(--rs-c3)"><span class="rs-kpi-l">En juego</span><span class="rs-kpi-v">'+rsCompact(abiertas.v)+'</span><span class="rs-kpi-s">'+abiertas.n+' cotizaciones abiertas</span></button>'+
+      '<button type="button" class="rs-kpi" data-rs-go="tab:aprobada" style="--k:var(--rs-c4)"><span class="rs-kpi-l">Aprobado en '+anio+'</span><span class="rs-kpi-v">'+rsCompact(aprob.v)+'</span><span class="rs-kpi-s">'+aprob.n+' cotizaciones</span></button>'+
+      '<button type="button" class="rs-kpi rs-kpi-ring" data-rs-go="ordenes" style="--k:var(--success)">'+rsRing(vendido ? cobrado/vendido : 0, 'var(--success)')+'<span><span class="rs-kpi-l">Por cobrar</span><span class="rs-kpi-v">'+rsCompact(porCobrar)+'</span><span class="rs-kpi-s">cobrado '+(vendido ? Math.round(100*cobrado/vendido) : 0)+'% de lo vendido</span></span></button>'+
+      '<button type="button" class="rs-kpi rs-kpi-ring" data-rs-go="estadisticas" style="--k:var(--rs-c2)">'+rsRing(tasa||0, 'var(--rs-c2)')+'<span><span class="rs-kpi-l">Aprobación</span><span class="rs-kpi-v">'+(tasa == null ? '—' : Math.round(tasa*100)+' %')+'</span><span class="rs-kpi-s">'+apr+' de '+dec+' decididas</span></span></button></div>';
+    if(typeof fin !== 'undefined' && fin && fin.admin){
+      try {
+        var saldos = finSaldos(finMovimientosTodos()), disp = saldos.reduce(function(s,x){ return s + x.saldo; }, 0);
+        var porPagar = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso') porPagar += Number(m.monto)||0; });
+        var res = finResultados(anio);
+        h += '<div class="rs-fin"><div class="rs-fin-h"><b>Finanzas</b><span>solo tú lo ves</span><button type="button" class="rs-link" data-rs-go="finanzas">Abrir Finanzas →</button></div><div class="rs-fin-g">'+
+          '<div><small>Dinero disponible</small><b class="'+(disp < 0 ? 'neg' : '')+'">'+(saldos.length ? fmtMoney.format(disp) : 'Sin cuentas')+'</b></div>'+
+          '<div><small>Gastos fijos al mes</small><b>'+fmtMoney.format(finFijosMensualTotal())+'</b></div>'+
+          '<div><small>Por pagar</small><b>'+fmtMoney.format(porPagar)+'</b></div>'+
+          '<div><small>Utilidad operativa '+anio+'</small><b class="'+(res.operativa < 0 ? 'neg' : '')+'">'+fmtMoney.format(res.operativa)+'</b></div></div></div>';
+      } catch(err){}
+    }
+    h += '<div class="rs-grid">'+
+      '<div class="rs-card rs-span2"><div class="rs-card-h"><h3>Embudo comercial</h3><button type="button" class="rs-link" data-rs-go="tab:todas">Ver cotizaciones →</button></div><div class="rs-emb-wrap">'+embudo+'</div></div>'+
+      '<div class="rs-card"><div class="rs-card-h"><h3>Lo que toca</h3><span class="rs-count">'+toca.length+'</span></div>'+
+        (toca.length ? '<div class="rs-toca">'+toca.slice(0,7).map(function(x){ return '<button type="button" class="rs-t '+x.cls+'" data-rs-go="'+x.go+'"><span class="rs-t-d">'+(x.f < hoy ? 'Atrasado' : x.f === hoy ? 'Hoy' : fmtShort(x.f))+'</span><span class="rs-t-x"><b>'+escapeHtml(x.t)+'</b><small>'+escapeHtml(x.s)+'</small></span></button>'; }).join('')+(toca.length > 7 ? '<p class="rs-mas">y '+(toca.length-7)+' más</p>' : '')+'</div>' : '<p class="rs-vacio">Nada pendiente en los próximos 7 días.</p>')+'</div>'+
+      '<div class="rs-card"><div class="rs-card-h"><h3>Obras en curso</h3><button type="button" class="rs-link" data-rs-go="ordenes">Órdenes →</button></div>'+(obras ? '<div class="rs-obras">'+obras+'</div>' : '<p class="rs-vacio">No hay obras en curso.</p>')+'</div>'+
+      '<div class="rs-card"><div class="rs-card-h"><h3>Aprobado por mes</h3><button type="button" class="rs-link" data-rs-go="estadisticas">Estadísticas →</button></div>'+chart+'</div>'+
+      '<div class="rs-card"><div class="rs-card-h"><h3>Próximos en la agenda</h3><button type="button" class="rs-link" data-rs-go="agenda">Agenda →</button></div>'+(agenda ? '<div class="rs-evs">'+agenda+'</div>' : '<p class="rs-vacio">Sin eventos próximos.</p>')+'</div>'+
+      '</div>';
+    root.innerHTML = h;
+  }
+  document.getElementById('resumenRoot').addEventListener('click', function(e){
+    var b = e.target.closest('[data-rs-go]'); if(!b) return;
+    var g = b.getAttribute('data-rs-go'), i = g.indexOf(':'), k = i < 0 ? g : g.slice(0, i), v = i < 0 ? '' : g.slice(i+1);
+    if(k === 'cot') return openCotModal(v);
+    if(k === 'oc') return openOcModal(v);
+    if(k === 'evt') return openEvtModal(v);
+    if(k === 'nueva') return openCotModal();
+    if(k === 'tab'){ showView('cotizaciones'); state.cotTab = v; try { localStorage.setItem('cenova.cotTab', v); } catch(err){}
+      var sb = document.querySelector('#cotSubtabs [data-subtab="internas"]'); if(sb) sb.click(); renderCotizaciones(); return; }
+    if(['ordenes','estadisticas','finanzas','agenda'].indexOf(k) !== -1) showView(k);
+  });
 
   /* ---------- Cotizaciones ---------- */
   function renderCotizaciones(){
@@ -6725,9 +6883,9 @@
       fin.admin = true;
       document.querySelectorAll('.fin-admin').forEach(function(el){ el.hidden = false; });
       renderPrecios(); precSembrar(); renderClientes();
-      db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
-      db.collection('finGastosFijos').onSnapshot(function(snap){ fin.fijos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
-      db.collection('finAjustes').onSnapshot(function(snap){ var g = snap.docs.filter(function(d){ return d.id === 'general'; })[0]; fin.ajustes = g ? g.data() : null; renderFinanzas(); });
+      db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); renderResumen(); });
+      db.collection('finGastosFijos').onSnapshot(function(snap){ fin.fijos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); renderResumen(); });
+      db.collection('finAjustes').onSnapshot(function(snap){ var g = snap.docs.filter(function(d){ return d.id === 'general'; })[0]; fin.ajustes = g ? g.data() : null; renderFinanzas(); renderResumen(); });
     }).catch(function(){});
   }
 
