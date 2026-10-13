@@ -263,10 +263,24 @@
   .pausa-line.due{color:var(--critical); font-weight:600;}
   .pausa-acts{display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;}
   .cot-tabs{flex-wrap:wrap; width:auto; max-width:100%;}
+  .cot-prox{margin-top:6px; font-size:12.5px; color:var(--text-muted); display:inline-block; border-radius:6px;}
+  .cot-prox.warn{color:var(--warning); font-weight:600;}
+  .cot-prox.crit{color:var(--critical); font-weight:600;}
+  .mejora-box{background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; margin-bottom:14px;}
+  .mejora-head h3{margin:0; font-size:16px;}
+  .mejora-head p{margin:4px 0 12px; color:var(--text-muted); font-size:13px;}
+  .mej-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px;}
+  .mej-card{border:1px dashed var(--border); border-radius:10px; padding:9px 11px;}
+  .mej-card.on{border-style:solid; background:var(--surface-2);}
+  .mej-n{font-family:"IBM Plex Mono",monospace; font-size:18px; font-weight:600;}
+  .mej-l{font-size:12.5px;}
+  .mej-v{font-size:11.5px; color:var(--text-muted); font-family:"IBM Plex Mono",monospace;}
+  .mej-tip{margin-top:12px; font-size:13px; background:var(--surface-2); border-radius:8px; padding:9px 12px;}
   .cot-tabs .subtab-btn .count{margin-left:6px; font-family:"IBM Plex Mono",monospace; font-size:11px; background:var(--surface-2); border-radius:99px; padding:1px 7px; color:var(--text-muted);}
   .cot-tabs .subtab-btn.active .count{background:var(--accent-soft); color:var(--accent-2);}
   .pill.st-aprobada, .pill.st-en_ejecucion{background:var(--success-soft); color:var(--success);}
   .pill.st-rechazada{background:var(--critical-soft); color:var(--critical);}
+  .pill.st-cerrada{background:var(--surface-2); color:var(--text-muted);}
   .pill.st-finalizado{background:var(--neutral-soft); color:var(--neutral);}
   .pill.mode{background:var(--neutral-soft); color:var(--text-muted);}
   .pill.oc-recibida{background:var(--accent-soft); color:var(--accent-2);}
@@ -1277,14 +1291,18 @@
       <div class="field-row three">
         <div class="field"><label>Responsable</label><input type="text" id="cotResponsable" list="equipoList"></div>
         <div class="field"><label>Fecha de envío</label><input type="date" id="cotFecha"></div>
-        <div class="field"><label>Vigencia oferta (días)</label><input type="number" id="cotVigencia" min="1" step="1" value="15"></div>
+        <div class="field"><label>Vigencia (días hábiles)</label><input type="number" id="cotVigencia" min="1" step="1" value="15"></div>
       </div>
       <div class="field-row three">
         <div class="field"><label>Días de instalación estimados</label><input type="number" id="cotDiasInst" min="0" step="1" placeholder="Ej. 5"><span class="no-file">Se usa para programar la instalación cuando llegue la orden de compra.</span></div>
-        <div class="field"><label>Fecha de aceptación</label><input type="date" id="cotFechaAceptacion"><span class="no-file">Se llena sola al registrar la orden de compra.</span></div>
-        <div class="field"></div>
+        <div class="field"><label>Fecha de aceptación</label><input type="date" id="cotFechaAceptacion"><span class="no-file">Día en que el cliente la autorizó. Se llena sola si está vacía.</span></div>
+        <div class="field" id="cotInicioEstWrap" hidden><label>Inicio estimado de la obra</label><input type="date" id="cotInicioEstimado"><span class="no-file">Si la obra arranca después, la orden pedirá el motivo del retraso.</span></div>
       </div>
-      <div class="no-file" style="margin-top:-6px;">Con la cotización en estado "Enviada" se programa un seguimiento en la agenda 5 días antes de que venza su vigencia. Al aceptarse, ese seguimiento se cierra con la fecha de aceptación.</div>
+      <div class="field-row" id="cotRechazoWrap" hidden>
+        <div class="field"><label>Motivo del rechazo</label><select id="cotRechazoMotivo"><option value="">Elige el motivo…</option></select></div>
+        <div class="field"><label>Qué pasó (opcional)</label><input type="text" id="cotRechazoNota" placeholder="Ej. otra empresa ofreció 20 % menos y entrega en 3 días"></div>
+      </div>
+      <div class="no-file" style="margin-top:-6px;">La vigencia se cuenta en días hábiles (sin fines de semana ni festivos). Con la cotización en estado "Enviada" se programa un seguimiento 2 días hábiles antes de que venza. Al aceptarse, ese seguimiento se cierra con la fecha de aceptación.</div>
       <div class="field-row">
         <div class="field"><label>Título del proyecto o servicio a cotizar</label><input type="text" id="cotDescripcion" placeholder="Qué incluye la cotización"></div>
         <div class="field"><label>Proyecto (obligatorio)</label><select id="cotProyecto"><option value="">Elige un proyecto…</option></select><button type="button" class="btn sm" id="cotNewProyBtn" style="align-self:flex-start; margin-top:2px;">+ Crear proyecto nuevo</button></div>
@@ -1781,7 +1799,7 @@
 
       <div class="fieldset-label">Instalación</div>
       <div class="field-row three">
-        <div class="field"><label>Inicio de labores</label><input type="date" id="ocFechaInicio"><span class="no-file">Déjalo vacío mientras se confirma con el cliente: la agenda te lo recordará.</span></div>
+        <div class="field"><label>Inicio de labores</label><input type="date" id="ocFechaInicio"><span class="no-file" id="ocInicioHint">Déjalo vacío mientras se confirma con el cliente: la agenda te lo recordará.</span></div>
         <div class="field"><label>Días de instalación</label><input type="number" id="ocDiasInst" min="0" step="1"></div>
         <div class="field"><label>Modalidad</label>
           <select id="ocModalidad">
@@ -1789,6 +1807,10 @@
             <option value="intercalados">Intercalados (días elegidos de la semana)</option>
           </select>
         </div>
+      </div>
+      <div class="field-row" id="ocRetrasoWrap" hidden>
+        <div class="field"><label>Motivo del retraso del inicio</label><select id="ocRetrasoMotivo"><option value="">Elige el motivo…</option></select></div>
+        <div class="field"><label>Qué pasó</label><input type="text" id="ocRetrasoNota" placeholder="Ej. el material llegó 4 días tarde del proveedor"></div>
       </div>
       <div class="field" id="ocDiasSemanaWrap" style="display:none;">
         <label>Días de la semana en que se trabaja</label>
@@ -1827,9 +1849,15 @@
       </div>
       <div class="field">
         <label>Personal que trabajó (lo que realmente se pagó)</label>
-        <div class="items-table-wrap"><table class="items-table"><thead><tr><th class="col-idx">#</th><th style="width:22%;">Persona / rol</th><th style="width:13%;">Tipo</th><th style="width:7%;">Días</th><th>Pago por día</th><th>Almuerzo por día</th><th>Transporte por día</th><th>Otros (total)</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead><tbody id="ocPersonalBody"></tbody></table></div>
+        <div class="items-table-wrap"><table class="items-table"><thead><tr><th class="col-idx">#</th><th style="width:22%;">Persona / rol</th><th style="width:13%;">Tipo</th><th style="width:7%;">Días</th><th>Pago por día</th><th>Almuerzo por día</th><th>Transporte por día</th><th>Otros (total)</th><th class="col-total">Total</th><th style="width:7%;">Pagado</th><th class="col-rm"></th></tr></thead><tbody id="ocPersonalBody"></tbody></table></div>
         <div style="display:flex; gap:8px;"><button type="button" class="btn sm" id="ocPersonalAdd">+ Agregar persona</button><button type="button" class="btn sm" id="ocPersonalCopy">Copiar lo planeado en la cotización</button></div>
         <div class="info-box" id="ocPersonalSummary"></div>
+      </div>
+      <div class="field">
+        <label>Otros pagos que Cenova debe por esta obra (reembolsos, devoluciones, viáticos aparte)</label>
+        <div class="items-table-wrap"><table class="items-table"><thead><tr><th class="col-idx">#</th><th style="width:38%;">Concepto</th><th style="width:22%;">A quién</th><th>Valor</th><th style="width:9%;">Pagado</th><th class="col-rm"></th></tr></thead><tbody id="ocPorPagarBody"></tbody></table></div>
+        <button type="button" class="btn sm" id="ocPorPagarAdd" style="align-self:flex-start;">+ Agregar pago pendiente</button>
+        <div class="no-file">La cotización pasa a "Cerradas" solo cuando el cliente pagó todo, el personal está marcado como pagado y no queda nada aquí sin pagar.</div>
       </div>
 
       <div class="fieldset-label">Notas</div>
@@ -2034,9 +2062,16 @@
   var COT_ESTADO_HINT = {
     pendiente_armar:'Pedida por el cliente; falta empezar a armarla.',
     en_proceso:'La estamos trabajando (precios, visita, ajustes).',
-    en_pausa:'El cliente la quiere a futuro, sin prisa. Cada semana te recordamos validar si sigue en pausa.'
+    en_pausa:'El cliente la quiere a futuro, sin prisa. Cada lunes la gerencia valida si sigue en pausa.'
   };
-  /* Pestañas del listado de cotizaciones. "Cerradas" = aprobadas cuya orden ya está pagada completa. */
+  /* Motivos de rechazo (2026-10-13): alimentan "Puntos de mejora" en la pestaña Rechazadas.
+     "descartada" = la idea la descartamos nosotros (no cuenta como negocio perdido). */
+  var COT_RECHAZO = {precio:'Precio alto', competencia:'Eligió otra empresa', tiempo:'Tiempo de entrega', presupuesto:'El cliente no tenía presupuesto',
+    alcance:'Cambió el alcance', sin_respuesta:'No respondió', otro:'Otro motivo', descartada:'La descartamos nosotros'};
+  /* Motivos de retraso del inicio de una obra aprobada. */
+  var OC_RETRASO = {cliente:'Por el cliente', material:'Demora en la recepción del material', proveedor:'Por el proveedor', equipo:'Disponibilidad de nuestro equipo', clima:'Clima o condiciones de la obra', otro:'Otro motivo'};
+  /* Pestañas del listado de cotizaciones. "Cerradas" = aprobadas cuya orden ya está pagada completa
+     y sin nada pendiente por pagar de esa obra (personal y otros pagos). */
   var COT_TABS = [
     {key:'pendiente_armar', label:'Por armar'}, {key:'en_proceso', label:'En proceso'}, {key:'enviada', label:'Enviadas'},
     {key:'aprobada', label:'Aprobadas en curso'}, {key:'cerrada', label:'Cerradas'}, {key:'en_pausa', label:'En pausa'}, {key:'rechazada', label:'Rechazadas'}, {key:'todas', label:'Todas'}
@@ -2063,7 +2098,7 @@
 
   var state = {
     cotizaciones: new Map(), proyectos: new Map(), eventos: new Map(), cotizacionesProveedor: new Map(), clientes: new Map(), ordenes: new Map(), prefacturas: new Map(), previewingPfId: null,
-    loaded: {}, userId: null, evtApoyo: [], proyForCot: false, ocNovedades: [], costosAdicionales: [], personal: [], ocPersonal: [], ocPagos: [], editingOcId: null, ocArchivo: null, ocArchivoRemoved: false, ocDiasSemana: [0,2,4], cronoStart: null,
+    loaded: {}, userId: null, evtApoyo: [], proyForCot: false, ocNovedades: [], costosAdicionales: [], personal: [], ocPersonal: [], ocPagos: [], ocPorPagar: [], editingOcId: null, ocArchivo: null, ocArchivoRemoved: false, ocDiasSemana: [0,2,4], cronoStart: null,
     db: null, editingCotId: null, editingProyId: null, editingEvtId: null, editingProvId: null, editingCliId: null, previewingCotId: null,
     expandedProyId: null,
     items: [], provItems: [], calMonth: startOfMonth(new Date()), selectedDate: toISODate(new Date()),
@@ -2301,6 +2336,34 @@
     var today = new Date(); today.setHours(0,0,0,0);
     return Math.round((d - today) / 86400000);
   }
+  /* Días hábiles en Colombia (2026-10-13): sin sábados, domingos ni festivos (Ley Emiliani y Semana Santa).
+     La vigencia de las cotizaciones se cuenta en días hábiles desde la fecha de envío. */
+  var _festivosCO = {};
+  function festivosCO(y){
+    if(_festivosCO[y]) return _festivosCO[y];
+    function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+    function lunes(m, d){ var x = new Date(y, m-1, d); var w = x.getDay(); if(w !== 1) x.setDate(x.getDate() + ((8 - w) % 7)); return iso(x); }
+    var a=y%19, b=Math.floor(y/100), c=y%100, d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25), g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30,
+        i=Math.floor(c/4), k=c%4, l=(32+2*e+2*i-h-k)%7, m=Math.floor((a+11*h+22*l)/451), mes=Math.floor((h+l-7*m+114)/31), dia=((h+l-7*m+114)%31)+1;
+    var pascua = new Date(y, mes-1, dia);
+    function desde(n){ var x = new Date(pascua); x.setDate(x.getDate()+n); return iso(x); }
+    var set = {};
+    [y+'-01-01', y+'-05-01', y+'-07-20', y+'-08-07', y+'-12-08', y+'-12-25',
+     lunes(1,6), lunes(3,19), lunes(6,29), lunes(8,15), lunes(10,12), lunes(11,1), lunes(11,11),
+     desde(-3), desde(-2), desde(43), desde(64), desde(71)].forEach(function(f){ set[f] = true; });
+    return (_festivosCO[y] = set);
+  }
+  function esHabil(iso){ var d = new Date(iso+'T00:00:00'), w = d.getDay(); return w !== 0 && w !== 6 && !festivosCO(d.getFullYear())[iso]; }
+  function habilesAdd(iso, n){
+    var d = new Date(iso+'T00:00:00'), c = 0;
+    while(c < n){ d.setDate(d.getDate()+1); if(esHabil(toISODate(d))) c++; }
+    return toISODate(d);
+  }
+  function cotVigDias(c){ return Number(c.vigenciaDias)||15; }
+  function cotVigFin(c){ return c.fecha ? habilesAdd(c.fecha, cotVigDias(c)) : null; }
+  /* Seguimiento: 2 días hábiles antes de que venza (el día 13 de 15). */
+  function cotSegFecha(c){ return c.fecha ? habilesAdd(c.fecha, Math.max(1, cotVigDias(c) - 2)) : null; }
+  function cotDiasVence(c){ var f = cotVigFin(c); return f ? daysUntil(f, 0) : null; }
   function passFilter(text, needle){ return !needle || String(text||'').toLowerCase().indexOf(needle) !== -1; }
 
   function cotTotal(c){
@@ -2337,11 +2400,11 @@
     document.getElementById('kpiProyectos').textContent = activos.length;
     document.getElementById('kpiProyectosSub').textContent = 'de ' + proys.length + ' en total';
 
-    var vencidas = enviadas.filter(function(c){ return c.fecha && daysUntil(c.fecha, Number(c.vigenciaDias)||15) < 0; });
+    var vencidas = enviadas.filter(function(c){ return c.fecha && cotDiasVence(c) < 0; });
     document.getElementById('kpiVencidas').textContent = vencidas.length;
 
     var vigenciaHtml = enviadas.filter(function(c){ return c.fecha; })
-      .map(function(c){ return {c:c, d: daysUntil(c.fecha, Number(c.vigenciaDias)||15)}; })
+      .map(function(c){ return {c:c, d: cotDiasVence(c)}; })
       .sort(function(a,b){ return a.d - b.d; })
       .map(function(x){
         var flag = '';
@@ -2408,17 +2471,18 @@
       container.innerHTML = '<div class="table-wrap"><div class="empty-state">'+(q||respF ? 'Ninguna cotización de "'+escapeHtml(tabLbl)+'" coincide con la búsqueda.' : 'No hay cotizaciones en "'+escapeHtml(tabLbl)+'".')+'</div></div>'; return;
     }
 
-    var html = '<div class="table-wrap"><table><thead><tr><th>N.°</th><th>Cliente</th><th>Descripción</th><th>Responsable</th><th>Fecha</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
+    var html = (state.cotTab === 'rechazada' ? cotMejoraHtml(rows) : '') +
+      '<div class="table-wrap"><table><thead><tr><th>N.°</th><th>Cliente</th><th>Descripción</th><th>Responsable</th><th>Fecha</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
     rows.forEach(function(e){
       var id = e[0], c = e[1]; var total = cotTotal(c);
       html += '<tr data-id="'+id+'">'+
         '<td class="num">'+escapeHtml(c.numero||'—')+'</td>'+
         '<td>'+escapeHtml(c.cliente||'—')+'</td>'+
-        '<td class="desc-cell"><div class="d-title">'+escapeHtml(c.descripcion||'—')+'</div>'+(c.items&&c.items.length?'<div class="d-notes">'+c.items.length+' ítem(s)</div>':'')+(c.estado==='en_pausa'?pausaInfoHtml(id, c):'')+'</td>'+
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml(c.descripcion||'—')+'</div>'+(c.items&&c.items.length?'<div class="d-notes">'+c.items.length+' ítem(s)</div>':'')+(c.estado==='en_pausa'?pausaInfoHtml(id, c):'')+cotProximoHtml(id, c)+'</td>'+
         '<td>'+escapeHtml(c.responsable||'—')+'</td>'+
         '<td class="num">'+fmtDate(c.fecha)+'</td>'+
         '<td class="num">'+(total?fmtMoney.format(total):'—')+'</td>'+
-        '<td><span class="pill st-'+c.estado+'">'+(COT_ESTADOS[c.estado]||c.estado)+'</span></td>'+
+        (cotTabKey(id, c) === 'cerrada' ? '<td><span class="pill st-cerrada">Cerrada</span></td>' : '<td><span class="pill st-'+c.estado+'">'+(COT_ESTADOS[c.estado]||c.estado)+'</span></td>')+
         '<td><div class="row-actions">'+
           '<button class="icon-btn view-cot" title="Vista previa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>'+
           '<button class="icon-btn edit-cot" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/></svg></button>'+
@@ -2430,6 +2494,59 @@
     container.querySelectorAll('.edit-cot').forEach(function(btn){ btn.addEventListener('click', function(){ openCotModal(btn.closest('tr').dataset.id); }); });
     container.querySelectorAll('.view-cot').forEach(function(btn){ btn.addEventListener('click', function(){ openPreview(btn.closest('tr').dataset.id); }); });
     bindPausaBtns(container);
+  }
+
+  /* Próximo paso visible en cada fila (2026-10-13). */
+  function cotProximoHtml(id, c){
+    var t = '', cls = '';
+    if(c.estado === 'enviada' && c.fecha){
+      var d = cotDiasVence(c), seg = cotSegFecha(c);
+      t = d < 0 ? 'Vigencia vencida el '+fmtShort(cotVigFin(c)) : 'Seguimiento '+fmtShort(seg)+' · vence el '+fmtShort(cotVigFin(c));
+      cls = d < 0 ? 'crit' : (seg <= todayIso() ? 'warn' : '');
+    } else if(c.estado === 'en_proceso'){
+      var desde = c.procesoDesde || c.fecha;
+      if(desde){ var dd = -daysUntil(desde, 0); t = 'En proceso hace '+dd+' d'+(c.actualizacionPedida ? ' · el cliente pidió actualizarla' : ''); cls = dd >= 3 ? 'warn' : ''; }
+    } else if(c.estado === 'aprobada'){
+      var o = cotOrdenActiva(id);
+      if(!o){
+        t = 'Sin orden de compra'+(c.inicioEstimado ? ' · inicio estimado '+fmtShort(c.inicioEstimado) : '');
+        cls = c.inicioEstimado && c.inicioEstimado < todayIso() ? 'warn' : '';
+      } else {
+        var saldo = ocSaldo(o), falta = ocPendientesObra(o);
+        if(saldo > 0) t = (o.numero||'Orden')+' · por cobrar '+fmtMoney.format(saldo);
+        else if(falta.length) t = (o.numero||'Orden')+' · cobrada · falta: '+falta.join(', ');
+        if(o.retrasoMotivo) t += (t ? ' · ' : '')+'retraso: '+(OC_RETRASO[o.retrasoMotivo]||o.retrasoMotivo).toLowerCase();
+        cls = saldo > 0 ? 'warn' : '';
+      }
+    } else if(c.estado === 'rechazada'){
+      t = c.rechazoMotivo ? (COT_RECHAZO[c.rechazoMotivo]||c.rechazoMotivo)+(c.rechazoNota ? ': '+c.rechazoNota : '') : 'Sin motivo registrado';
+      cls = c.rechazoMotivo ? '' : 'warn';
+    }
+    return t ? '<div class="cot-prox '+cls+'">'+escapeHtml(t)+'</div>' : '';
+  }
+  /* Rechazadas → Puntos de mejora: cuántas y cuánto se perdió por motivo, y la tasa de éxito. */
+  function cotMejoraHtml(rows){
+    var por = {}, sinMotivo = 0, perdido = 0, nPerd = 0;
+    rows.forEach(function(e){ var c = e[1], k = c.rechazoMotivo || ''; if(!k){ sinMotivo++; return; }
+      if(!por[k]) por[k] = {n:0, v:0}; por[k].n++; por[k].v += cotTotal(c); if(k !== 'descartada'){ perdido += cotTotal(c); nPerd++; } });
+    var aprob = 0, rech = 0; state.cotizaciones.forEach(function(c){ if(c.estado === 'aprobada') aprob++; else if(c.estado === 'rechazada' && c.rechazoMotivo !== 'descartada') rech++; });
+    var tasa = (aprob + rech) ? Math.round(aprob / (aprob + rech) * 100) : null;
+    var tarjetas = Object.keys(COT_RECHAZO).map(function(k){
+      var x = por[k] || {n:0, v:0};
+      return '<div class="mej-card'+(x.n?' on':'')+'"><div class="mej-n">'+x.n+'</div><div class="mej-l">'+COT_RECHAZO[k]+'</div><div class="mej-v">'+(x.v ? fmtMoney.format(x.v) : '—')+'</div></div>';
+    }).join('');
+    var top = Object.keys(por).filter(function(k){ return k !== 'descartada'; }).sort(function(a,b){ return por[b].n - por[a].n || por[b].v - por[a].v; })[0];
+    var consejo = {precio:'Revisa márgenes y proveedores: Costos → Precios de proveedores muestra dónde hay opciones más baratas.',
+      competencia:'Pregunta al cliente qué ofreció la otra empresa (precio, tiempo, garantía) y anótalo en el rechazo.',
+      tiempo:'Revisa los días de instalación cotizados contra los reales en Costos → Costo real por obra.',
+      presupuesto:'Ofrece por etapas o una opción básica antes de dar el valor completo.',
+      alcance:'Confirma el alcance por escrito (visita técnica u orden de trabajo) antes de cotizar.',
+      sin_respuesta:'El seguimiento 2 días hábiles antes de vencer ayuda: una llamada pesa más que un correo.',
+      otro:'Lee las notas de los rechazos para encontrar el patrón.'}[top];
+    return '<div class="mejora-box"><div class="mejora-head"><div><h3>Puntos de mejora</h3><p>'+
+      (nPerd ? nPerd+' negocio(s) perdido(s) por '+fmtMoney.format(perdido) : 'Aún no hay negocios perdidos con motivo registrado')+
+      (tasa != null ? ' · tasa de aprobación '+tasa+' %' : '')+(sinMotivo ? ' · '+sinMotivo+' sin motivo (ábrelas y elígelo)' : '')+'</p></div></div>'+
+      '<div class="mej-grid">'+tarjetas+'</div>'+(consejo ? '<div class="mej-tip"><strong>Lo que más se repite: '+escapeHtml(COT_RECHAZO[top])+'.</strong> '+consejo+'</div>' : '')+'</div>';
   }
 
   function emptyState(title, sub, btnId){
@@ -3266,10 +3383,21 @@
     var v = document.getElementById('cotEstado').value;
     var c = state.editingCotId ? (state.cotizaciones.get(state.editingCotId) || {}) : {};
     var t = COT_ESTADO_HINT[v] || '';
-    if(v === 'en_pausa' && c.estado === 'en_pausa') t += ' Próxima revisión: '+fmtDate(pausaProxima(c))+'.';
     document.getElementById('cotEstadoHint').textContent = t;
+    document.getElementById('cotInicioEstWrap').hidden = v !== 'aprobada';
+    document.getElementById('cotRechazoWrap').hidden = v !== 'rechazada';
   }
-  document.getElementById('cotEstado').addEventListener('change', cotEstadoHintRefresh);
+  (function(){
+    var sel = document.getElementById('cotRechazoMotivo');
+    Object.keys(COT_RECHAZO).forEach(function(k){ var o = document.createElement('option'); o.value = k; o.textContent = COT_RECHAZO[k]; sel.appendChild(o); });
+  })();
+  document.getElementById('cotEstado').addEventListener('change', function(){
+    var v = this.value, c = state.editingCotId ? (state.cotizaciones.get(state.editingCotId) || {}) : {};
+    /* Al pasarla a "Enviada" (de nuevo, p. ej. tras actualizarla), la fecha de envío es hoy: la vigencia vuelve a contar. */
+    if(v === 'enviada' && c.estado !== 'enviada') document.getElementById('cotFecha').value = todayIso();
+    if(v === 'aprobada' && !document.getElementById('cotFechaAceptacion').value) document.getElementById('cotFechaAceptacion').value = todayIso();
+    cotEstadoHintRefresh();
+  });
 
   /* Acciones rápidas de la revisión semanal de una cotización en pausa. */
   function pausaValidar(id){
@@ -3283,7 +3411,7 @@
   }
   function pausaReactivar(id){
     var db = requireDb(); var c = state.cotizaciones.get(id); if(!db || !c) return;
-    var upd = {estado:'en_proceso', pausaDesde:null, pausaRevisada:null};
+    var upd = {estado:'en_proceso', pausaDesde:null, pausaRevisada:null, procesoDesde: todayIso()};
     db.collection('cotizaciones').doc(id).update(upd).then(function(){
       Object.assign(c, upd); syncAutoEventsFor('cotizacion', id);
       toast((c.numero||'Cotización')+' pasó a "En proceso"');
@@ -3292,8 +3420,8 @@
   }
   function pausaInfoHtml(id, c){
     var prox = pausaProxima(c), d = daysUntil(prox, 0);
-    var cuando = d < 0 ? 'revisión atrasada '+Math.abs(d)+' d' : (d === 0 ? 'revisar hoy' : 'próxima revisión '+fmtShort(prox));
-    return '<div class="pausa-line'+(d <= 0 ? ' due' : '')+'">⏸ En pausa desde '+fmtShort(c.pausaDesde||c.fecha||todayIso())+' · '+cuando+'</div>'+
+    var cuando = 'se revisa el lunes '+fmtShort(prox);
+    return '<div class="pausa-line">⏸ En pausa desde '+fmtShort(c.pausaDesde||c.fecha||todayIso())+' · '+cuando+'</div>'+
       '<div class="pausa-acts"><button class="btn sm pausa-ok" data-cid="'+id+'" title="Validé con el cliente: sigue para más adelante">✓ Sigue en pausa</button>'+
       '<button class="btn sm pausa-go" data-cid="'+id+'" title="El cliente la activó: pasarla a En proceso">▶ Pasar a en proceso</button></div>';
   }
@@ -3311,6 +3439,9 @@
     document.getElementById('cotNumero').placeholder = id ? 'Sin número' : 'Se asigna al guardar (' + nextCotNumero() + ')';
     document.getElementById('cotDiasInst').value = (c.diasInstalacion != null ? c.diasInstalacion : '');
     document.getElementById('cotFechaAceptacion').value = c.fechaAceptacion || '';
+    document.getElementById('cotInicioEstimado').value = c.inicioEstimado || '';
+    document.getElementById('cotRechazoMotivo').value = c.rechazoMotivo || '';
+    document.getElementById('cotRechazoNota').value = c.rechazoNota || '';
     document.getElementById('cotRegistrarOcBtn').style.display = id ? 'inline-flex' : 'none';
     document.getElementById('cotVersion').value = c.version || 1;
     document.getElementById('cotVigencia').value = c.vigenciaDias || 15;
@@ -3397,10 +3528,24 @@
   document.getElementById('cotOverlay').addEventListener('click', function(e){ if(e.target===this) closeCotModal(); });
   document.getElementById('proyOverlay').addEventListener('click', function(e){ if(e.target===this) closeProyModal(); });
 
+  /* Lo que Cenova todavía debe de una obra: personal sin marcar como pagado, otros pagos de la obra
+     (reembolsos, devoluciones, viáticos aparte) y, para administración, pagos pendientes en Finanzas
+     ligados al proyecto. Mientras haya algo, la cotización no pasa a "Cerradas". */
+  function ocPendientesObra(o){
+    var out = [];
+    (o.personal||[]).forEach(function(r){ if(!r.pagado && personalRowTotal(r) > 0) out.push('pagar a '+(r.nombre||'personal')); });
+    (o.porPagar||[]).forEach(function(x){ if(!x.pagado && Number(x.monto) > 0) out.push((x.concepto||'pago de la obra')+(x.a?' ('+x.a+')':'')); });
+    if(o.proyectoId && typeof fin !== 'undefined' && fin && fin.movs){
+      var n = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso' && m.proyectoId === o.proyectoId) n++; });
+      if(n) out.push(n+' pago(s) pendiente(s) en Finanzas');
+    }
+    return out;
+  }
+  function cotOrdenActiva(id){ var r = null; state.ordenes.forEach(function(o, oid){ if(!r && o.cotizacionId === id && o.estado !== 'anulada') r = Object.assign({_id: oid}, o); }); return r; }
   function cotTabKey(id, c){
     if(c.estado === 'aprobada'){
       var cerrada = false;
-      state.ordenes.forEach(function(o){ if(o.cotizacionId === id && o.estado !== 'anulada' && ocSaldo(o) === 0 && (o.estado === 'pagada' || ocRecibido(o) > 0)) cerrada = true; });
+      state.ordenes.forEach(function(o){ if(o.cotizacionId === id && o.estado !== 'anulada' && ocSaldo(o) === 0 && (o.estado === 'pagada' || ocRecibido(o) > 0) && !ocPendientesObra(o).length) cerrada = true; });
       return cerrada ? 'cerrada' : 'aprobada';
     }
     return COT_ESTADOS[c.estado] ? c.estado : 'pendiente_armar';
@@ -3932,7 +4077,7 @@
           '<div class="di-row"><span>Cotización N°</span><span>'+escapeHtml(c.numero||'—')+'</span></div>'+
           '<div class="di-row"><span>Versión</span><span>'+(c.version||1)+'</span></div>'+
           '<div class="di-row"><span>Fecha</span><span>'+fmtDate(c.fecha)+'</span></div>'+
-          '<div class="di-row"><span>Vigencia oferta</span><span>'+(c.vigenciaDias||15)+' días</span></div>'+
+          '<div class="di-row"><span>Vigencia oferta</span><span>'+(c.vigenciaDias||15)+' días hábiles</span></div>'+
         '</div>'+
       '</div>'+
       '<div class="preview-title-row"><h2>Cotización de Servicio</h2></div>'+
@@ -4193,11 +4338,15 @@
   /* Cotizaciones en pausa: la revisión toca 7 días después de la última validación (o de cuando se pausó). */
   function pausaProxima(c){
     var base = c.pausaRevisada || c.pausaDesde || c.fecha || todayIso();
-    return isoAdd(base, 7);
+    var d = new Date(isoAdd(base, 1)+'T00:00:00'); while(d.getDay() !== 1) d.setDate(d.getDate()+1);
+    return toISODate(d);
   }
   function desiredForCot(id, c){
     var out = [];
-    if(c && c.estado === 'en_pausa'){
+    /* Desde el 2026-10-13 la revisión de las cotizaciones en pausa (los lunes) la lleva la Agenda MH de gerencia:
+       ya no se crea un evento en la agenda del equipo. */
+    if(c && c.estado === 'en_pausa') return out;
+    if(false){
       var nP = c.numero || 'Cotización';
       out.push({auto:true, origen:'cotizacion', origenId:id, clave:'revision-pausa', tipo:'revision_pausa',
         cliente:c.cliente||'', proyectoId:c.proyectoId||'', creadoPorId:c.creadoPorId||null,
@@ -4208,16 +4357,16 @@
       return out;
     }
     if(!c || !c.fecha || c.estado === 'pendiente_armar' || c.estado === 'en_proceso') return out;
-    var vig = Number(c.vigenciaDias)||15;
-    var fin = isoAdd(c.fecha, vig);
-    var seg = isoMax(c.fecha, isoAdd(fin, -5));
+    var vig = cotVigDias(c);
+    var fin = cotVigFin(c);
+    var seg = cotSegFecha(c);
     var num = c.numero || 'Cotización';
     var base = {auto:true, origen:'cotizacion', origenId:id, clave:'seguimiento', tipo:'seguimiento_cot',
       cliente:c.cliente||'', proyectoId:c.proyectoId||'', creadoPorId:c.creadoPorId||null};
     if(c.estado === 'enviada'){
       out.push(Object.assign({}, base, {fecha:seg, estado:'pendiente', fechaCumplido:null, etiqueta:'Seg. '+num,
         titulo:'Seguimiento '+num+' · '+(c.cliente||'')+' — la vigencia vence el '+fmtShort(fin),
-        motivo:'Quedan 5 días de la vigencia de '+vig+' días (enviada el '+fmtDate(c.fecha)+'). Llamar o escribir al cliente para confirmar si aprueba.'}));
+        motivo:'Quedan 2 días hábiles de la vigencia de '+vig+' días hábiles (enviada el '+fmtDate(c.fecha)+'). Llamar o escribir al cliente: ¿la aprueba, la rechaza o pide actualizarla?'}));
     } else if(c.estado === 'aprobada'){
       var fa = c.fechaAceptacion || seg;
       out.push(Object.assign({}, base, {fecha:fa, estado:'cumplido', fechaCumplido:fa, etiqueta:num+' aceptada',
@@ -4455,6 +4604,39 @@
     if(k.pago) parts.push('<strong>Pago:</strong> aviso el '+fmtDate(k.pagoAviso)+' y vence el <strong>'+fmtDate(k.pago)+'</strong>');
     document.getElementById('ocCalcOut').innerHTML = parts.join('<br>');
   }
+  /* Inicio estimado (al aprobar) vs inicio real: si la obra arranca después, se justifica el retraso. */
+  function ocInicioEstimado(){ var c = state.cotizaciones.get(document.getElementById('ocCotizacion').value); return (c && c.inicioEstimado) || null; }
+  function ocRetrasoAplica(){
+    var est = ocInicioEstimado(); if(!est) return false;
+    var ini = document.getElementById('ocFechaInicio').value;
+    return ini ? ini > est : todayIso() > est;
+  }
+  function renderOcRetraso(){
+    var est = ocInicioEstimado();
+    document.getElementById('ocRetrasoWrap').hidden = !ocRetrasoAplica();
+    document.getElementById('ocInicioHint').textContent = est ? 'Inicio estimado al aprobar: '+fmtDate(est)+'. Si arranca después, se pide el motivo.' : 'Déjalo vacío mientras se confirma con el cliente: la agenda te lo recordará.';
+  }
+  (function(){ var sel = document.getElementById('ocRetrasoMotivo'); Object.keys(OC_RETRASO).forEach(function(k){ var op = document.createElement('option'); op.value = k; op.textContent = OC_RETRASO[k]; sel.appendChild(op); }); })();
+  document.getElementById('ocFechaInicio').addEventListener('change', renderOcRetraso);
+  document.getElementById('ocCotizacion').addEventListener('change', renderOcRetraso);
+  /* Otros pagos que Cenova debe por la obra */
+  function renderOcPorPagar(){
+    var body = document.getElementById('ocPorPagarBody');
+    body.innerHTML = state.ocPorPagar.map(function(x, i){
+      return '<tr data-i="'+i+'"><td class="col-idx">'+(i+1)+'</td>'+
+        '<td><input type="text" class="pp-concepto" value="'+escapeHtml(x.concepto||'')+'" placeholder="Ej. devolución a Jorge por la Notaría"></td>'+
+        '<td><input type="text" class="pp-a" list="equipoList" value="'+escapeHtml(x.a||'')+'" placeholder="Persona o empresa"></td>'+
+        '<td><input type="number" class="pp-monto input-miles" value="'+(x.monto!=null&&x.monto!==''?x.monto:'')+'" min="0" step="1000" placeholder="0"></td>'+
+        '<td style="text-align:center;"><input type="checkbox" class="pp-pagado"'+(x.pagado?' checked':'')+'></td>'+
+        '<td class="col-rm"><button type="button" class="icon-btn pp-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
+    }).join('');
+    var map = {'pp-concepto':'concepto','pp-a':'a','pp-monto':'monto'};
+    Object.keys(map).forEach(function(cls){ body.querySelectorAll('.'+cls).forEach(function(el){ el.addEventListener('input', function(){
+      var x = state.ocPorPagar[+el.closest('tr').dataset.i]; x[map[cls]] = cls === 'pp-monto' ? (el.value === '' ? null : Number(el.value)) : el.value; }); }); });
+    body.querySelectorAll('.pp-pagado').forEach(function(el){ el.addEventListener('change', function(){ state.ocPorPagar[+el.closest('tr').dataset.i].pagado = el.checked; }); });
+    body.querySelectorAll('.pp-rm').forEach(function(b){ b.addEventListener('click', function(){ state.ocPorPagar.splice(+b.closest('tr').dataset.i, 1); renderOcPorPagar(); }); });
+  }
+  document.getElementById('ocPorPagarAdd').addEventListener('click', function(){ state.ocPorPagar.push({concepto:'', a:'', monto:null, pagado:false}); renderOcPorPagar(); });
   ['ocFechaRecepcion','ocPlazoPago','ocFechaInicio','ocDiasInst','ocModalidad'].forEach(function(fid){
     document.getElementById(fid).addEventListener('input', renderOcCalc);
     document.getElementById(fid).addEventListener('change', renderOcCalc);
@@ -4595,6 +4777,10 @@
     document.getElementById('ocAnticipoPct').value = (o.anticipoPct != null ? o.anticipoPct : '');
     state.ocPagos = (o.pagos||[]).map(function(x){ return Object.assign({}, x); });
     renderPersonalTable('ocPersonalBody', state.ocPersonal, renderOcPersonalSummary);
+    state.ocPorPagar = (o.porPagar||[]).map(function(x){ return Object.assign({}, x); });
+    renderOcPorPagar();
+    document.getElementById('ocRetrasoMotivo').value = o.retrasoMotivo || '';
+    document.getElementById('ocRetrasoNota').value = o.retrasoNota || '';
     state.ocArchivo = o.archivoDatos ? {nombre:o.archivoNombre, tipo:o.archivoTipo, tamano:o.archivoTamano, datos:o.archivoDatos} : null;
     state.ocArchivoRemoved = false;
     renderOcFileCurrent(); renderOcDiasSemana();
@@ -4602,6 +4788,7 @@
     renderOcCalc();
     renderOcPersonalSummary();
     renderOcPagos();
+    renderOcRetraso();
     document.getElementById('ocOverlay').classList.add('open');
   }
   function closeOcModal(){ document.getElementById('ocOverlay').classList.remove('open'); state.editingOcId = null; }
@@ -4618,6 +4805,10 @@
     if(!f.fechaRecepcion){ toast('Indica la fecha de recepción.'); return; }
     if(f.modalidad==='intercalados' && !f.diasSemana.length){ toast('Marca al menos un día de la semana.'); return; }
     var c = state.cotizaciones.get(cotId) || {};
+    if(ocRetrasoAplica() && !document.getElementById('ocRetrasoMotivo').value){
+      toast('La obra arranca después del inicio estimado ('+fmtDate(c.inicioEstimado)+'): elige el motivo del retraso.', 5000);
+      document.getElementById('ocRetrasoMotivo').focus(); return;
+    }
     var estado = document.getElementById('ocEstado').value;
     if(estado==='recibida' && f.fechaInicio) estado = 'programada';
     var pagosClean = state.ocPagos.filter(function(x){ return Number(x.monto) > 0; }).map(function(x){
@@ -4644,7 +4835,10 @@
       costoImprevistos: document.getElementById('ocCostoImprevistos').value==='' ? null : Number(document.getElementById('ocCostoImprevistos').value),
       causaDesvio: document.getElementById('ocCausaDesvio').value,
       causaDetalle: document.getElementById('ocCausaDetalle').value.trim(),
-      personal: state.ocPersonal.filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0}; }),
+      personal: state.ocPersonal.filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0, pagado:!!r.pagado}; }),
+      porPagar: state.ocPorPagar.filter(function(x){ return (x.concepto||'').trim() || Number(x.monto); }).map(function(x){ return {concepto:(x.concepto||'').trim(), a:(x.a||'').trim(), monto:Number(x.monto)||0, pagado:!!x.pagado}; }),
+      retrasoMotivo: ocRetrasoAplica() ? document.getElementById('ocRetrasoMotivo').value || null : null,
+      retrasoNota: ocRetrasoAplica() ? document.getElementById('ocRetrasoNota').value.trim() : '',
       novedades: state.ocNovedades.filter(function(n){ return (n.material||'').trim() || Number(n.costo); }).map(function(n){
         return {material:(n.material||'').trim(), motivo:n.motivo||'fabrica', cantidad:Number(n.cantidad)||0, costo:Number(n.costo)||0, garantia:n.garantia||'no', nota:(n.nota||'').trim()};
       }),
@@ -5041,7 +5235,7 @@
     var utilidad = ventas - costos - imprev;
     var decididas = cots.filter(function(e){ return ['enviada','aprobada','rechazada'].indexOf(e[1].estado) !== -1; });
     var aprobadas = cots.filter(function(e){ return e[1].estado === 'aprobada'; });
-    var enEspera = cots.filter(function(e){ var c=e[1]; return c.estado==='enviada' && c.fecha && daysUntil(c.fecha, Number(c.vigenciaDias)||15) >= 0; });
+    var enEspera = cots.filter(function(e){ var c=e[1]; return c.estado==='enviada' && c.fecha && cotDiasVence(c) >= 0; });
     var enEsperaValor = enEspera.reduce(function(s,e){ return s + cotTotal(e[1]); }, 0);
     var respuestas = aprobadas.filter(function(e){ return e[1].fecha && e[1].fechaAceptacion; })
       .map(function(e){ return Math.round((new Date(e[1].fechaAceptacion+'T00:00:00') - new Date(e[1].fecha+'T00:00:00'))/86400000); });
@@ -5433,6 +5627,7 @@
         '<td><input type="number" class="ps-dias" value="'+(r.dias!=null?r.dias:1)+'" min="0" step="0.5"></td>'+
         '<td>'+num('ps-pago', r.pagoDia)+'</td><td>'+num('ps-alm', r.almuerzoDia)+'</td><td>'+num('ps-trans', r.transporteDia)+'</td><td>'+num('ps-otros', r.otros)+'</td>'+
         '<td class="col-total ps-total">'+fmtMoney.format(personalRowTotal(r))+'</td>'+
+        (bodyId === 'ocPersonalBody' ? '<td style="text-align:center;"><input type="checkbox" class="ps-pagado" title="Ya se le pagó"'+(r.pagado?' checked':'')+'></td>' : '')+
         '<td class="col-rm"><button type="button" class="icon-btn ps-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
     }).join('');
     var map = {'ps-nombre':'nombre','ps-tipo':'tipo','ps-dias':'dias','ps-pago':'pagoDia','ps-alm':'almuerzoDia','ps-trans':'transporteDia','ps-otros':'otros'};
@@ -5447,6 +5642,7 @@
         });
       });
     });
+    body.querySelectorAll('.ps-pagado').forEach(function(el){ el.addEventListener('change', function(){ list[+el.closest('tr').dataset.i].pagado = el.checked; onChange(); }); });
     body.querySelectorAll('.ps-rm').forEach(function(b){ b.addEventListener('click', function(){ list.splice(+b.closest('tr').dataset.i, 1); renderPersonalTable(bodyId, list, onChange); onChange(); }); });
   }
   function newPersonalRow(){ return {nombre:'', tipo:'externo', dias:1, pagoDia:null, almuerzoDia:null, transporteDia:null, otros:null}; }
@@ -5893,7 +6089,7 @@
     var tasa = finTasaAprobacion();
     if(finAjustes().incluirEspera && tasa){
       state.cotizaciones.forEach(function(c){
-        if(c.estado !== 'enviada' || !c.fecha || daysUntil(c.fecha, Number(c.vigenciaDias)||15) < 0) return;
+        if(c.estado !== 'enviada' || !c.fecha || cotDiasVence(c) < 0) return;
         put(finYmAdd(ym0,1)+'-15', 'espera', cotTotal(c) * tasa, null);
       });
     }
@@ -6636,6 +6832,9 @@
       toast(MSG_CLIENTE_NO_REG, 6000); document.getElementById('cotCliente').focus(); return;
     }
     var estadoNuevo = document.getElementById('cotEstado').value;
+    if(estadoNuevo === 'rechazada' && !document.getElementById('cotRechazoMotivo').value){
+      toast('Elige el motivo del rechazo: con eso armamos los puntos de mejora.', 4500); document.getElementById('cotRechazoMotivo').focus(); return;
+    }
     var fechaAcept = document.getElementById('cotFechaAceptacion').value;
     if(estadoNuevo === 'aprobada' && !fechaAcept) fechaAcept = toISODate(new Date());
     var data = {
@@ -6644,6 +6843,10 @@
       version: Number(document.getElementById('cotVersion').value)||1,
       diasInstalacion: document.getElementById('cotDiasInst').value === '' ? null : Number(document.getElementById('cotDiasInst').value),
       fechaAceptacion: fechaAcept || null,
+      inicioEstimado: estadoNuevo === 'aprobada' ? (document.getElementById('cotInicioEstimado').value || null) : (prev.inicioEstimado || null),
+      rechazoMotivo: estadoNuevo === 'rechazada' ? document.getElementById('cotRechazoMotivo').value : null,
+      rechazoNota: estadoNuevo === 'rechazada' ? document.getElementById('cotRechazoNota').value.trim() : null,
+      fechaRechazo: estadoNuevo === 'rechazada' ? (prev.estado === 'rechazada' ? (prev.fechaRechazo || todayIso()) : todayIso()) : null,
       creadoPorId: prev.creadoPorId || state.userId || null,
       vigenciaDias: Number(document.getElementById('cotVigencia').value)||15,
       proyectoId: document.getElementById('cotProyecto').value,
@@ -6679,6 +6882,9 @@
       data.pausaDesde = prev.estado === 'en_pausa' ? (prev.pausaDesde || todayIso()) : todayIso();
       data.pausaRevisada = prev.estado === 'en_pausa' ? (prev.pausaRevisada || null) : null;
     } else { data.pausaDesde = null; data.pausaRevisada = null; }
+    /* En proceso: desde cuándo (la Agenda MH avisa cada 3 días desde esa fecha). */
+    data.procesoDesde = data.estado === 'en_proceso' ? (prev.estado === 'en_proceso' ? (prev.procesoDesde || null) : todayIso()) : null;
+    ['actualizacionPedida','inicioDesdeAgenda'].forEach(function(k){ if(prev[k] && data.estado === prev.estado) data[k] = prev[k]; });
     var col = db.collection('cotizaciones');
     var eraEdicion = !!state.editingCotId;
     var p = state.editingCotId ? col.doc(state.editingCotId).set(data).then(function(){ return state.editingCotId; }) : col.add(data).then(function(ref){ return ref && ref.id; });

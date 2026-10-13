@@ -93,7 +93,8 @@ async function auditar(env, usuario, accion, col, id, detalle, req) {
    Se entra únicamente con la llave secreta AGENDA_TOKEN (la misma que tiene la agenda como
    INTRANET_TOKEN). Sin esa llave configurada, la ruta no existe. */
 const AGENDA_COLS = ['cotizaciones', 'ordenesCompra', 'proyectos', 'clientes', 'cotizacionesProveedor', 'eventos', 'prefacturas', 'finGastosFijos', 'finMovimientos', 'finAjustes'];
-async function agendaCenova(req, env) {
+// Devuelve una respuesta de error si la llave de la Agenda MH falta o no coincide; null si es válida.
+async function agendaLlave(req, env) {
   if (!env.AGENDA_TOKEN || env.AGENDA_TOKEN.length < 32) return err(404, 'ruta', 'No encontrado.');
   const m = (req.headers.get('authorization') || '').match(/^Bearer\s+(\S+)$/);
   const dado = m ? await sha256(m[1]) : '', esperado = await sha256(env.AGENDA_TOKEN);
@@ -103,9 +104,59 @@ async function agendaCenova(req, env) {
     await auditar(env, null, 'agenda_llave_incorrecta', null, null, null, req);
     return err(401, 'llave', 'No autorizado.');
   }
+  return null;
+}
+
+async function agendaCenova(req, env) {
+  const no = await agendaLlave(req, env);
+  if (no) return no;
   const r = await env.DB.prepare(`SELECT col, id, actualizado, json_remove(data, '$.archivoDatos') AS data FROM docs WHERE col IN (${AGENDA_COLS.map(() => '?').join(',')})`)
     .bind(...AGENDA_COLS).all();
   return json({ results: r.results || [] });
+}
+
+/* La Agenda MH responde los recordatorios de cotizaciones (2026-10-13). Solo puede cambiar el estado
+   de una cotización por estos caminos, con los campos de cada uno; nada más. */
+const AGENDA_ACCIONES = {
+  iniciar:    { de: ['pendiente_armar'], a: 'en_proceso' },
+  descartar:  { de: ['pendiente_armar'], a: 'rechazada' },
+  reanudar:   { de: ['en_pausa'], a: 'en_proceso' },
+  actualizar: { de: ['enviada'], a: 'en_proceso' },
+  aprobar:    { de: ['enviada', 'en_proceso'], a: 'aprobada' },
+  rechazar:   { de: ['enviada', 'en_proceso', 'en_pausa'], a: 'rechazada' }
+};
+const RECHAZO_MOTIVOS = ['precio', 'competencia', 'tiempo', 'presupuesto', 'alcance', 'sin_respuesta', 'otro'];
+async function agendaCotizacion(req, env) {
+  const no = await agendaLlave(req, env);
+  if (no) return no;
+  let b; try { b = await req.json(); } catch (e) { return err(400, 'formato', 'Solicitud inválida.'); }
+  const id = b && String(b.id || ''), acc = AGENDA_ACCIONES[b && b.accion];
+  if (!id || !idValido(id) || !acc) return err(400, 'formato', 'Acción no válida.');
+  const fila = await env.DB.prepare("SELECT data FROM docs WHERE col = 'cotizaciones' AND id = ?").bind(id).first();
+  if (!fila) return err(404, 'no_existe', 'La cotización no existe.');
+  const c = JSON.parse(fila.data);
+  if (acc.de.indexOf(c.estado) === -1) return err(409, 'estado', 'La cotización ya no está en ese estado (ahora: ' + c.estado + '). Actualiza la agenda.');
+  const hoy = hoyBogota(), nota = String(b.nota || '').slice(0, 300).trim();
+  const d = Object.assign({}, c, { estado: acc.a });
+  if (acc.a === 'en_proceso') {
+    Object.assign(d, { procesoDesde: hoy, pausaDesde: null, pausaRevisada: null });
+    if (b.accion === 'iniciar') d.inicioDesdeAgenda = hoy;
+    if (b.accion === 'actualizar') { d.actualizacionPedida = hoy; if (nota) d.actualizacionNota = nota; }
+  } else d.procesoDesde = null;
+  if (b.accion === 'aprobar') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.inicioEstimado || ''))) return err(400, 'fecha', 'Falta la fecha estimada de inicio.');
+    Object.assign(d, { fechaAceptacion: c.fechaAceptacion || hoy, inicioEstimado: b.inicioEstimado, pausaDesde: null, pausaRevisada: null });
+  }
+  if (b.accion === 'rechazar') {
+    if (RECHAZO_MOTIVOS.indexOf(b.motivo) === -1) return err(400, 'motivo', 'Elige el motivo del rechazo.');
+    Object.assign(d, { rechazoMotivo: b.motivo, rechazoNota: nota, fechaRechazo: hoy, pausaDesde: null, pausaRevisada: null });
+  }
+  if (b.accion === 'descartar') Object.assign(d, { rechazoMotivo: 'descartada', rechazoNota: nota, fechaRechazo: hoy });
+  const ahora = Date.now();
+  await env.DB.prepare("UPDATE docs SET data = ?, actualizado = ?, actualizado_por = ? WHERE col = 'cotizaciones' AND id = ?")
+    .bind(JSON.stringify(d), ahora, 'agenda-mh', id).run();
+  await auditar(env, 'agenda-mh', 'agenda_' + b.accion, 'cotizaciones', id, c.numero || '', req);
+  return json({ ok: true, id, estado: d.estado, act: ahora });
 }
 
 function inactividadMs(env) { return (Number(env.INACTIVIDAD_MIN) || 15) * 60000; }
@@ -407,6 +458,7 @@ export default {
           if (req.headers.get('x-cenova') !== '1') return err(403, 'origen', 'Solicitud no permitida.');
         }
         if (p === '/api/agenda/cenova' && req.method === 'GET') return await agendaCenova(req, env);
+        if (p === '/api/agenda/cenova/cotizacion' && req.method === 'POST') return await agendaCotizacion(req, env);
         if (p === '/api/login' && req.method === 'POST') return await login(req, env);
         if (p === '/api/logout' && req.method === 'POST') {
           const t = leerCookie(req, COOKIE);
