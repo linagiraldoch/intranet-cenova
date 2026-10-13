@@ -8,9 +8,9 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'precios', 'inventario', 'documentos'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
-const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes'];
+const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
 // Precios: todos los ven; costos, márgenes y precios solo los cambia administración.
 // El equipo solo puede actualizar el stock y el contenido de los kits.
