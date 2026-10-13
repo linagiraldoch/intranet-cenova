@@ -45,7 +45,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f3f6fb;
@@ -744,6 +744,67 @@
   :root[data-theme="lavanda"] .mk.m-confirm{background:#b9a3ec;}
   :root[data-theme="lavanda"] .mk.m-pago{background:#e58ab3;}
   :root[data-theme="lavanda"] .mk.m-pagoaviso{border-color:#e58ab3;}
+
+  /* ===== Temas 2026-10-13 (maqueta aprobada por Lina): Claro limpio, Oscuro y Rosa con flores ===== */
+  :root{
+    --bg:#f4f6f9; --surface:#ffffff; --surface-2:#f0f3f7; --border:#e1e6ee;
+    --text:#15202f; --text-muted:#5f6d80; --accent:#1f4f99; --accent-2:#163a73; --accent-soft:#e7eefa;
+    --success:#1f7a4d; --success-soft:#e3f3ea; --warning:#a1640b; --warning-soft:#fbf0dc; --critical:#b4362f; --critical-soft:#fbe7e5;
+  }
+  :root[data-theme="dark"]{
+    --bg:#0e141c; --surface:#151d28; --surface-2:#1b2532; --border:#253244;
+    --text:#e6ecf4; --text-muted:#93a3b8; --accent:#79a6ee; --accent-2:#a9c7f4; --accent-soft:#1b2a40;
+    --success:#5cc58d; --success-soft:#173226; --warning:#e3b257; --warning-soft:#352a14; --critical:#ef8079; --critical-soft:#3a1e1d;
+  }
+  :root[data-theme="lavanda"]{
+    --bg:#fbf3f4; --surface:#fffbf8; --surface-2:#f8ecee; --border:#efdcdf;
+    --text:#3a2b3a; --text-muted:#7d6a76; --accent:#b4517a; --accent-2:#8e3a5e; --accent-soft:#fbe6ee;
+    --pink:#d77aa0; --pink-2:#a03f68; --pink-soft:#fbe6ee; --sky:#8fb3d9; --sky-2:#4a6f99; --sky-soft:#eef3fa;
+    --success:#3f8a62; --success-soft:#e5f3ea; --warning:#a8691c; --warning-soft:#fcefdc; --critical:#b8424a; --critical-soft:#fbe5e6;
+    --neutral:#7d6a76; --neutral-soft:#f6eef0;
+    --shadow:0 1px 2px rgba(120,60,80,.06), 0 12px 28px -16px rgba(150,80,110,.32);
+  }
+  :root[data-theme="lavanda"] body{background-color:var(--bg); background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .6 0 0 0 0 .4 0 0 0 0 .45 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"), radial-gradient(900px 420px at 100% 0%, #fde6ee, transparent 60%), radial-gradient(700px 420px at 0% 100%, #f1e9fb, transparent 60%); background-attachment:fixed;}
+  :root[data-theme="lavanda"] h1, :root[data-theme="lavanda"] h2, :root[data-theme="lavanda"] h3, :root[data-theme="lavanda"] .brand-text strong{font-family:"Gowun Batang","Manrope",Georgia,serif; font-weight:700;}
+  :root[data-theme="lavanda"] .sidebar{background:#fff7f6 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 160'%3E%3Cg fill='none' stroke='%238a6a6f' stroke-linecap='round' opacity='.5'%3E%3Cpath d='M-5 160C40 128 72 116 122 74S186 30 225 20' stroke-width='3'/%3E%3Cpath d='M80 110c8-12 20-16 34-16M142 56c6-12 16-16 28-14' stroke-width='2'/%3E%3C/g%3E%3Cg fill='%23f4b4c9'%3E%3Ccircle cx='114' cy='92' r='5'/%3E%3Ccircle cx='120' cy='86' r='5'/%3E%3Ccircle cx='126' cy='92' r='5'/%3E%3Ccircle cx='123' cy='99' r='5'/%3E%3Ccircle cx='115' cy='99' r='5'/%3E%3Ccircle cx='62' cy='124' r='3.4'/%3E%3C/g%3E%3Cg fill='%23f8cbd8'%3E%3Ccircle cx='168' cy='40' r='4'/%3E%3Ccircle cx='173' cy='35' r='4'/%3E%3Ccircle cx='178' cy='40' r='4'/%3E%3Ccircle cx='176' cy='46' r='4'/%3E%3Ccircle cx='170' cy='46' r='4'/%3E%3Ccircle cx='152' cy='60' r='3'/%3E%3C/g%3E%3Cg fill='%23c8a15a'%3E%3Ccircle cx='120' cy='93' r='2.2'/%3E%3Ccircle cx='173' cy='41' r='1.8'/%3E%3C/g%3E%3C/svg%3E") no-repeat left -12px bottom -8px / 220px auto; background-attachment:local; border-right-color:var(--border);}
+  :root[data-theme="lavanda"] .brand-text strong{color:var(--accent-2);}
+  :root[data-theme="lavanda"] .nav-btn.active{background:var(--accent-soft); color:var(--accent-2);}
+  :root[data-theme="lavanda"] .nav-btn.active .count{color:var(--accent-2);}
+  :root[data-theme="lavanda"] .topbar{position:relative;}
+  :root[data-theme="lavanda"] .topbar::after{content:""; position:absolute; right:-10px; top:-34px; width:300px; max-width:42%; aspect-ratio:300/120; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 120'%3E%3Cg fill='none' stroke='%238a6a6f' stroke-linecap='round' opacity='.45'%3E%3Cpath d='M300 18C250 22 210 40 170 62S90 98 30 104' stroke-width='2.6'/%3E%3Cpath d='M205 46c-9-16-5-28 7-36M120 82c-8 14-8 26 0 34' stroke-width='1.8'/%3E%3C/g%3E%3Cg fill='%23f4b4c9' opacity='.85'%3E%3Ccircle cx='212' cy='12' r='6'/%3E%3Ccircle cx='219' cy='6' r='6'/%3E%3Ccircle cx='226' cy='12' r='6'/%3E%3Ccircle cx='223' cy='20' r='6'/%3E%3Ccircle cx='214' cy='20' r='6'/%3E%3Ccircle cx='118' cy='114' r='4'/%3E%3C/g%3E%3Cg fill='%23f8cbd8'%3E%3Ccircle cx='160' cy='62' r='5'/%3E%3Ccircle cx='166' cy='57' r='5'/%3E%3Ccircle cx='172' cy='62' r='5'/%3E%3Ccircle cx='169' cy='69' r='5'/%3E%3Ccircle cx='162' cy='69' r='5'/%3E%3Ccircle cx='260' cy='24' r='3.6'/%3E%3C/g%3E%3Cg fill='%23c8a15a'%3E%3Ccircle cx='219' cy='13' r='2.6'/%3E%3Ccircle cx='166' cy='63' r='2.2'/%3E%3C/g%3E%3C/svg%3E") no-repeat right top / contain; pointer-events:none; z-index:0;}
+  :root[data-theme="lavanda"] .topbar > *{position:relative; z-index:1;}
+  :root[data-theme="lavanda"] .kpi{border-top:3px solid var(--pink);}
+  :root[data-theme="lavanda"] .kpis .kpi:nth-child(3n+2){border-top-color:#c9a0d9;}
+  :root[data-theme="lavanda"] .kpis .kpi:nth-child(3n){border-top-color:var(--sky);}
+  :root[data-theme="lavanda"] thead th{background:#fbf0f2;}
+  :root[data-theme="lavanda"] .subtab-btn.active{color:var(--accent-2);}
+  :root[data-theme="lavanda"] .info-box:not(.ok):not(.warn){background:#fdf3f5; border-color:var(--border);}
+  :root[data-theme="lavanda"] .btn.primary{background:var(--accent); border-color:var(--accent); color:#fff;}
+  :root[data-theme="lavanda"] .btn.primary:hover{background:var(--accent-2);}
+  :root[data-theme="lavanda"] .toast{background:var(--accent-2);}
+  :root[data-theme="lavanda"] .overlay{background:rgba(70,30,50,.36);}
+  :root[data-theme="lavanda"] .panel, :root[data-theme="lavanda"] .table-wrap, :root[data-theme="lavanda"] .kpi, :root[data-theme="lavanda"] .modal{border-radius:16px;}
+  :root[data-theme="lavanda"] .cal-head{background:linear-gradient(90deg,#fde8f0 0%,#fbf0f2 60%,#f4eef9 100%);}
+  :root[data-theme="lavanda"] .day-panel{background:linear-gradient(90deg,#f4b4c9,#e8c3d6,#cdb8e6) top/100% 4px no-repeat, var(--surface);}
+  :root[data-theme="lavanda"] .cal-cell.today .cal-daynum{background:var(--accent); color:#fff;}
+  @media (max-width:760px){ :root[data-theme="lavanda"] .topbar::after{display:none;} }
+
+  /* Cotizaciones: flujo encadenado como en la maqueta */
+  .cot-flujo{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
+  .cot-cadena, .cot-lado{display:flex; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px;}
+  .cot-cadena{flex:1 1 0; min-width:min(100%,560px);}
+  .cot-lado{flex:0 0 auto;}
+  @media (max-width:760px){ .cot-lado{flex:1 1 100%;} .cot-tab{padding:8px 10px; font-size:13px;} .cot-cadena .cot-tab + .cot-tab::before{display:none;} }
+  .cot-tab{position:relative; border:0; background:none; cursor:pointer; padding:8px 10px; border-radius:9px; display:flex; align-items:center; justify-content:center; gap:7px; font:inherit; font-size:13px; color:var(--text-muted); font-weight:500; flex:1 1 auto; white-space:nowrap;}
+  .cot-cadena .cot-tab + .cot-tab::before{content:""; position:absolute; left:-4px; top:50%; width:7px; height:7px; border-top:1.5px solid var(--border); border-right:1.5px solid var(--border); transform:translateY(-50%) rotate(45deg);}
+  .cot-tab .d{width:8px; height:8px; border-radius:50%; flex:none;}
+  .cot-tab .n{font-family:"IBM Plex Mono",monospace; font-size:12px; background:var(--surface-2); border-radius:99px; padding:0 7px; margin:0;}
+  .cot-tab.active{background:var(--accent-soft); color:var(--text); font-weight:600;}
+  .cot-tab.active .n{background:var(--surface);}
+  .cot-tab:hover{color:var(--text);}
+  .cot-regla{display:flex; gap:10px; align-items:flex-start; background:var(--surface-2); border-radius:10px; padding:10px 14px; font-size:13px; color:var(--text-muted); margin-bottom:14px;}
+  .cot-regla b{color:var(--text);}
+  .cot-regla svg{flex:none; width:16px; height:16px; margin-top:2px; color:var(--accent);}
   /* ---------- Finanzas (solo administración) ---------- */
   .nav-btn.fin-admin[hidden]{display:none !important;}
   .fin-tabs{flex-wrap:wrap;}
@@ -1005,7 +1066,8 @@
 
       <!-- Subvista: cotizaciones a clientes (la de siempre) -->
       <div class="subview active" id="subview-internas">
-        <div class="subtabs cot-tabs" id="cotEstadoTabs"></div>
+        <div class="cot-flujo" id="cotEstadoTabs" role="tablist" aria-label="Estado de la cotización"></div>
+        <div class="cot-regla" id="cotRegla"></div>
         <div class="filters" style="margin-bottom:14px;">
           <input type="search" id="cotSearch" placeholder="Buscar cliente o descripción…">
           <select id="cotRespFilter"><option value="">Todo el equipo</option></select>
@@ -2136,6 +2198,18 @@
     en_proceso:'La estamos trabajando (precios, visita, ajustes).',
     en_pausa:'El cliente la quiere a futuro, sin prisa. Cada lunes la gerencia valida si sigue en pausa.'
   };
+  /* Pestañas del flujo (2026-10-13): color y regla de recordatorios de cada estado. */
+  var COT_TAB_COLOR = {pendiente_armar:'#8a94a6', en_proceso:'#3d6fd0', enviada:'#c88a1a', aprobada:'#1f8a57', cerrada:'#6b7685', en_pausa:'#8d6fc4', rechazada:'#c0473f', todas:'var(--text-muted)'};
+  var COT_TAB_REGLA = {
+    pendiente_armar:'<b>Ideas por armar.</b> Cada lunes la gerencia pregunta si sigue siendo idea o ya se inicia. Si se inicia, pasa a En proceso.',
+    en_proceso:'<b>El cliente la está esperando.</b> Cada 3 días desde que entró aquí sale un aviso para verificar el avance o enviarla.',
+    enviada:'<b>Seguimiento con el cliente.</b> Un solo aviso, 2 días hábiles antes de que venza: pidió actualizarla, la aprobó o la rechazó.',
+    aprobada:'<b>Se está ejecutando o falta el pago.</b> Avisos de orden de compra, cobro y factura. Se cierra sola cuando el cliente pagó todo y no queda nada por pagar de la obra.',
+    cerrada:'<b>Todo saldado.</b> El cliente pagó todo, el personal está pagado y no quedan otros pagos de la obra.',
+    en_pausa:'<b>El cliente la quiere más adelante.</b> Cada lunes la gerencia valida si sigue en pausa.',
+    rechazada:'<b>Puntos de mejora.</b> Cada rechazo guarda su motivo para ver dónde perdemos negocios.',
+    todas:'<b>Todas las cotizaciones</b>, en cualquier estado.'
+  };
   /* Motivos de rechazo (2026-10-13): alimentan "Puntos de mejora" en la pestaña Rechazadas.
      "descartada" = la idea la descartamos nosotros (no cuenta como negocio perdido). */
   var COT_RECHAZO = {precio:'Precio alto', competencia:'Eligió otra empresa', tiempo:'Tiempo de entrega', presupuesto:'El cliente no tenía presupuesto',
@@ -2607,9 +2681,10 @@
       state.cotTab = saved && counts[saved] !== undefined ? saved : (counts.enviada ? 'enviada' : 'pendiente_armar');
     }
     var tabsEl = document.getElementById('cotEstadoTabs');
-    tabsEl.innerHTML = COT_TABS.map(function(t){
-      return '<button class="subtab-btn'+(t.key===state.cotTab?' active':'')+'" data-tab="'+t.key+'">'+t.label+'<span class="count">'+counts[t.key]+'</span></button>';
-    }).join('');
+    var tabBtn = function(t){ return '<button type="button" class="cot-tab subtab-btn'+(t.key===state.cotTab?' active':'')+'" data-tab="'+t.key+'"><span class="d" style="background:'+(COT_TAB_COLOR[t.key]||'var(--text-muted)')+'"></span>'+t.label+'<span class="n">'+counts[t.key]+'</span></button>'; };
+    tabsEl.innerHTML = '<div class="cot-cadena">'+COT_TABS.slice(0,5).map(tabBtn).join('')+'</div><div class="cot-lado">'+COT_TABS.slice(5).map(tabBtn).join('')+'</div>';
+    var regla = document.getElementById('cotRegla');
+    if(regla) regla.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><div>'+(COT_TAB_REGLA[state.cotTab]||'')+'</div>';
     tabsEl.querySelectorAll('.subtab-btn').forEach(function(b){ b.addEventListener('click', function(){
       state.cotTab = b.dataset.tab; try { localStorage.setItem('cenova.cotTab', state.cotTab); } catch(err){}
       renderCotizaciones();
@@ -3815,7 +3890,7 @@
       '<title>Cotización — Cenova S.A.S.</title>'+
       '<link rel="preconnect" href="https://fonts.googleapis.com">'+
       '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'+
-      '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">'+
+      '<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">'+
       '<style>'+PRINT_DOC_CSS+'</style>'+
       '</head><body>'+
       '<div class="print-bar">Vista de impresión — usa Ctrl+P (o Cmd+P) si el diálogo no se abrió solo, y elige tamaño Carta u Oficio ahí. <button id="printNowBtn" type="button">Imprimir / Guardar PDF</button></div>'+
