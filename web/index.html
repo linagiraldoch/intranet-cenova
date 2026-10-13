@@ -354,6 +354,95 @@
   @media (max-width:1100px){ .rs-grid{grid-template-columns:repeat(2, minmax(0,1fr));} }
   @media (max-width:760px){ .rs-grid{grid-template-columns:minmax(0,1fr);} .rs-span2{grid-column:auto;} .rs-emb{grid-template-columns:78px minmax(0,1fr) 28px 66px; gap:6px;} }
   @media (prefers-reduced-motion:reduce){ .rs-kpi{transition:none;} }
+
+  /* ---------- Vista visual de Operación y Administración (2026-10-13) ---------- */
+  .vk-strip{display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:12px; margin-bottom:12px;}
+  .vk-stat{display:flex; align-items:center; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:12px 14px; position:relative; overflow:hidden;}
+  .vk-stat::before{content:""; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--k);}
+  .vk-stat > div{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .vk-l{font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted);}
+  .vk-v{font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .vk-s{font-size:12px; color:var(--text-muted);}
+  .vk-flujo{display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:14px; font-size:12.5px; color:var(--text-muted);}
+  .vk-flujo > i{width:14px; height:1.5px; background:var(--border);}
+  .vk-flujo-p{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border); background:var(--surface); border-radius:99px; padding:4px 10px;}
+  .vk-flujo-p b{font-family:"IBM Plex Mono",monospace; color:var(--text);}
+  .vk-flujo-p.on{border-color:color-mix(in srgb, var(--accent) 40%, var(--border)); color:var(--text);}
+  .vk-barra{display:flex; justify-content:flex-end; margin:-4px 0 10px;}
+  .vk-toggle{display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:99px; padding:3px;}
+  .vk-toggle button{border:0; background:none; border-radius:99px; padding:5px 12px; font:inherit; font-size:12.5px; font-weight:600; color:var(--text-muted); cursor:pointer;}
+  .vk-toggle button.on{background:var(--surface); color:var(--text); box-shadow:0 1px 2px rgba(0,0,0,.08);}
+  .vk-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:12px;}
+  .vk-oc, .vk-art{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:8px; cursor:pointer; transition:box-shadow .15s, transform .15s; min-width:0;}
+  .vk-oc:hover, .vk-art:hover, .vk-hb[data-vk-go]:hover{box-shadow:0 10px 24px -16px rgba(20,30,60,.4);}
+  .vk-oc:hover, .vk-art:hover{transform:translateY(-1px);}
+  .vk-oc:focus-visible, .vk-art:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  .vk-oc.anulada{opacity:.55;}
+  .vk-oc header, .vk-art header{display:flex; justify-content:space-between; align-items:center; gap:8px;}
+  .vk-oc-n{font-family:"IBM Plex Mono",monospace; font-weight:600;}
+  .vk-oc-cli{font-weight:600;}
+  .vk-oc-desc{font-size:12.5px; color:var(--text-muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
+  .vk-oc-mid{display:flex; align-items:center; gap:14px; position:relative;}
+  .vk-oc-pc{position:absolute; left:0; width:58px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;}
+  .vk-oc-mid dl{margin:0; display:grid; grid-template-columns:repeat(3,auto); gap:4px 14px; font-size:12px;}
+  .vk-oc-mid dt{color:var(--text-muted);}
+  .vk-oc-mid dd{margin:0; font-family:"IBM Plex Mono",monospace; font-weight:600;}
+  .vk-oc-mid dd.warn{color:var(--warning);}
+  .vk-pasos{display:flex; gap:4px;}
+  .vk-pasos i{flex:1; height:5px; border-radius:99px; background:var(--surface-2);}
+  .vk-pasos i.on{background:var(--success);}
+  .vk-oc footer, .vk-art footer{display:flex; flex-wrap:wrap; gap:6px; justify-content:space-between; font-size:12px; color:var(--text-muted);}
+  .vk-art-acc{display:flex; gap:6px;}
+  .vk-mini{border:1px solid var(--border); background:var(--surface-2); border-radius:99px; padding:3px 9px; font:inherit; font-size:11.5px; font-weight:600; color:var(--text); cursor:pointer;}
+  .vk-mini:hover{border-color:var(--accent);}
+  .vk-tag{display:inline-flex; border-radius:99px; padding:2px 9px; font-size:11.5px; font-weight:600; background:var(--surface-2); color:var(--text-muted);}
+  .vk-tag.ok{background:var(--success-soft); color:var(--success);} .vk-tag.warn{background:var(--warning-soft); color:var(--warning);} .vk-tag.crit{background:var(--critical-soft); color:var(--critical);}
+  .vk-inv{display:grid; grid-template-columns:260px minmax(0,1fr); gap:14px; align-items:start;}
+  .vk-grid-art{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+  .vk-art header b{font-size:13.5px; font-weight:600;}
+  .vk-art-st{display:flex; align-items:baseline; gap:8px; font-size:12px; color:var(--text-muted);}
+  .vk-art-n{font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:600; color:var(--text);}
+  .vk-gauge{position:relative; height:8px; background:var(--surface-2); border-radius:99px;}
+  .vk-gauge i{position:absolute; left:0; top:0; bottom:0; border-radius:99px;}
+  .vk-gauge b{position:absolute; top:-3px; width:2px; height:14px; background:var(--text-muted); border-radius:2px;}
+  .vk-panel{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:14px 16px; margin-bottom:14px; min-width:0;}
+  .vk-panel h4{margin:0 0 10px; font-size:14px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;}
+  .vk-panel-donut{display:flex; flex-direction:column; align-items:center;}
+  .vk-panel-donut h4{align-self:flex-start;}
+  .vk-donut{position:relative; display:grid; place-items:center;}
+  .vk-donut-c{position:absolute; text-align:center; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:14px; line-height:1.15; max-width:84px;}
+  .vk-donut-c small{display:block; font-family:"IBM Plex Sans",sans-serif; font-weight:400; font-size:11px; color:var(--text-muted);}
+  .vk-ley{list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:4px; font-size:12.5px; align-self:stretch;}
+  .vk-ley li{display:flex; align-items:center; gap:8px;}
+  .vk-ley li b{margin-left:auto; font-family:"IBM Plex Mono",monospace; font-weight:600; white-space:nowrap; padding-left:8px;}
+  .vk-ley i, .vk-ley-in i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+  .vk-ley-in{display:inline-flex; gap:6px; align-items:center; font-size:12px; font-weight:400; color:var(--text-muted); margin-left:auto;}
+  .vk-cols{display:grid; grid-template-columns:280px minmax(0,1fr); gap:14px;}
+  .vk-hbars{display:flex; flex-direction:column; gap:8px;}
+  .vk-hb{display:grid; grid-template-columns:minmax(0,200px) minmax(0,1fr) 112px; gap:10px; align-items:center; border-radius:8px; padding:3px 4px;}
+  .vk-hb[data-vk-go]{cursor:pointer;}
+  .vk-hb-l{font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .vk-hb-bars{display:flex; flex-direction:column; gap:3px;}
+  .vk-hb-bars i{display:block; height:9px; border-radius:99px; min-width:2px;}
+  .vk-hb-v{font-family:"IBM Plex Mono",monospace; font-size:12px; text-align:right; white-space:nowrap;}
+  .vk-agenda{margin-bottom:14px;}
+  .vk-semana-h{display:flex; gap:10px; align-items:center; margin-bottom:8px;}
+  .vk-semana{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px;}
+  .vk-dia{display:flex; flex-direction:column; gap:4px; align-items:flex-start; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:8px 10px; font:inherit; cursor:pointer; text-align:left; min-width:0;}
+  .vk-dia.hoy{border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent);}
+  .vk-dia.sel{background:var(--accent-soft);}
+  .vk-dia-n{font-size:12px; color:var(--text-muted);}
+  .vk-dia-n b{color:var(--text); font-family:"IBM Plex Mono",monospace;}
+  .vk-dia-c{font-family:"IBM Plex Mono",monospace; font-size:20px; font-weight:600;}
+  .vk-dia-c.cero{font-family:inherit; font-size:12.5px; font-weight:500; color:var(--text-muted); padding:5px 0 4px;}
+  .vk-dia-t{display:flex; gap:3px; min-height:6px;}
+  .vk-dia-t i{width:14px; height:5px; border-radius:99px; background:var(--accent);}
+  .vk-dia-t i.t-pago, .vk-dia-t i.t-pago_aviso{background:var(--success);} .vk-dia-t i.t-seguimiento_cot, .vk-dia-t i.t-seguimiento{background:var(--warning);}
+  .vk-dia-t i.t-instalacion, .vk-dia-t i.t-confirmar_inicio{background:#7c4dcc;}
+  :root[data-theme="lavanda"] .vk-stat, :root[data-theme="lavanda"] .vk-oc, :root[data-theme="lavanda"] .vk-art, :root[data-theme="lavanda"] .vk-panel, :root[data-theme="lavanda"] .vk-dia{border-radius:18px;}
+  @media (max-width:900px){ .vk-inv, .vk-cols{grid-template-columns:minmax(0,1fr);} }
+  @media (max-width:760px){ .vk-semana{grid-template-columns:repeat(4,minmax(0,1fr));} .vk-hb{grid-template-columns:minmax(0,1fr) 70px; } .vk-hb-l{grid-column:1 / -1;} .vk-grid{grid-template-columns:minmax(0,1fr);} }
+  @media (prefers-reduced-motion:reduce){ .vk-oc, .vk-art{transition:none;} }
   .cot-prox{margin-top:6px; font-size:12.5px; color:var(--text-muted); display:inline-block; border-radius:6px;}
   .cot-prox.warn{color:var(--warning); font-weight:600;}
   .cot-prox.crit{color:var(--critical); font-weight:600;}
@@ -1107,6 +1196,7 @@
         </div>
       </div>
       <div class="no-file" style="margin:-6px 0 14px;">Cada orden recibe su número OC automático y queda ligada a su cotización. Al guardarla se programan solos en la agenda: la confirmación del inicio de labores, los días de instalación y el vencimiento del pago.</div>
+      <div id="vkOrdenes"></div>
       <div id="ocContainer"></div>
     </section>
 
@@ -1153,6 +1243,7 @@
     <!-- ESTADÍSTICAS -->
     <section class="view" id="view-estadisticas">
       <div class="kpis stats" id="statsKpis"></div>
+      <div id="vkStats"></div>
       <h3 class="stats-h">Rentabilidad por proyecto</h3>
       <div class="stats-note">Venta y costo salen de las cotizaciones que tienen orden de compra (valores sin IVA). Utilidad = venta − costo directo de los ítems − costos imprevistos. "Dejado de cobrar" = días de instalación extra × tarifa diaria de instalación cotizada. <strong>"Ítems sin costo"</strong> quiere decir que en esa cotización falta escribir cuánto le costó cada ítem a Cenova (columna "Costo"); mientras falte, la utilidad y el margen salen inflados. Haz clic en el aviso de ítems sin costo para completarlos, o en el proyecto para ver su informe: en qué se fue el dinero fuera de la cotización, margen por ítem, qué se compró, quién instaló y las notas.</div>
       <div id="statsProyectos"></div>
@@ -1163,6 +1254,7 @@
 
     <!-- FINANZAS (solo administración) -->
     <section class="view" id="view-precios">
+      <div id="vkPrecios"></div>
       <div class="subtabs fin-tabs" id="precTabs">
         <button class="subtab-btn active" data-prec="instalacion">Servicios de instalación</button>
         <button class="subtab-btn" data-prec="materiales">Materiales y kits</button>
@@ -1200,6 +1292,7 @@
     </section>
 
     <section class="view" id="view-costos">
+      <div id="vkCostos"></div>
       <div class="subtabs fin-tabs" id="cosTabs">
         <button class="subtab-btn active" data-cos="cargar">Costos por cargar</button>
         <button class="subtab-btn" data-cos="proveedores">Precios de proveedores</button>
@@ -1234,6 +1327,7 @@
       <div class="subview active" id="fin-resumen">
         <div class="info-box warn fin-setup" id="finSetup" hidden></div>
         <div class="kpis stats" id="finKpis"></div>
+        <div id="vkFin"></div>
         <div class="fin-grid">
           <div class="panel fin-chart-panel">
             <div class="panel-head"><h3>Entradas y salidas de dinero</h3><span>últimos 6 meses</span></div>
@@ -1355,6 +1449,7 @@
           </button>
         </div>
       </div>
+      <div id="vkAgenda" class="vk-agenda"></div>
       <div class="subtabs" id="agendaSubtabs">
         <button class="subtab-btn active" data-subtab="calendario">Calendario</button>
         <button class="subtab-btn" data-subtab="cronograma">Cronograma</button>
@@ -2335,6 +2430,7 @@
     if(v==='inventario') renderInventario();
     if(v==='costos') renderCostos();
     if(v==='formatos') renderFormatos();
+    vkRenderTodo();
   }
   document.getElementById('primaryNav').addEventListener('click', function(e){
     var btn = e.target.closest('.nav-btn'); if(btn) showView(btn.dataset.view);
@@ -2661,6 +2757,179 @@
       var sb = document.querySelector('#cotSubtabs [data-subtab="internas"]'); if(sb) sb.click(); renderCotizaciones(); return; }
     if(['ordenes','estadisticas','finanzas','agenda'].indexOf(k) !== -1) showView(k);
   });
+
+  /* =====================================================================
+     Vista visual de Operación y Administración (2026-10-13): tarjetas, círculos
+     de avance y gráficos encima de cada sección, para no leer todo en listas.
+     ===================================================================== */
+  function vkModo(clave, def){ try { return localStorage.getItem('cenova.vista.'+clave) || def; } catch(e){ return def; } }
+  function vkSetModo(clave, v){ try { localStorage.setItem('cenova.vista.'+clave, v); } catch(e){} }
+  function vkToggle(clave, modo){
+    return '<div class="vk-toggle" role="group" aria-label="Cómo ver"><button type="button" data-vk-modo="'+clave+':tarjetas" class="'+(modo==='tarjetas'?'on':'')+'">Tarjetas</button><button type="button" data-vk-modo="'+clave+':tabla" class="'+(modo==='tabla'?'on':'')+'">Tabla</button></div>';
+  }
+  document.addEventListener('click', function(e){
+    var b = e.target.closest('[data-vk-modo]'); if(!b) return;
+    var p = b.getAttribute('data-vk-modo').split(':'); vkSetModo(p[0], p[1]);
+    if(p[0] === 'ordenes') renderOrdenes(); else if(p[0] === 'inventario') renderInventario();
+  });
+  function vkStat(label, value, sub, color, ring){
+    return '<div class="vk-stat" style="--k:'+color+'">'+(ring != null ? rsRing(ring, color, 50) : '')+'<div><span class="vk-l">'+label+'</span><span class="vk-v">'+value+'</span>'+(sub ? '<span class="vk-s">'+sub+'</span>' : '')+'</div></div>';
+  }
+  function vkDonut(segs, size, centro){
+    size = size || 120; var r = size/2 - 12, c = 2*Math.PI*r, tot = segs.reduce(function(s,x){ return s + x.v; }, 0), acc = 0;
+    var arcs = tot ? segs.filter(function(x){ return x.v > 0; }).map(function(x){ var len = c*x.v/tot, off = -acc; acc += len;
+      return '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+x.c+'" stroke-width="16" stroke-dasharray="'+len.toFixed(1)+' '+(c-len).toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/>'; }).join('') : '';
+    return '<div class="vk-donut"><svg viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true"><circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="var(--surface-2)" stroke-width="16"/>'+arcs+'</svg>'+
+      (centro ? '<span class="vk-donut-c">'+centro+'</span>' : '')+'</div><ul class="vk-ley">'+segs.map(function(x){ return '<li><i style="background:'+x.c+'"></i>'+escapeHtml(x.l)+' <b>'+x.t+'</b></li>'; }).join('')+'</ul>';
+  }
+  function vkHBars(filas, tope){
+    var max = tope || Math.max.apply(null, filas.map(function(f){ return Math.max(f.a||0, f.b||0); }).concat([1]));
+    return '<div class="vk-hbars">'+filas.map(function(f){
+      return '<div class="vk-hb"'+(f.go ? ' data-vk-go="'+f.go+'" role="button" tabindex="0"' : '')+'><span class="vk-hb-l">'+escapeHtml(f.l)+'</span><span class="vk-hb-bars">'+
+        '<i style="width:'+Math.min(100, 100*(f.a||0)/max)+'%;background:'+(f.ca||'var(--accent)')+'" title="'+escapeHtml(f.ta||'')+'"></i>'+
+        (f.b != null ? '<i style="width:'+Math.min(100, 100*(f.b||0)/max)+'%;background:'+(f.cb||'var(--warning)')+'" title="'+escapeHtml(f.tb||'')+'"></i>' : '')+
+        '</span><span class="vk-hb-v">'+(f.v || '')+'</span></div>'; }).join('')+'</div>';
+  }
+  document.addEventListener('click', function(e){
+    var m = e.target.closest('[data-vk-inv]');
+    if(m){ e.stopPropagation(); var pp = m.getAttribute('data-vk-inv').split(':'); openInvModal(pp[0], pp.slice(1).join(':')); return; }
+    var b = e.target.closest('[data-vk-go]'); if(!b) return;
+    var g = b.getAttribute('data-vk-go'), i = g.indexOf(':'), k = g.slice(0, i), v = g.slice(i+1);
+    if(k === 'oc') openOcModal(v); else if(k === 'cot') openCotModal(v); else if(k === 'evt') openEvtModal(v);
+    else if(k === 'dia'){ state.selectedDate = v; var d = new Date(v+'T00:00:00'); state.calMonth = new Date(d.getFullYear(), d.getMonth(), 1); renderCalendar(); renderDayPanel(); }
+    else if(k === 'inv') openPrecioModal(v);
+  });
+
+  /* ---------- Órdenes de compra ---------- */
+  var OC_PASOS = ['recibida','programada','en_ejecucion','finalizada','facturada','pagada'];
+  function vkOrdenesStrip(){
+    var ords = Array.from(state.ordenes.values()).filter(function(o){ return o.estado !== 'anulada'; });
+    var vend = 0, porCob = 0, instalando = 0, porCerrar = 0, sinInicio = 0;
+    ords.forEach(function(o){ var v = Number(o.valor)||0, s = ocSaldo(o); vend += v; porCob += s;
+      if(o.estado === 'en_ejecucion' || o.estado === 'programada') instalando++;
+      if(!o.fechaInicio && ['finalizada','facturada','pagada'].indexOf(o.estado) === -1) sinInicio++;
+      if(!s && (o.estado === 'pagada' || ocRecibido(o) > 0) && ocPendientesObra(o).length) porCerrar++; });
+    var porEst = OC_PASOS.map(function(k){ return {k:k, n:ords.filter(function(o){ return o.estado === k; }).length}; });
+    return '<div class="vk-strip">'+
+      vkStat('Por cobrar', fmtMoney.format(porCob), 'cobrado '+(vend ? Math.round(100*(vend-porCob)/vend) : 0)+'% de '+rsCompact(vend), 'var(--success)', vend ? (vend-porCob)/vend : 0)+
+      vkStat('Obras activas', ords.filter(function(o){ return o.estado !== 'pagada'; }).length, instalando+' programadas o en ejecución', 'var(--accent)')+
+      vkStat('Sin fecha de inicio', sinInicio, 'confirmar con el cliente', sinInicio ? 'var(--warning)' : 'var(--text-muted)')+
+      vkStat('Por cerrar', porCerrar, 'cobradas con pagos pendientes de la obra', porCerrar ? 'var(--warning)' : 'var(--text-muted)')+
+      '</div><div class="vk-flujo">'+porEst.map(function(x){ return '<span class="vk-flujo-p'+(x.n ? ' on' : '')+'"><b>'+x.n+'</b>'+OC_ESTADOS[x.k]+'</span>'; }).join('<i></i>')+'</div>';
+  }
+  function vkOrdenCard(id, o){
+    var c = state.cotizaciones.get(o.cotizacionId) || {}, k = ocCalc(o), v = Number(o.valor)||0, s = ocSaldo(o), paso = OC_PASOS.indexOf(o.estado);
+    var falta = (!s && (o.estado === 'pagada' || ocRecibido(o) > 0)) ? ocPendientesObra(o) : [];
+    var pago = o.estado === 'anulada' ? '' : (s ? (k.pago ? (k.pago < todayIso() ? '<span class="vk-tag crit">Pago vencido '+fmtShort(k.pago)+'</span>' : '<span class="vk-tag">Vence '+fmtShort(k.pago)+'</span>') : '') : '<span class="vk-tag ok">Cobrada</span>');
+    return '<article class="vk-oc'+(o.estado === 'anulada' ? ' anulada' : '')+'" data-vk-go="oc:'+id+'" role="button" tabindex="0">'+
+      '<header><span class="vk-oc-n">'+escapeHtml(o.numero||'Orden')+'</span><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||o.estado)+'</span></header>'+
+      '<div class="vk-oc-cli">'+escapeHtml(o.cliente||'—')+'</div><div class="vk-oc-desc">'+escapeHtml((c.numero ? c.numero+' · ' : '')+(c.descripcion||''))+'</div>'+
+      '<div class="vk-oc-mid">'+rsRing(v ? (v-s)/v : 0, 'var(--success)', 58)+'<span class="vk-oc-pc">'+(v ? Math.round(100*(v-s)/v) : 0)+'%</span>'+
+        '<dl><div><dt>Valor</dt><dd>'+fmtMoney.format(v)+'</dd></div><div><dt>Saldo</dt><dd class="'+(s ? 'warn' : '')+'">'+fmtMoney.format(s)+'</dd></div>'+
+        '<div><dt>Instalación</dt><dd>'+(o.fechaInicio ? fmtShort(o.fechaInicio)+(k.fin && k.fin !== o.fechaInicio ? ' → '+fmtShort(k.fin) : '') : 'por confirmar')+'</dd></div></dl></div>'+
+      '<div class="vk-pasos">'+OC_PASOS.map(function(x, j){ return '<i class="'+(paso >= j ? 'on' : '')+'" title="'+OC_ESTADOS[x]+'"></i>'; }).join('')+'</div>'+
+      '<footer>'+pago+(falta.length ? '<span class="vk-tag warn">Falta: '+escapeHtml(falta.join(', '))+'</span>' : '')+(o.retrasoMotivo ? '<span class="vk-tag">Retraso: '+escapeHtml((OC_RETRASO[o.retrasoMotivo]||'').toLowerCase())+'</span>' : '')+'</footer></article>';
+  }
+
+  /* ---------- Inventario ---------- */
+  function vkInvCard(p){
+    var st = precNum(p.stock), min = precNum(p.stockMin), k = precNum(p.costo), e = invEstado(p);
+    var tope = Math.max(st||0, (min||0)*2, 1), pc = st == null ? 0 : Math.min(1, (st||0)/tope);
+    var col = e.k === 'agotado' ? 'var(--critical)' : e.k === 'bajo' ? 'var(--warning)' : e.k === 'ok' ? 'var(--success)' : 'var(--text-muted)';
+    return '<article class="vk-art" data-vk-go="inv:'+escapeHtml(p._id)+'" role="button" tabindex="0"><header><b>'+escapeHtml(p.nombre||'—')+'</b><span class="fin-badge '+(e.badge||'')+'">'+e.lbl+'</span></header>'+
+      '<div class="vk-art-st"><span class="vk-art-n">'+(st == null ? '—' : invCant(st))+'</span><span>'+escapeHtml(p.unidad||'')+(min != null ? ' · mínimo '+invCant(min) : '')+'</span></div>'+
+      '<div class="vk-gauge"><i style="width:'+(pc*100)+'%;background:'+col+'"></i>'+(min != null ? '<b style="left:'+(100*min/tope)+'%"></b>' : '')+'</div>'+
+      '<footer><span>'+(p.tipo === 'equipo' ? 'Equipo' : 'Material')+(p.ubicacion ? ' · '+escapeHtml(p.ubicacion) : '')+(st != null && k != null ? ' · '+fmtMoney.format(st*k) : '')+'</span>'+
+      '<span class="vk-art-acc"><button type="button" class="vk-mini" data-vk-inv="entrada:'+escapeHtml(p._id)+'" title="Registrar entrada">+ Entrada</button><button type="button" class="vk-mini" data-vk-inv="salida:'+escapeHtml(p._id)+'" title="Salida a obra">− Salida</button></span></footer></article>';
+  }
+  function vkInvDonut(arts){
+    var n = {ok:0, bajo:0, agotado:0, sin:0}; arts.forEach(function(p){ n[invEstado(p).k]++; });
+    return '<div class="vk-panel vk-panel-donut"><h4>Estado de la bodega</h4>'+vkDonut([
+      {l:'Disponibles', v:n.ok, t:n.ok, c:'var(--success)'}, {l:'Bajo el mínimo', v:n.bajo, t:n.bajo, c:'var(--warning)'},
+      {l:'Agotados', v:n.agotado, t:n.agotado, c:'var(--critical)'}, {l:'Sin contar', v:n.sin, t:n.sin, c:'var(--border)'}], 112, arts.length+'<small>artículos</small>')+'</div>';
+  }
+
+  /* ---------- Agenda: la semana en tarjetas ---------- */
+  function vkAgendaSemana(){
+    var box = document.getElementById('vkAgenda'); if(!box) return;
+    var hoy = todayIso(), d0 = new Date(hoy+'T00:00:00'); d0.setDate(d0.getDate() - ((d0.getDay()+6)%7));
+    var DIAS = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'], evs = Array.from(state.eventos.entries()).filter(function(e){ return e[1].estado !== 'cancelado' && e[1].estado !== 'cumplido'; });
+    var venc = evs.filter(function(e){ return e[1].fecha && e[1].fecha < hoy && e[1].estado === 'pendiente'; }).length;
+    var tiles = DIAS.map(function(nom, i){
+      var d = new Date(d0); d.setDate(d0.getDate()+i); var iso = toISODate(d);
+      var del = evs.filter(function(e){ return e[1].fecha === iso; });
+      var tipos = {}; del.forEach(function(e){ var t = e[1].tipo||'tarea'; tipos[t] = (tipos[t]||0)+1; });
+      return '<button type="button" class="vk-dia'+(iso === hoy ? ' hoy' : '')+(iso === state.selectedDate ? ' sel' : '')+'" data-vk-go="dia:'+iso+'"><span class="vk-dia-n">'+nom+' <b>'+d.getDate()+'</b></span>'+
+        '<span class="vk-dia-c'+(del.length ? '' : ' cero')+'">'+(del.length || 'Libre')+'</span><span class="vk-dia-t">'+Object.keys(tipos).slice(0,4).map(function(t){ return '<i class="t-'+t+'" title="'+escapeHtml(TIPO_LABELS[t]||t)+'"></i>'; }).join('')+'</span></button>';
+    }).join('');
+    box.innerHTML = '<div class="vk-semana-h"><b>Esta semana</b>'+(venc ? '<span class="vk-tag crit">'+venc+' vencido(s) sin cerrar</span>' : '<span class="vk-tag ok">Nada vencido</span>')+'</div><div class="vk-semana">'+tiles+'</div>';
+  }
+
+  /* ---------- Precios ---------- */
+  function vkPrecios(){
+    var box = document.getElementById('vkPrecios'); if(!box) return;
+    var items = Array.from(state.precios.values()).filter(function(p){ return p.tipo !== 'instalacion' && p.tipo !== 'kit'; });
+    var con = items.filter(function(p){ return precNum(p.costo) != null || precNum(p.tarifa) != null || precNum(p.valor) != null; }).length;
+    var mars = items.map(function(p){ return precNum(p.margen); }).filter(function(x){ return x != null; });
+    var prom = mars.length ? mars.reduce(function(a,b){ return a+b; }, 0)/mars.length : null;
+    var meta = (typeof fin !== 'undefined' && fin && fin.ajustes && fin.ajustes.metaMargen) ? Number(fin.ajustes.metaMargen) : 30;
+    box.innerHTML = '<div class="vk-strip">'+
+      vkStat('Ítems con costo', con+' de '+items.length, con < items.length ? 'faltan '+(items.length-con)+' por cargar en Costos' : 'lista completa', con < items.length ? 'var(--warning)' : 'var(--success)', items.length ? con/items.length : 0)+
+      vkStat('Margen promedio fijado', prom == null ? '—' : Math.round(prom)+' %', 'meta '+meta+' %', prom != null && prom < meta ? 'var(--warning)' : 'var(--accent)', prom == null ? 0 : Math.min(1, prom/meta))+
+      '</div>';
+  }
+
+  /* ---------- Costos: cotizado vs real por obra ---------- */
+  function vkCostos(){
+    var box = document.getElementById('vkCostos'); if(!box) return;
+    var ords = Array.from(state.ordenes.entries()).filter(function(e){ return e[1].estado !== 'anulada'; });
+    var filas = ords.map(function(e){ var o = e[1], c = state.cotizaciones.get(o.cotizacionId) || {};
+      var cot = 0, real = 0; try { cot = cotCostoInfo(c).costo; } catch(err){} try { real = ocCostoInfo(o).costo + ocDesvio(o).imprevistos; } catch(err){}
+      var dif = real - cot;
+      return {l:(o.numero||'OC')+' · '+(o.cliente||''), a:cot, b:real, ca:'var(--accent)', cb: dif > 0 ? 'var(--warning)' : 'var(--success)', ta:'Cotizado '+fmtMoney.format(cot), tb:'Real '+fmtMoney.format(real),
+        v:(dif > 0 ? '+' : '')+rsCompact(dif), go:'oc:'+e[0]}; }).filter(function(f){ return f.a || f.b; });
+    var precios = Array.from(state.precios.values()).filter(function(p){ return p.tipo !== 'instalacion' && p.tipo !== 'kit'; });
+    var con = precios.filter(function(p){ return precNum(p.costo) != null || precNum(p.tarifa) != null || precNum(p.valor) != null; }).length;
+    box.innerHTML = '<div class="vk-strip">'+vkStat('Costos cargados en Precios', con+' de '+precios.length, 'para cotizar con margen real', con < precios.length ? 'var(--warning)' : 'var(--success)', precios.length ? con/precios.length : 0)+'</div>'+
+      (filas.length ? '<div class="vk-panel"><h4>Costo cotizado vs real por obra <span class="vk-ley-in"><i style="background:var(--accent)"></i>Cotizado <i style="background:var(--warning)"></i>Real</span></h4>'+vkHBars(filas)+'</div>' : '');
+  }
+
+  /* ---------- Estadísticas ---------- */
+  function vkEstadisticas(){
+    var box = document.getElementById('vkStats'); if(!box) return;
+    var cots = Array.from(state.cotizaciones.values());
+    var n = function(f){ return cots.filter(f).length; };
+    var apr = n(function(c){ return c.estado === 'aprobada'; }), rech = n(function(c){ return c.estado === 'rechazada' && c.rechazoMotivo !== 'descartada'; }), esp = n(function(c){ return c.estado === 'enviada'; });
+    var ords = Array.from(state.ordenes.entries()).filter(function(e){ return e[1].estado !== 'anulada'; });
+    var filas = ords.map(function(e){ var o = e[1], c = state.cotizaciones.get(o.cotizacionId) || {};
+      var venta = cotSubtotalVenta(c), costo = 0; try { costo = ocCostoInfo(o).costo + ocDesvio(o).imprevistos; } catch(err){}
+      var m = venta ? (venta - costo)/venta : 0;
+      return {l:(o.numero||'OC')+' · '+(o.cliente||''), a:Math.max(0, m*100), ca: m < 0.15 ? 'var(--critical)' : m < 0.30 ? 'var(--warning)' : 'var(--success)', v:Math.round(m*100)+' %', go:'oc:'+e[0]}; });
+    box.innerHTML = '<div class="vk-cols">'+
+      '<div class="vk-panel vk-panel-donut"><h4>Cotizaciones decididas</h4>'+vkDonut([{l:'Aprobadas', v:apr, t:apr, c:'var(--success)'}, {l:'Rechazadas', v:rech, t:rech, c:'var(--critical)'}, {l:'En espera', v:esp, t:esp, c:'var(--warning)'}], 112, ((apr+rech+esp) ? Math.round(100*apr/(apr+rech+esp)) : 0)+'%<small>aprobación</small>')+'</div>'+
+      (filas.length ? '<div class="vk-panel"><h4>Margen real por obra <span class="vk-ley-in">escala de 0 a 50 % · meta 30 %</span></h4>'+vkHBars(filas, 50)+'</div>' : '')+'</div>';
+  }
+
+  /* ---------- Finanzas: en qué se va el dinero ---------- */
+  function vkFinanzas(){
+    var box = document.getElementById('vkFin'); if(!box || typeof fin === 'undefined' || !fin || !fin.admin) { if(box) box.innerHTML = ''; return; }
+    var anio = todayIso().slice(0,4), cat = {};
+    fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.estado !== 'pendiente' && String(m.fecha||'').slice(0,4) === anio){ var k = finCatLabel(m); cat[k] = (cat[k]||0) + (Number(m.monto)||0); } });
+    var pal = ['#1f4f99','#c88a1a','#1f8a57','#7c4dcc','#d6407a','#0b8bb0','#a86a2c','#5f6f86'];
+    var segs = Object.keys(cat).sort(function(a,b){ return cat[b]-cat[a]; }).slice(0,7).map(function(k, i){ return {l:k, v:cat[k], t:rsCompact(cat[k]), c:pal[i % pal.length]}; });
+    var tot = Object.keys(cat).reduce(function(s,k){ return s + cat[k]; }, 0);
+    var fijos = finFijosActivos().map(function(e){ return {l:e[1].nombre||'Gasto fijo', a:finFijoMensual(e[1]), ca:'var(--accent)', v:rsCompact(finFijoMensual(e[1]))+'/mes'}; });
+    box.innerHTML = '<div class="vk-cols">'+(segs.length ? '<div class="vk-panel vk-panel-donut"><h4>Gastos de '+anio+' por categoría</h4>'+vkDonut(segs, 132, rsCompact(tot).replace('$ ','')+'<small>pesos</small>')+'</div>' : '')+
+      (fijos.length ? '<div class="vk-panel"><h4>Gastos fijos al mes</h4>'+vkHBars(fijos)+'</div>' : '')+'</div>';
+  }
+
+  function vkRenderTodo(){
+    try { vkAgendaSemana(); } catch(e){}
+    try { vkPrecios(); } catch(e){}
+    try { vkCostos(); } catch(e){}
+    try { vkEstadisticas(); } catch(e){}
+    try { vkFinanzas(); } catch(e){}
+  }
 
   /* ---------- Cotizaciones ---------- */
   function renderCotizaciones(){
@@ -3387,7 +3656,7 @@
     renderResumen(); renderCotizaciones(); renderOrdenes(); renderProyectos(); renderProveedores(); renderClientes();
     if(document.getElementById('view-agenda').classList.contains('active')) renderCronograma();
     if(document.getElementById('view-estadisticas').classList.contains('active')) renderEstadisticas();
-    renderFinanzas(); invCostRefresh();
+    renderFinanzas(); invCostRefresh(); vkRenderTodo();
     document.getElementById('navCountEvt').textContent = state.eventos.size;
     document.getElementById('navCountProv').textContent = state.cotizacionesProveedor.size;
     if(document.getElementById('view-agenda').classList.contains('active')){ renderCalendar(); renderDayPanel(); }
@@ -4765,7 +5034,10 @@
       if(q && !(passFilter(o.numero,q) || passFilter(o.numeroCliente,q) || passFilter(o.cliente,q) || passFilter(c.numero,q) || passFilter(c.descripcion,q))) return false;
       return true;
     }).sort(function(a,b){ return String(b[1].numero||'').localeCompare(String(a[1].numero||'')); });
+    var modoOc = vkModo('ordenes', 'tarjetas');
+    document.getElementById('vkOrdenes').innerHTML = vkOrdenesStrip() + '<div class="vk-barra">'+vkToggle('ordenes', modoOc)+'</div>';
     if(!rows.length){ container.innerHTML = '<div class="table-wrap"><div class="empty-state">Ninguna orden coincide con el filtro.</div></div>'; return; }
+    if(modoOc === 'tarjetas'){ container.innerHTML = '<div class="vk-grid">'+rows.map(function(e){ return vkOrdenCard(e[0], e[1]); }).join('')+'</div>'; return; }
     var html = '<div class="table-wrap"><table><thead><tr><th>N.° OC</th><th>OC cliente</th><th>Cotización</th><th>Cliente</th><th>Recibida</th><th>Instalación</th><th>Vence pago</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
     rows.forEach(function(e){
       var id = e[0], o = e[1], c = state.cotizaciones.get(o.cotizacionId) || {};
@@ -8009,6 +8281,16 @@
             '<button class="icon-btn inv-menos" title="Salida a obra" aria-label="Salida a obra"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg></button>' +
           '</div></td></tr>';
       });
+      var modoInv = vkModo('inventario', 'tarjetas');
+      h += '<div class="vk-barra">'+vkToggle('inventario', modoInv)+'</div>';
+      if(modoInv === 'tarjetas'){
+        var artsF = arts.filter(function(p){ var e = invEstado(p).k;
+          if(inv.filtro === 'alerta' && e !== 'bajo' && e !== 'agotado') return false;
+          if(inv.filtro === 'sin' && e !== 'sin') return false;
+          if((inv.filtro === 'material' || inv.filtro === 'equipo') && p.tipo !== inv.filtro) return false;
+          return !q || [p.nombre, p.ubicacion, p.proveedor, p.stockNota, p.notas].join(' ').toLowerCase().indexOf(q) !== -1; });
+        h += '<div class="vk-inv">'+vkInvDonut(arts)+'<div class="vk-grid vk-grid-art">'+(artsF.map(vkInvCard).join('') || '<p class="rs-vacio">Nada coincide con el filtro.</p>')+'</div></div>';
+      } else
       h += '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Tipo</th><th class="num">Stock</th><th class="num">Mínimo</th><th class="num">Costo</th><th class="num">Valor</th><th>Estado</th><th></th></tr></thead><tbody>' +
         (rows.join('') || '<tr><td colspan="8" class="empty-state">Nada coincide con el filtro.</td></tr>') + '</tbody></table></div>';
       h += '<div class="info-box" style="margin-top:14px;">Toca un artículo para cambiar su ubicación o su stock mínimo'+(admin ? ', su costo o su margen' : '')+'. El stock solo cambia con movimientos: entradas, salidas a obra, devoluciones o un conteo. Lo que sale a una obra queda ligado a su orden de compra y se ve en <strong>Costos → Costo real por obra</strong>.</div>';
