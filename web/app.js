@@ -208,6 +208,10 @@
   api('GET', '/api/me').then(function(me){
     if(me.debeCambiar){ location.replace('/login?cambiar=1'); return; }
     yo = me;
+    // Rosa de la duquesa: el tema Rosa tiene una versión propia solo para Lina (ver index.html, "Rosa de la duquesa").
+    var dama = me.id === 'lmgiraldo';
+    if(dama) html.setAttribute('data-dama', ''); else html.removeAttribute('data-dama');
+    try{ if(dama) localStorage.setItem('cenova.dama', '1'); else localStorage.removeItem('cenova.dama'); }catch(e){}
     html.setAttribute('data-theme', ['light','dark','lavanda'].indexOf(me.tema) === -1 ? 'light' : me.tema);
     try{ localStorage.setItem('cenova.theme', html.getAttribute('data-theme')); }catch(e){}
     primeraCarga = sincronizar();

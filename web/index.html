@@ -1,4 +1,4 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#173a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Cenova"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Intranet Cenova</title><script>(function(){var t="light";try{t=localStorage.getItem("cenova.theme")||"light";}catch(e){}if(["light","dark","lavanda"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);try{if(localStorage.getItem("cenova.menuPlegado")==="1")document.documentElement.classList.add("menu-plegado");}catch(e){}})();</script><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.classList.add("cenova-locked");</script><script src="/app.js"></script></head><body>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="/manifest.webmanifest"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><meta name="theme-color" content="#173a73"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Cenova"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="referrer" content="no-referrer"><meta name="robots" content="noindex,nofollow"><title>Intranet Cenova</title><script>(function(){var t="light";try{t=localStorage.getItem("cenova.theme")||"light";}catch(e){}if(["light","dark","lavanda"].indexOf(t)===-1)t="light";document.documentElement.setAttribute("data-theme",t);try{if(localStorage.getItem("cenova.dama")==="1")document.documentElement.setAttribute("data-dama","");}catch(e){}try{if(localStorage.getItem("cenova.menuPlegado")==="1")document.documentElement.classList.add("menu-plegado");}catch(e){}})();</script><style>:root{color-scheme:light}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style><script>document.documentElement.classList.add("cenova-locked");</script><script src="/app.js"></script></head><body>
 <style>html.cenova-locked .app{visibility:hidden;}
 #cenovaLogin{position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; padding:24px 16px; overflow-y:auto;
   background:radial-gradient(1200px 600px at 10% -10%, var(--accent-soft), transparent 60%), radial-gradient(900px 500px at 110% 110%, var(--accent-soft), transparent 55%), var(--bg);}
@@ -45,7 +45,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Gowun+Batang:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Gowun+Batang:wght@400;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,500&family=Cinzel:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#f3f6fb;
@@ -900,6 +900,143 @@
   :root[data-theme="lavanda"] .day-panel{background:linear-gradient(90deg,#f4b4c9,#e8c3d6,#cdb8e6) top/100% 4px no-repeat, var(--surface);}
   :root[data-theme="lavanda"] .cal-cell.today .cal-daynum{background:var(--accent); color:#fff;}
   @media (max-width:760px){ :root[data-theme="lavanda"] .topbar::after{display:none;} }
+
+  /* ===== Rosa de la duquesa (2026-10-14): el tema Rosa solo para el usuario de Lina (lmgiraldo).
+     app.js pone data-dama en <html> cuando entra Lina; los demás usuarios con tema Rosa ven el Rosa de siempre.
+     Pasteles (rosa, lavanda, menta, melocotón, cielo), filete dorado fino, Cormorant Garamond y Cinzel. ===== */
+  :root[data-theme="lavanda"][data-dama]{
+    --bg:#fff7fa; --surface:#ffffff; --surface-2:#fbf3f8; --border:#f0dfe8;
+    --text:#3d2f4a; --text-muted:#7f6d84; --accent:#b4517a; --accent-2:#7e3b67; --accent-soft:#fde7f0;
+    --pink:#e58ab3; --pink-2:#a8386f; --pink-soft:#fde7f0;
+    --sky:#8fbde6; --sky-2:#3f6f9e; --sky-soft:#e6f2fc;
+    --success:#3a8a68; --success-soft:#e0f4ea; --warning:#a96a1e; --warning-soft:#fdf0dd; --critical:#b9445f; --critical-soft:#fde6ec;
+    --neutral:#7f6d84; --neutral-soft:#f5eef6;
+    --d-rosa:#f9cfe0; --d-lav:#e3d8f7; --d-menta:#cfeee0; --d-melo:#fde2cc; --d-cielo:#d6eafa; --d-mante:#fbf0c6;
+    --d-oro:#d8b874; --d-oro-s:#f3e6c4; --d-tinta:#3d2f4a;
+    --d-display:"Cormorant Garamond","Gowun Batang",Georgia,serif; --d-caps:"Cinzel","Cormorant Garamond",Georgia,serif;
+    --shadow:0 1px 2px rgba(150,80,120,.05), 0 14px 30px -18px rgba(160,90,140,.38);
+    --radius:18px;
+  }
+  :root[data-theme="lavanda"][data-dama] ::selection{background:#f8c6dc; color:var(--d-tinta);}
+  :root[data-theme="lavanda"][data-dama] body{
+    background-color:var(--bg);
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23c9a35a' stroke-opacity='.13' stroke-width='1'%3E%3Cpath d='M60 38c5 7 5 13 0 22-5-9-5-15 0-22Z'/%3E%3Cpath d='M60 60c-6-3-12-2-17 3 7 2 12 1 17-3ZM60 60c6-3 12-2 17 3-7 2-12 1-17-3Z'/%3E%3C/g%3E%3Cg fill='%23e58ab3' fill-opacity='.10'%3E%3Ccircle cx='10' cy='10' r='3'/%3E%3Ccircle cx='110' cy='110' r='3'/%3E%3C/g%3E%3Cg fill='%23a98be0' fill-opacity='.10'%3E%3Ccircle cx='110' cy='10' r='2.4'/%3E%3Ccircle cx='10' cy='110' r='2.4'/%3E%3C/g%3E%3C/svg%3E"),
+      radial-gradient(900px 600px at 0% 0%, #fde3ee 0%, transparent 60%),
+      radial-gradient(800px 600px at 100% 0%, #ece3fb 0%, transparent 60%),
+      radial-gradient(900px 700px at 100% 100%, #dff1fb 0%, transparent 60%),
+      radial-gradient(800px 700px at 0% 100%, #e2f5ec 0%, transparent 60%);
+    background-attachment:fixed; background-size:120px 120px, auto, auto, auto, auto;
+  }
+  :root[data-theme="lavanda"][data-dama] h1, :root[data-theme="lavanda"][data-dama] h2, :root[data-theme="lavanda"][data-dama] h3,
+  :root[data-theme="lavanda"][data-dama] .brand-text strong{font-family:var(--d-display); font-weight:700; letter-spacing:.01em; color:var(--d-tinta);}
+  :root[data-theme="lavanda"][data-dama] .topbar h1{font-size:32px; line-height:1.05; color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .topbar p{font-family:var(--d-display); font-style:italic; font-size:16px;}
+
+  /* menú lateral */
+  :root[data-theme="lavanda"][data-dama] .sidebar{
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,.35)),
+      linear-gradient(180deg,#fde6ef 0%,#f1e8fb 38%,#e5f1fb 70%,#e4f5ed 100%);
+    border-right:1px solid #efdbe6; box-shadow:inset -1px 0 0 #fff, 6px 0 24px -20px rgba(160,90,140,.5);
+  }
+  :root[data-theme="lavanda"][data-dama] .brand{position:relative; padding:14px 8px 12px; border-radius:16px; background:rgba(255,255,255,.7);
+    box-shadow:inset 0 0 0 1px #f0dfe8, inset 0 0 0 4px #fff, inset 0 0 0 5px var(--d-oro-s);}
+  :root[data-theme="lavanda"][data-dama] .brand::before{content:""; position:absolute; left:50%; top:-9px; width:46px; height:18px; transform:translateX(-50%);
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 46 18'%3E%3Cpath d='M4 16 7 6l7 6 9-10 9 10 7-6 3 10Z' fill='%23fdf3e1' stroke='%23d8b874' stroke-width='1.3' stroke-linejoin='round'/%3E%3Ccircle cx='23' cy='3' r='2.2' fill='%23e58ab3'/%3E%3Ccircle cx='7' cy='6' r='1.6' fill='%23a98be0'/%3E%3Ccircle cx='39' cy='6' r='1.6' fill='%238fbde6'/%3E%3Ccircle cx='23' cy='12' r='1.8' fill='%23b9445f'/%3E%3C/svg%3E") center/contain no-repeat;}
+  :root[data-theme="lavanda"][data-dama] .brand-mark{border-radius:12px; box-shadow:0 0 0 2px #fff, 0 0 0 3px var(--d-oro-s), 0 8px 16px -10px rgba(160,90,140,.6);}
+  :root[data-theme="lavanda"][data-dama] .brand-text strong{font-size:20px; color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .brand-text span{font-family:var(--d-caps); font-size:9.5px; letter-spacing:.22em; text-transform:uppercase; color:#b08a4a;}
+  :root[data-theme="lavanda"][data-dama] .nav-label{font-family:var(--d-caps); font-size:9.5px; letter-spacing:.24em; color:#b08a4a; margin:14px 8px 6px; display:flex; align-items:center; gap:8px;}
+  :root[data-theme="lavanda"][data-dama] .nav-label::after{content:""; flex:1; height:1px; background:linear-gradient(90deg,var(--d-oro-s),transparent);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn{border-radius:14px; color:#5d4b66; font-weight:600; padding:7px 10px; transition:background .15s, transform .15s;}
+  :root[data-theme="lavanda"][data-dama] .nav-btn svg{background:color-mix(in srgb, var(--ic) 16%, #ffffff); box-shadow:inset 0 0 0 1px color-mix(in srgb, var(--ic) 22%, #ffffff);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn:hover{background:rgba(255,255,255,.75); color:var(--d-tinta); transform:translateX(2px);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn.active{background:#fff; color:var(--accent-2); box-shadow:inset 0 0 0 1px #f3d6e3, 0 8px 18px -12px rgba(180,81,122,.6); position:relative;}
+  :root[data-theme="lavanda"][data-dama] .nav-btn.active::before{content:""; position:absolute; left:-6px; top:9px; bottom:9px; width:4px; border-radius:4px; background:linear-gradient(180deg,#f29bbf,#a98be0);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn.active svg{background:color-mix(in srgb, var(--ic) 26%, #ffffff);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn .count:empty{display:none;}
+  :root[data-theme="lavanda"][data-dama] .nav-btn .count{background:#fff; border-radius:99px; padding:1px 8px; color:var(--accent); box-shadow:inset 0 0 0 1px #f3d6e3; font-weight:700;}
+  :root[data-theme="lavanda"][data-dama] .session-card{background:rgba(255,255,255,.75); border-color:#f0dfe8; border-radius:16px;}
+  :root[data-theme="lavanda"][data-dama] .session-card .avatar{background:linear-gradient(135deg,#f29bbf,#a98be0) !important; box-shadow:0 0 0 2px #fff, 0 0 0 3px var(--d-oro-s);}
+
+  /* encabezado con guirnalda */
+  :root[data-theme="lavanda"][data-dama] .topbar::after{top:-30px; right:110px; width:340px; max-width:38%; aspect-ratio:340/130;
+    background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 340 130'%3E%3Cpath d='M8 20C70 70 150 84 230 62s86-34 104-52' fill='none' stroke='%23d8b874' stroke-width='1.6' stroke-linecap='round'/%3E%3Cpath d='M60 52c-4-10 2-18 10-20M128 72c-2-10 6-17 14-17M210 66c2-10 11-14 18-12M282 40c3-9 12-12 19-9' fill='none' stroke='%23d8b874' stroke-width='1.1' stroke-linecap='round' opacity='.8'/%3E%3Cg%3E%3Ccircle cx='96' cy='66' r='9' fill='%23f9cfe0'/%3E%3Ccircle cx='96' cy='66' r='4' fill='%23e58ab3'/%3E%3Ccircle cx='170' cy='74' r='11' fill='%23e3d8f7'/%3E%3Ccircle cx='170' cy='74' r='4.5' fill='%23a98be0'/%3E%3Ccircle cx='244' cy='58' r='9' fill='%23fde2cc'/%3E%3Ccircle cx='244' cy='58' r='4' fill='%23e8a066'/%3E%3Ccircle cx='306' cy='30' r='8' fill='%23cfeee0'/%3E%3Ccircle cx='306' cy='30' r='3.5' fill='%2366b892'/%3E%3Ccircle cx='40' cy='40' r='7' fill='%23d6eafa'/%3E%3Ccircle cx='40' cy='40' r='3' fill='%236fa8d8'/%3E%3C/g%3E%3Cg fill='%23f29bbf'%3E%3Cellipse cx='120' cy='84' rx='6' ry='3' transform='rotate(30 120 84)'/%3E%3Cellipse cx='200' cy='80' rx='6' ry='3' transform='rotate(-25 200 80)'/%3E%3C/g%3E%3Cg fill='%23d8b874'%3E%3Ccircle cx='70' cy='60' r='2'/%3E%3Ccircle cx='140' cy='82' r='2'/%3E%3Ccircle cx='222' cy='70' r='2'/%3E%3Ccircle cx='280' cy='48' r='2'/%3E%3C/g%3E%3Cpath d='M164 92c-10 4-16 12-14 22l10-6 4 10 4-10 10 6c2-10-4-18-14-22Z' fill='%23f9cfe0' stroke='%23e58ab3' stroke-width='1.2'/%3E%3C/svg%3E") center/contain no-repeat;}
+
+  /* tarjetas */
+  :root[data-theme="lavanda"][data-dama] .panel, :root[data-theme="lavanda"][data-dama] .table-wrap, :root[data-theme="lavanda"][data-dama] .kpi,
+  :root[data-theme="lavanda"][data-dama] .rs-card, :root[data-theme="lavanda"][data-dama] .rs-kpi, :root[data-theme="lavanda"][data-dama] .day-panel-head h3{font-size:21px; color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .day-panel{
+    border-radius:20px; border-color:#f1e0e9;
+    box-shadow:inset 0 0 0 4px #fff, inset 0 0 0 5px #f8ecd8, 0 16px 32px -24px rgba(160,90,140,.5);}
+  :root[data-theme="lavanda"][data-dama] .rs-card-h h3, :root[data-theme="lavanda"][data-dama] .panel h3{font-size:19px;}
+  :root[data-theme="lavanda"][data-dama] .rs-hero h2{font-size:34px; color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .rs-fecha{font-family:var(--d-caps); letter-spacing:.2em; color:#b08a4a;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi::before{display:none;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi, :root[data-theme="lavanda"][data-dama] .kpi{border-top:none; --dk:var(--d-rosa); --dt:#a8386f;
+    background:linear-gradient(160deg, color-mix(in srgb, var(--dk) 55%, #fff) 0%, #fff 70%);}
+  :root[data-theme="lavanda"][data-dama] .rs-kpis > :nth-child(4n+2), :root[data-theme="lavanda"][data-dama] .kpis > :nth-child(4n+2){--dk:var(--d-lav); --dt:#6a4fb8;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpis > :nth-child(4n+3), :root[data-theme="lavanda"][data-dama] .kpis > :nth-child(4n+3){--dk:var(--d-menta); --dt:#2f7d5c;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpis > :nth-child(4n), :root[data-theme="lavanda"][data-dama] .kpis > :nth-child(4n){--dk:var(--d-melo); --dt:#a5612a;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi-l, :root[data-theme="lavanda"][data-dama] .kpi .label{font-family:var(--d-caps); font-size:10px; letter-spacing:.18em; color:var(--dt);}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi-v, :root[data-theme="lavanda"][data-dama] .kpi .value{font-family:var(--d-display); font-size:32px; font-weight:700; color:var(--d-tinta); font-variant-numeric:lining-nums tabular-nums; line-height:1.05;}
+
+  /* tablas */
+  :root[data-theme="lavanda"][data-dama] thead{background:linear-gradient(90deg,#fde8f1 0%,#f2ebfc 50%,#e7f3fc 100%);}
+  :root[data-theme="lavanda"][data-dama] thead th{background:transparent; color:#7e3b67; font-family:var(--d-caps); font-size:10px; letter-spacing:.16em; font-weight:600; border-bottom-color:#f0dfe8;}
+  :root[data-theme="lavanda"][data-dama] tbody tr:nth-child(even){background:#fffafc;}
+  :root[data-theme="lavanda"][data-dama] tbody tr:hover{background:#fdf0f6;}
+  :root[data-theme="lavanda"][data-dama] td{border-bottom-color:#f6e9ef;}
+
+  /* botones y campos */
+  :root[data-theme="lavanda"][data-dama] .btn{border-radius:999px; border-color:#efd9e4; background:#fff;}
+  :root[data-theme="lavanda"][data-dama] .btn:hover{background:#fdeef5; border-color:#ebc6d8;}
+  :root[data-theme="lavanda"][data-dama] .btn.primary{background:linear-gradient(135deg,#d4699a 0%,#9a78d6 100%); border-color:transparent; color:#fff; box-shadow:0 8px 18px -10px rgba(154,120,214,.8);}
+  :root[data-theme="lavanda"][data-dama] .btn.primary:hover{background:linear-gradient(135deg,#c2578a 0%,#8665c9 100%); color:#fff;}
+  :root[data-theme="lavanda"][data-dama] .icon-btn{border-radius:12px;}
+  :root[data-theme="lavanda"][data-dama] .field input, :root[data-theme="lavanda"][data-dama] .field select, :root[data-theme="lavanda"][data-dama] .field textarea,
+  :root[data-theme="lavanda"][data-dama] .main input[type="text"], :root[data-theme="lavanda"][data-dama] .main input[type="search"], :root[data-theme="lavanda"][data-dama] .main select{
+    border-radius:12px; border-color:#efd9e4; background:#fffdfe;}
+  :root[data-theme="lavanda"][data-dama] input:focus, :root[data-theme="lavanda"][data-dama] select:focus, :root[data-theme="lavanda"][data-dama] textarea:focus{outline:none; border-color:#e58ab3 !important; box-shadow:0 0 0 3px #fde3ee;}
+  :root[data-theme="lavanda"][data-dama] .subtabs{background:linear-gradient(90deg,#fdeef5,#f3eefc); border-color:#f0dfe8; border-radius:999px; padding:4px;}
+  :root[data-theme="lavanda"][data-dama] .subtab-btn{border-radius:999px;}
+  :root[data-theme="lavanda"][data-dama] .subtab-btn.active{background:#fff; color:var(--accent-2); box-shadow:inset 0 0 0 1px #f3d6e3, 0 6px 14px -10px rgba(180,81,122,.6);}
+  :root[data-theme="lavanda"][data-dama] .info-box:not(.ok):not(.warn){background:linear-gradient(90deg,#fdf1f7,#f6f1fd); border-color:#f0dfe8; border-radius:14px;}
+  :root[data-theme="lavanda"][data-dama] .pill{box-shadow:inset 0 0 0 1px rgba(255,255,255,.7);}
+
+  /* ventanas */
+  :root[data-theme="lavanda"][data-dama] .overlay{background:rgba(90,50,90,.30); backdrop-filter:blur(3px);}
+  :root[data-theme="lavanda"][data-dama] .modal{border-radius:24px; border-color:#f0dfe8; overflow:hidden;
+    background:linear-gradient(90deg,#f29bbf,#c9b3f0,#a9d4f2,#a9e2c8) top/100% 5px no-repeat, #fff;
+    box-shadow:inset 0 0 0 5px #fff, inset 0 0 0 6px #f8ecd8, 0 30px 70px -30px rgba(120,60,110,.55);}
+  :root[data-theme="lavanda"][data-dama] .modal-head{border-bottom-color:#f4e6ee;}
+  :root[data-theme="lavanda"][data-dama] .modal-head h3{font-family:var(--d-display); font-size:22px; color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .toast{background:linear-gradient(135deg,#b4517a,#7e5cc0); border-radius:999px;}
+
+  /* agenda */
+  :root[data-theme="lavanda"][data-dama] .cal-head{background:linear-gradient(90deg,#fde3ee 0%,#efe7fc 50%,#e2f1fb 100%);}
+  :root[data-theme="lavanda"][data-dama] .cal-head h3{font-size:22px; color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .cal-dow{font-family:var(--d-caps); letter-spacing:.14em; color:#9a7bc9; background:#fcf9ff;}
+  :root[data-theme="lavanda"][data-dama] #calGrid .cal-cell:nth-child(7n+6), :root[data-theme="lavanda"][data-dama] #calGrid .cal-cell:nth-child(7n){background:#fbf7ff;}
+  :root[data-theme="lavanda"][data-dama] .cal-cell.today{background:linear-gradient(160deg,#fde3ee 0%,#fff 75%) !important;}
+  :root[data-theme="lavanda"][data-dama] .cal-cell.today .cal-daynum{background:linear-gradient(135deg,#e07aa6,#9a78d6); color:#fff; box-shadow:0 4px 10px -4px rgba(154,120,214,.8);}
+  :root[data-theme="lavanda"][data-dama] .cal-evt{border-radius:6px;}
+  :root[data-theme="lavanda"][data-dama] .day-panel{background:linear-gradient(90deg,#f29bbf,#c9b3f0,#a9d4f2) top/100% 5px no-repeat, #fff;}
+  :root[data-theme="lavanda"][data-dama] .evt-card{border-radius:14px;}
+
+  /* selector de tema y barra de desplazamiento */
+  :root[data-theme="lavanda"][data-dama] .theme-btn[data-theme-set="lavanda"] .theme-sw i:nth-child(1){background:#f9cfe0 !important;}
+  :root[data-theme="lavanda"][data-dama] .theme-btn[data-theme-set="lavanda"] .theme-sw i:nth-child(2){background:#e3d8f7 !important;}
+  :root[data-theme="lavanda"][data-dama] .theme-btn[data-theme-set="lavanda"] .theme-sw i:nth-child(3){background:#cfeee0 !important;}
+  :root[data-theme="lavanda"][data-dama] *{scrollbar-color:#ebc6d8 transparent;}
+  :root[data-theme="lavanda"][data-dama] ::-webkit-scrollbar{width:10px; height:10px;}
+  :root[data-theme="lavanda"][data-dama] ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#f6c6da,#d8cbf3); border-radius:99px; border:2px solid transparent; background-clip:padding-box;}
+  @media (max-width:760px){
+    :root[data-theme="lavanda"][data-dama] .topbar h1{font-size:26px;}
+    :root[data-theme="lavanda"][data-dama] .rs-hero h2{font-size:28px;}
+    :root[data-theme="lavanda"][data-dama] .rs-kpi-v, :root[data-theme="lavanda"][data-dama] .kpi .value{font-size:26px;}
+  }
 
   /* Cotizaciones: flujo encadenado como en la maqueta */
   .cot-flujo{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}

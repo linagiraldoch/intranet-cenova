@@ -136,3 +136,8 @@ npx wrangler dev
 - Tablas: se ven como tarjetas. El encabezado de cada columna se copia solo a sus celdas (`data-label`), así que una tabla nueva dentro de `.table-wrap` queda en tarjetas sin hacer nada más.
 - Ventanas: a pantalla completa, con el encabezado y los botones fijos; si hay más de dos botones, los secundarios van en "Más acciones".
 - Anclar al inicio: `manifest.webmanifest` + íconos (`icon-*.png`, `apple-touch-icon.png`), servidos sin sesión por el Worker. El botón "Anclar al inicio del celular" del menú muestra los pasos (iPhone: Safari → Compartir → Agregar a pantalla de inicio; Android: Chrome → ⋮ → Instalar app). La app abre en `/login`: por seguridad cada apertura pide ingresar.
+
+## Rosa de la duquesa (tema Rosa de Lina, 2026-10-14)
+
+- El tema **Rosa** (`data-theme="lavanda"`) tiene una versión propia solo para el usuario `lmgiraldo`: `web/app.js` pone `data-dama` en `<html>` al recibir `/api/me` (y lo recuerda en `localStorage` `cenova.dama` para pintarlo sin parpadeo). Los estilos están en el bloque "Rosa de la duquesa" de `web/index.html`, todos con `:root[data-theme="lavanda"][data-dama]`.
+- Los demás usuarios que elijan Rosa ven el Rosa de siempre. Es solo apariencia: no cambia permisos ni datos.
