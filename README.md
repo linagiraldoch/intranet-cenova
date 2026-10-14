@@ -141,3 +141,10 @@ npx wrangler dev
 
 - El tema **Rosa** (`data-theme="lavanda"`) tiene una versión propia solo para el usuario `lmgiraldo`: `web/app.js` pone `data-dama` en `<html>` al recibir `/api/me` (y lo recuerda en `localStorage` `cenova.dama` para pintarlo sin parpadeo). Los estilos están en el bloque "Rosa de la duquesa" de `web/index.html`, todos con `:root[data-theme="lavanda"][data-dama]`.
 - Los demás usuarios que elijan Rosa ven el Rosa de siempre. Es solo apariencia: no cambia permisos ni datos.
+
+## Selector de clientes (2026-10-14)
+
+- Los campos **Cliente** de la cotización, el proyecto y el evento, y **Atención (contacto)** de la cotización, ya no usan la lista desplegable del navegador: al tocarlos (o con la lupa) se abre una tabla con buscador (nombre, NIT, ciudad, dirección o contacto). Cada cliente muestra NIT, ciudad, contacto principal y cuántas cotizaciones y proyectos tiene; con ▾ se despliegan su dirección y todos sus contactos. Tocar el cliente lo carga con todos sus datos; tocar uno de sus contactos carga el cliente y ese contacto.
+- En el celular se abre como hoja desde abajo, con letra y botones más grandes, y se acomoda al teclado.
+- Teclado en computador: ↑ ↓ para moverse, → para ver los datos, Enter para usar, Esc para cerrar.
+- Código: bloque "Selector de clientes" de `web/index.html` (`cpMontar`). El campo sigue siendo el mismo `<input>`, así que guardar, validar y autocompletar funcionan igual. Administración (o cualquiera, en el contacto) puede usar un nombre escrito a mano con "Usar «…»".

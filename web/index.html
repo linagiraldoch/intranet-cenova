@@ -901,6 +901,66 @@
   :root[data-theme="lavanda"] .cal-cell.today .cal-daynum{background:var(--accent); color:#fff;}
   @media (max-width:760px){ :root[data-theme="lavanda"] .topbar::after{display:none;} }
 
+  /* ===== Selector de clientes (2026-10-14) ===== */
+  .cp-wrap{position:relative; display:block;}
+  .cp-wrap > input{width:100%; padding-right:42px !important; box-sizing:border-box;}
+  .cp-btn{position:absolute; right:4px; top:50%; transform:translateY(-50%); width:34px; height:34px; border:none; background:none; border-radius:8px; color:var(--text-muted); cursor:pointer; display:flex; align-items:center; justify-content:center;}
+  .cp-btn svg{width:18px; height:18px;}
+  .cp-btn:hover{background:var(--surface-2); color:var(--accent);}
+  .cp-wrap > input:disabled + .cp-btn{display:none;}
+  .cp-wrap > input.cp-ok{box-shadow:0 0 0 3px var(--success-soft); border-color:var(--success) !important; transition:box-shadow .2s;}
+  .cp-panel{position:fixed; z-index:200; display:flex; flex-direction:column; background:var(--surface); border:1px solid var(--border); border-radius:14px; box-shadow:0 24px 50px -18px rgba(10,20,40,.45); overflow:hidden; font-size:13.5px; color:var(--text);}
+  .cp-buscar{display:flex; align-items:center; gap:8px; margin:10px; padding:0 12px; border:1px solid var(--border); border-radius:10px; background:var(--surface-2); flex:none;}
+  .cp-buscar svg{width:17px; height:17px; color:var(--text-muted); flex:none;}
+  .cp-buscar input{flex:1; min-width:0; border:none !important; outline:none; background:transparent !important; box-shadow:none !important; padding:10px 0 !important; font:inherit; font-size:14px; color:var(--text);}
+  .cp-buscar:focus-within{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);}
+  .cp-lista{overflow-y:auto; flex:1; min-height:0; padding:0 6px 6px; overscroll-behavior:contain;}
+  .cp-item{border-radius:10px;}
+  .cp-item.cp-ab{background:var(--surface-2); margin:2px 0;}
+  .cp-fila{display:flex; align-items:center; gap:10px; padding:8px 8px; border-radius:10px; cursor:pointer; min-width:0;}
+  .cp-fila:hover{background:var(--surface-2);}
+  .cp-fila.cp-sel{background:var(--accent-soft);}
+  .cp-fila.cp-actual .cp-ini{background:var(--accent); color:#fff;}
+  .cp-ini{width:32px; height:32px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; background:var(--accent-soft); color:var(--accent-2);}
+  .cp-txt{flex:1; min-width:0; display:flex; flex-direction:column; line-height:1.3;}
+  .cp-txt b{font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cp-txt small, .cp-meta small{color:var(--text-muted); font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .cp-meta{flex:none; max-width:38%; display:flex; flex-direction:column; align-items:flex-end; text-align:right; line-height:1.3; font-size:12px; min-width:0;}
+  .cp-meta > span{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%;}
+  .cp-meta em, .cp-tag{font-style:normal; font-size:10.5px; font-weight:700; color:var(--accent); background:var(--accent-soft); border-radius:99px; padding:1px 6px;}
+  .cp-flecha{flex:none; width:30px; height:30px; border:1px solid var(--border); background:var(--surface); border-radius:8px; color:var(--text-muted); cursor:pointer; font-size:13px; transition:transform .15s;}
+  .cp-ab .cp-flecha{transform:rotate(180deg); color:var(--accent);}
+  .cp-detalle{padding:2px 10px 12px 50px;}
+  .cp-detalle dl{display:grid; grid-template-columns:1fr 1fr; gap:6px 14px; margin:0 0 8px;}
+  .cp-detalle dl div{min-width:0;} .cp-detalle .cp-ancho{grid-column:1/-1;}
+  .cp-detalle dt, .cp-dt{font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--text-muted); margin:0;}
+  .cp-detalle dd{margin:1px 0 0; overflow-wrap:anywhere;}
+  .cp-contactos{list-style:none; margin:4px 0 10px; padding:0; display:flex; flex-direction:column; gap:4px;}
+  .cp-contactos button{width:100%; text-align:left; display:flex; flex-direction:column; gap:1px; padding:7px 10px; border:1px solid var(--border); background:var(--surface); border-radius:9px; cursor:pointer; font:inherit; color:var(--text);}
+  .cp-contactos button:hover{border-color:var(--accent);}
+  .cp-contactos small{color:var(--text-muted); font-size:11.5px; overflow-wrap:anywhere;}
+  .cp-usar{width:100%; justify-content:center;}
+  .cp-panel mark{background:var(--warning-soft); color:inherit; border-radius:3px; padding:0 1px;}
+  .cp-libre{display:block; width:calc(100% - 4px); margin:2px 2px 6px; text-align:left; padding:9px 12px; border:1px dashed var(--accent); background:var(--accent-soft); color:var(--accent-2); border-radius:10px; font:inherit; font-weight:600; cursor:pointer; overflow-wrap:anywhere;}
+  .cp-vacio{margin:14px 10px; color:var(--text-muted); text-align:center; line-height:1.45;}
+  .cp-muted{color:var(--text-muted);}
+  .cp-pie{flex:none; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:8px 14px; border-top:1px solid var(--border); font-size:11.5px; color:var(--text-muted); background:var(--surface);}
+  .cp-pie:empty{display:none;}
+  .cp-fondo{position:fixed; inset:0; z-index:199; background:rgba(10,16,26,.45);}
+  .cp-hoja{left:0 !important; right:0; bottom:0; top:auto !important; width:auto !important; max-height:none !important; height:min(86dvh, 680px); border-radius:20px 20px 0 0; padding-bottom:env(safe-area-inset-bottom,0px); font-size:14.5px; animation:cpSube .18s ease-out;}
+  @keyframes cpSube{from{transform:translateY(30px); opacity:.4;} to{transform:none; opacity:1;}}
+  .cp-hoja-cab{display:flex; align-items:center; justify-content:space-between; padding:14px 14px 0 18px; flex:none;}
+  .cp-hoja-cab strong{font-size:17px;}
+  .cp-hoja .cp-buscar input{font-size:16px; padding:12px 0 !important;}
+  .cp-hoja .cp-fila{padding:11px 8px;}
+  .cp-hoja .cp-ini{width:38px; height:38px; font-size:15px;}
+  .cp-hoja .cp-flecha{width:40px; height:40px; font-size:15px;}
+  .cp-hoja .cp-meta{display:none;}
+  .cp-hoja .cp-detalle{padding:2px 10px 12px 10px;}
+  .cp-hoja .cp-contactos button{padding:10px 12px;}
+  .cp-hoja .cp-atajos{display:none;}
+  @media (hover:none){ .cp-atajos{display:none;} }
+
   /* ===== Rosa de la duquesa (2026-10-14): el tema Rosa solo para el usuario de Lina (lmgiraldo).
      app.js pone data-dama en <html> cuando entra Lina; los demás usuarios con tema Rosa ven el Rosa de siempre.
      Pasteles (rosa, lavanda, menta, melocotón, cielo), filete dorado fino, Cormorant Garamond y Cinzel. ===== */
@@ -2718,6 +2778,207 @@
     });
   }
   document.getElementById('cotCliente').addEventListener('input', function(){ autofillClienteEnCot(this.value, false); });
+  /* ---------- Selector de clientes (2026-10-14, pedido del equipo) ----------
+     Reemplaza la lista desplegable del navegador en los campos de cliente (cotización, proyecto, evento)
+     y de contacto (cotización): tabla que se despliega con lupa para buscar; cada cliente se puede abrir
+     para ver todos sus contactos y datos, y al tocarlo se carga en el campo (y en la cotización, toda su
+     información). En el celular se abre como hoja a pantalla casi completa.
+     El campo sigue siendo el mismo <input>: el resto del código lee su valor como antes. */
+  var CP = { abierto: null };
+  var CP_LUPA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+  function cpNorm(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').trim(); }
+  function cpClientes(){
+    var out = [];
+    state.clientes.forEach(function(c, id){ if(c && c.nombre) out.push({ id:id, c:c }); });
+    if(!out.length){
+      var vistos = {};
+      state.cotizaciones.forEach(function(x){ if(x.cliente && !vistos[cpNorm(x.cliente)]){ vistos[cpNorm(x.cliente)] = 1; out.push({ id:'', c:{ nombre:x.cliente, nit:x.clienteNit||'', ciudad:x.clienteCiudad||'', direccion:x.clienteDireccion||'', contacto:x.clienteContacto||'', telefono:x.clienteTelefono||'', email:x.clienteEmail||'' } }); } });
+    }
+    out.sort(function(a,b){ return cpNorm(a.c.nombre).localeCompare(cpNorm(b.c.nombre)); });
+    return out;
+  }
+  function cpUsoCliente(nombre){
+    var n = cpNorm(nombre), cot = 0, proy = 0;
+    state.cotizaciones.forEach(function(x){ if(cpNorm(x.cliente) === n) cot++; });
+    state.proyectos.forEach(function(x){ if(cpNorm(x.cliente) === n) proy++; });
+    return { cot:cot, proy:proy };
+  }
+  function cpMontar(inputId, modo){
+    var inp = document.getElementById(inputId); if(!inp || inp.dataset.cp) return;
+    inp.dataset.cp = modo; inp.removeAttribute('list'); inp.setAttribute('autocomplete','off');
+    var wrap = document.createElement('span'); wrap.className = 'cp-wrap';
+    inp.parentNode.insertBefore(wrap, inp); wrap.appendChild(inp);
+    var b = document.createElement('button'); b.type = 'button'; b.className = 'cp-btn'; b.tabIndex = -1;
+    b.setAttribute('aria-label', modo === 'contacto' ? 'Buscar contacto' : 'Buscar cliente'); b.innerHTML = CP_LUPA;
+    wrap.appendChild(b);
+    b.addEventListener('mousedown', function(e){ e.preventDefault(); });
+    b.addEventListener('click', function(){ if(inp.disabled) return; if(CP.abierto && CP.abierto.inp === inp) cpCerrar(); else cpAbrir(inp, ''); });
+    inp.addEventListener('focus', function(){ if(!inp.disabled && !esCel() && !(CP.abierto && CP.abierto.inp === inp)) cpAbrir(inp, ''); });
+    inp.addEventListener('click', function(){ if(!inp.disabled && esCel()) { inp.blur(); cpAbrir(inp, ''); } });
+    inp.addEventListener('input', function(e){ if(e.isTrusted && !esCel()){ if(!(CP.abierto && CP.abierto.inp === inp)) cpAbrir(inp, inp.value); else { CP.abierto.q = inp.value; CP.abierto.sel = 0; CP.abierto.panel.querySelector('.cp-buscar input').value = inp.value; cpPintar(); } } });
+    inp.addEventListener('keydown', function(e){
+      if(!CP.abierto || CP.abierto.inp !== inp) { if(e.key === 'ArrowDown'){ cpAbrir(inp, ''); e.preventDefault(); } return; }
+      cpTeclas(e);
+    });
+    inp.addEventListener('blur', function(){ setTimeout(function(){ var a = document.activeElement; if(CP.abierto && CP.abierto.inp === inp && !(a && CP.abierto.panel.contains(a))) cpCerrar(); }, 120); });
+  }
+  function esCel(){ return window.matchMedia('(max-width:760px)').matches; }
+  function cpItems(){
+    var A = CP.abierto, q = cpNorm(A.q);
+    if(A.modo === 'contacto'){
+      var c = findClienteByNombre(document.getElementById('cotCliente').value);
+      return cliContactos(c).map(function(k, i){ return { tipo:'k', k:k, i:i }; })
+        .filter(function(x){ return !q || cpNorm([x.k.nombre, x.k.cargo, x.k.telefono, x.k.email].join(' ')).indexOf(q) !== -1; });
+    }
+    return cpClientes().filter(function(x){
+      var c = x.c, ks = cliContactos(c).map(function(k){ return [k.nombre,k.telefono,k.email].join(' '); }).join(' ');
+      return !q || cpNorm([c.nombre, c.nit, c.ciudad, c.direccion, ks].join(' ')).indexOf(q) !== -1;
+    });
+  }
+  function cpAbrir(inp, q){
+    cpCerrar();
+    var modo = inp.dataset.cp, cel = esCel();
+    var p = document.createElement('div');
+    p.className = 'cp-panel' + (cel ? ' cp-hoja' : '');
+    p.setAttribute('role','dialog'); p.setAttribute('aria-label', modo === 'contacto' ? 'Elegir contacto' : 'Elegir cliente');
+    p.innerHTML = (cel ? '<div class="cp-hoja-cab"><strong>' + (modo === 'contacto' ? 'Elegir contacto' : 'Elegir cliente') + '</strong><button type="button" class="icon-btn cp-x" aria-label="Cerrar">✕</button></div>' : '') +
+      '<label class="cp-buscar">' + CP_LUPA + '<input type="search" placeholder="' + (modo === 'contacto' ? 'Buscar por nombre, cargo, teléfono o correo' : 'Buscar por nombre, NIT, ciudad o contacto') + '" autocomplete="off" enterkeyhint="search"></label>' +
+      '<div class="cp-lista" role="listbox"></div><div class="cp-pie"></div>';
+    var fondo = null;
+    if(cel){ fondo = document.createElement('div'); fondo.className = 'cp-fondo'; document.body.appendChild(fondo); fondo.addEventListener('click', cpCerrar); }
+    document.body.appendChild(p);
+    CP.abierto = { inp:inp, modo:modo, panel:p, fondo:fondo, q:q || '', sel:0, abiertos:{} };
+    var bus = p.querySelector('.cp-buscar input');
+    bus.value = CP.abierto.q;
+    bus.addEventListener('input', function(){ CP.abierto.q = bus.value; CP.abierto.sel = 0; cpPintar(); });
+    bus.addEventListener('keydown', cpTeclas);
+    bus.addEventListener('blur', function(){ setTimeout(function(){ var a = document.activeElement; if(CP.abierto && CP.abierto.panel === p && a !== inp && !p.contains(a) && !esCel()) cpCerrar(); }, 120); });
+    p.addEventListener('mousedown', function(e){ if(!e.target.closest('input')) e.preventDefault(); });
+    p.addEventListener('click', function(e){
+      if(e.target.closest('.cp-x')){ cpCerrar(); return; }
+      var t = e.target.closest('[data-cp-toggle]');
+      if(t){ var k = t.dataset.cpToggle; CP.abierto.abiertos[k] = !CP.abierto.abiertos[k]; cpPintar(); return; }
+      if(e.target.closest('[data-cp-texto]')){ cpPoner(CP.abierto.inp, CP.abierto.q.trim()); return; }
+      var kc = e.target.closest('[data-cp-contacto]');
+      if(kc){ cpElegirCliente(kc.dataset.cpCliente, Number(kc.dataset.cpContacto)); return; }
+      var r = e.target.closest('[data-cp-i]');
+      if(r) cpElegir(Number(r.dataset.cpI));
+    });
+    cpPintar(); cpUbicar();
+    if(cel || q === '') setTimeout(function(){ if(cel || document.activeElement !== inp) bus.focus(); }, 30);
+  }
+  function cpUbicar(){
+    var A = CP.abierto; if(!A || A.panel.classList.contains('cp-hoja')) return;
+    var r = A.inp.getBoundingClientRect(), p = A.panel, w = Math.max(r.width, Math.min(560, window.innerWidth - 24));
+    var left = Math.min(r.left, window.innerWidth - w - 12), abajo = window.innerHeight - r.bottom - 12, arriba = r.top - 12;
+    p.style.width = w + 'px'; p.style.left = Math.max(12, left) + 'px';
+    if(abajo < 260 && arriba > abajo){ p.style.top = ''; p.style.bottom = (window.innerHeight - r.top + 6) + 'px'; p.style.maxHeight = Math.min(440, arriba) + 'px'; }
+    else { p.style.bottom = ''; p.style.top = (r.bottom + 6) + 'px'; p.style.maxHeight = Math.min(440, abajo) + 'px'; }
+  }
+  window.addEventListener('resize', function(){ if(CP.abierto && !CP.abierto.panel.classList.contains('cp-hoja')) cpUbicar(); });
+  // En el celular, que el teclado no tape la hoja: se ajusta al espacio visible.
+  if(window.visualViewport) window.visualViewport.addEventListener('resize', function(){
+    var A = CP.abierto; if(!A || !A.panel.classList.contains('cp-hoja')) return;
+    var vv = window.visualViewport, tapado = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    A.panel.style.bottom = tapado + 'px';
+    A.panel.style.height = Math.min(vv.height * (tapado > 0 ? 0.96 : 0.86), 680) + 'px';
+  });
+  document.addEventListener('scroll', function(e){ if(CP.abierto && !CP.abierto.panel.contains(e.target)) cpUbicar(); }, true);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && CP.abierto){ e.stopPropagation(); cpCerrar(); } }, true);
+  function cpCerrar(){
+    if(!CP.abierto) return;
+    CP.abierto.panel.remove(); if(CP.abierto.fondo) CP.abierto.fondo.remove();
+    CP.abierto = null;
+  }
+  function cpTeclas(e){
+    var A = CP.abierto; if(!A) return;
+    var n = A.panel.querySelectorAll('[data-cp-i]').length;
+    if(e.key === 'ArrowDown'){ A.sel = Math.min(n - 1, A.sel + 1); cpPintar(); e.preventDefault(); }
+    else if(e.key === 'ArrowUp'){ A.sel = Math.max(0, A.sel - 1); cpPintar(); e.preventDefault(); }
+    else if(e.key === 'ArrowRight' && A.modo !== 'contacto'){ var r = A.panel.querySelector('[data-cp-i="' + A.sel + '"]'); if(r){ A.abiertos[r.dataset.cpKey] = true; cpPintar(); } }
+    else if(e.key === 'ArrowLeft' && A.modo !== 'contacto'){ var r2 = A.panel.querySelector('[data-cp-i="' + A.sel + '"]'); if(r2){ A.abiertos[r2.dataset.cpKey] = false; cpPintar(); } }
+    else if(e.key === 'Enter'){ e.preventDefault(); if(n) cpElegir(A.sel); else if(A.panel.querySelector('[data-cp-texto]')) cpPoner(A.inp, A.q.trim()); }
+    else if(e.key === 'Tab') cpCerrar();
+  }
+  function cpMarcar(txt, q){
+    txt = String(txt||''); var n = cpNorm(q); if(!n) return escapeHtml(txt);
+    var base = cpNorm(txt), i = base.indexOf(n);
+    if(i === -1 || base.length !== txt.length) return escapeHtml(txt);
+    return escapeHtml(txt.slice(0,i)) + '<mark>' + escapeHtml(txt.slice(i, i + n.length)) + '</mark>' + escapeHtml(txt.slice(i + n.length));
+  }
+  function cpPintar(){
+    var A = CP.abierto; if(!A) return;
+    var items = cpItems(), lista = A.panel.querySelector('.cp-lista'), pie = A.panel.querySelector('.cp-pie'), q = A.q;
+    A.items = items; if(A.sel >= items.length) A.sel = Math.max(0, items.length - 1);
+    var actual = cpNorm(A.inp.value);
+    var exacto = items.some(function(x){ return cpNorm(A.modo === 'contacto' ? x.k.nombre : x.c.nombre) === cpNorm(q); });
+    var libre = q.trim() && !exacto && (A.modo === 'contacto' || precAdmin() || !state.clientes.size)
+      ? '<button type="button" class="cp-libre" data-cp-texto>Usar «' + escapeHtml(q.trim()) + '»' + (A.modo === 'contacto' ? ' como contacto nuevo' : ' tal como está escrito') + '</button>' : '';
+    if(A.modo === 'contacto'){
+      var cli = document.getElementById('cotCliente').value.trim();
+      lista.innerHTML = !cli ? '<p class="cp-vacio">Primero elige el cliente.</p>' :
+        !items.length ? '<p class="cp-vacio">' + (q ? 'Ningún contacto coincide.' : 'Este cliente no tiene contactos guardados. Escribe el nombre y se agregará al guardar la cotización.') + '</p>' :
+        items.map(function(x, j){ var k = x.k;
+          return '<div class="cp-fila' + (j === A.sel ? ' cp-sel' : '') + (cpNorm(k.nombre) === actual && actual ? ' cp-actual' : '') + '" role="option" data-cp-i="' + j + '">' +
+            '<span class="cp-ini">' + escapeHtml((k.nombre||'?').trim().charAt(0).toUpperCase()) + '</span>' +
+            '<span class="cp-txt"><b>' + cpMarcar(k.nombre || '(sin nombre)', q) + (x.i === 0 ? ' <em class="cp-tag">Principal</em>' : '') + '</b>' +
+            '<small>' + escapeHtml([k.cargo, k.telefono, k.email].filter(Boolean).join(' · ') || 'Sin datos de contacto') + '</small></span></div>';
+        }).join('');
+      if(cli) lista.innerHTML = libre + lista.innerHTML;
+      pie.innerHTML = cli ? '<span>' + items.length + (items.length === 1 ? ' contacto' : ' contactos') + ' de ' + escapeHtml(cli) + '</span>' : '';
+      cpScroll(); return;
+    }
+    lista.innerHTML = !items.length ? '<p class="cp-vacio">' + (q ? 'Ningún cliente coincide con «' + escapeHtml(q) + '».' : 'Todavía no hay clientes registrados.') + '</p>' :
+      items.map(function(x, j){
+        var c = x.c, ks = cliContactos(c), key = x.id || cpNorm(c.nombre), ab = !!A.abiertos[key] || (!!q && items.length === 1), uso = cpUsoCliente(c.nombre);
+        var sub = [c.nit ? 'NIT ' + c.nit : '', c.ciudad].filter(Boolean).join(' · ');
+        var k0 = ks[0];
+        return '<div class="cp-item' + (ab ? ' cp-ab' : '') + '">' +
+          '<div class="cp-fila' + (j === A.sel ? ' cp-sel' : '') + (cpNorm(c.nombre) === actual && actual ? ' cp-actual' : '') + '" role="option" data-cp-i="' + j + '" data-cp-key="' + escapeHtml(key) + '">' +
+          '<span class="cp-ini">' + escapeHtml(c.nombre.trim().charAt(0).toUpperCase()) + '</span>' +
+          '<span class="cp-txt"><b>' + cpMarcar(c.nombre, q) + '</b><small>' + escapeHtml(sub || 'Sin NIT ni ciudad') + '</small></span>' +
+          '<span class="cp-meta">' + (k0 ? '<span>' + escapeHtml(k0.nombre || k0.telefono || '') + (ks.length > 1 ? ' <em>+' + (ks.length - 1) + '</em>' : '') + '</span>' : '<span class="cp-muted">Sin contacto</span>') +
+          '<small>' + uso.cot + ' cot. · ' + uso.proy + ' proy.</small></span>' +
+          '<button type="button" class="cp-flecha" data-cp-toggle="' + escapeHtml(key) + '" aria-expanded="' + ab + '" aria-label="' + (ab ? 'Ocultar' : 'Ver') + ' datos de ' + escapeHtml(c.nombre) + '">▾</button></div>' +
+          (ab ? '<div class="cp-detalle">' +
+            '<dl><div><dt>NIT</dt><dd>' + escapeHtml(c.nit || '—') + '</dd></div><div><dt>Ciudad</dt><dd>' + escapeHtml(c.ciudad || '—') + '</dd></div>' +
+            '<div class="cp-ancho"><dt>Dirección</dt><dd>' + escapeHtml(c.direccion || '—') + '</dd></div></dl>' +
+            (ks.length ? '<p class="cp-dt">Contactos</p><ul class="cp-contactos">' + ks.map(function(k, i){
+              return '<li><button type="button" data-cp-cliente="' + j + '" data-cp-contacto="' + i + '"><b>' + escapeHtml(k.nombre || '(sin nombre)') + (i === 0 ? ' <em class="cp-tag">Principal</em>' : '') + '</b><small>' + escapeHtml([k.cargo, k.telefono, k.email].filter(Boolean).join(' · ') || 'Sin datos') + '</small></button></li>';
+            }).join('') + '</ul>' : '<p class="cp-muted">Sin contactos guardados.</p>') +
+            '<button type="button" class="btn sm primary cp-usar" data-cp-i="' + j + '">Usar este cliente</button></div>' : '') +
+          '</div>';
+      }).join('');
+    lista.innerHTML = libre + lista.innerHTML;
+    var nota = precAdmin() ? '' : ' · ¿No está? Pídele a Lina que lo cree.';
+    pie.innerHTML = '<span>' + items.length + (items.length === 1 ? ' cliente' : ' clientes') + nota + '</span><span class="cp-atajos">↑↓ elegir · → ver datos · Enter usar</span>';
+    cpScroll();
+  }
+  function cpScroll(){ var A = CP.abierto, s = A && A.panel.querySelector('.cp-sel'); if(s && s.scrollIntoView) s.scrollIntoView({ block:'nearest' }); }
+  function cpElegir(j){
+    var A = CP.abierto; if(!A || !A.items || !A.items[j]) return;
+    if(A.modo === 'contacto'){ cpPoner(A.inp, A.items[j].k.nombre || ''); return; }
+    cpPoner(A.inp, A.items[j].c.nombre);
+  }
+  function cpElegirCliente(j, ki){
+    var A = CP.abierto; if(!A || !A.items || !A.items[Number(j)]) return;
+    var c = A.items[Number(j)].c, inp = A.inp;
+    cpPoner(inp, c.nombre);
+    if(inp.id === 'cotCliente'){
+      var k = cliContactos(c)[ki]; if(!k) return;
+      var ct = document.getElementById('cotClienteContacto');
+      ct.value = k.nombre || ''; ct.dispatchEvent(new Event('input', { bubbles:true }));
+    }
+  }
+  function cpPoner(inp, valor){
+    cpCerrar();
+    inp.value = valor;
+    inp.dispatchEvent(new Event('input', { bubbles:true }));
+    inp.dispatchEvent(new Event('change', { bubbles:true }));
+    if(!esCel()) inp.focus();
+    inp.classList.add('cp-ok'); setTimeout(function(){ inp.classList.remove('cp-ok'); }, 700);
+  }
+  cpMontar('cotCliente', 'cliente'); cpMontar('proyCliente', 'cliente'); cpMontar('evtCliente', 'cliente'); cpMontar('cotClienteContacto', 'contacto');
   function respOptionsRefresh(){
     var set = new Set(['Lina Giraldo','Ángel Berrocal','Jorge Cantillo']);
     state.cotizaciones.forEach(function(c){ if(c.responsable) set.add(c.responsable); });
