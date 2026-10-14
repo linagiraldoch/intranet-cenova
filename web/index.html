@@ -1766,7 +1766,7 @@
       </div>
       <div class="field-row three">
         <div class="field"><label>Responsable</label><input type="text" id="cotResponsable" list="equipoList"></div>
-        <div class="field"><label>Fecha de envío</label><input type="date" id="cotFecha"></div>
+        <div class="field"><label>Fecha de la cotización</label><input type="date" id="cotFecha"><span class="no-file" id="cotFechaHint">Se pone sola con la fecha de hoy cada vez que guardas cambios en la cotización (mientras no esté aprobada ni rechazada).</span></div>
         <div class="field"><label>Vigencia (días hábiles)</label><input type="number" id="cotVigencia" min="1" step="1" value="15"></div>
       </div>
       <div class="field-row three">
@@ -2253,6 +2253,7 @@
         </div>
         <div class="field"><label>Fecha de recepción</label><input type="date" id="ocFechaRecepcion"></div>
       </div>
+      <p class="no-file" id="ocEditadoInfo" hidden></p>
       <div class="info-box" id="ocCotInfo"><span class="muted">Elige la cotización para traer cliente, valor y días de instalación.</span></div>
       <div class="field-row three">
         <div class="field"><label>Responsable</label><input type="text" id="ocResponsable" list="equipoList"></div>
@@ -4390,6 +4391,7 @@
   }
 
   function openCotModal(id, presetProyectoId){
+    setTimeout(function(){ if(state.cotAbierta) state.cotAbierta.clave = cotClaveForm(); }, 0);
     if(id && !state.cotizaciones.get(id)){ toast('No se pudo cargar esa cotización — vuelve a intentar.'); return; }
     state.editingCotId = id || null;
     var c = id ? (state.cotizaciones.get(id) || {}) : {};
@@ -4422,6 +4424,8 @@
     document.getElementById('cotEstado').value = COT_ESTADOS[c.estado] ? c.estado : 'pendiente_armar';
     cotEstadoHintRefresh();
     document.getElementById('cotFecha').value = c.fecha || '';
+    state.cotAbierta = { fecha: c.fecha || '', version: String(c.version || 1) };
+    document.getElementById('cotFechaHint').textContent = 'Se pone sola con la fecha de hoy cada vez que guardas cambios en la cotización (mientras no esté aprobada ni rechazada).' + editadoTxt(c);
     document.getElementById('cotCostingMode').value = c.costingMode || 'simple';
     document.getElementById('cotIva').value = (c.ivaPct != null ? c.ivaPct : 19);
     document.getElementById('cotIvaAiu').value = (c.ivaPct != null ? c.ivaPct : 19);
@@ -5792,6 +5796,7 @@
     document.getElementById('ocCotizacion').disabled = !!id;
     document.getElementById('ocMedio').value = o.medio || 'orden_compra';
     document.getElementById('ocFechaRecepcion').value = o.fechaRecepcion || todayIso();
+    var ocEd = document.getElementById('ocEditadoInfo'); ocEd.textContent = editadoTxt(o).trim(); ocEd.hidden = !o.editadoEn;
     document.getElementById('ocResponsable').value = o.responsable || '';
     document.getElementById('ocValor').value = (o.valor != null ? o.valor : '');
     document.getElementById('ocPlazoPago').value = (o.plazoPagoDias != null ? o.plazoPagoDias : 30);
@@ -5883,7 +5888,8 @@
       anticipoPct: document.getElementById('ocAnticipoPct').value==='' ? null : Number(document.getElementById('ocAnticipoPct').value),
       pagos: pagosClean,
       creadoPorId: prev.creadoPorId || state.userId || null,
-      creadoEn: prev.creadoEn || new Date().toISOString()
+      creadoEn: prev.creadoEn || new Date().toISOString(),
+      editadoEn: new Date().toISOString(), editadoPorId: state.userId || null
     });
     if(!f.fechaInicio) data.fechaConfirmacion = null;
     if(state.ocArchivo){
@@ -8304,6 +8310,30 @@
     }).catch(function(err){ toast('La cotización se guardó, pero no se pudo actualizar su orden: '+(err && err.message ? err.message : 'error'), 6000); });
   }
 
+  /* Lo que ve el cliente en la cotización: si algo de esto cambia, la fecha (y la versión, si ya se envió) se actualizan solas. */
+  function eraEdicionCot(prev){ return !!(prev && prev.numero); }
+  function cotContenidoClave(c){
+    return JSON.stringify([c.cliente||'', c.clienteNit||'', c.clienteContacto||'', c.clienteDireccion||'', c.clienteCiudad||'', c.clienteTelefono||'', c.clienteEmail||'',
+      c.descripcion||'', c.costingMode||'simple', Number(c.ivaPct)||0, Number(c.aiuAdministracionPct)||0, Number(c.aiuImprevistosPct)||0, Number(c.aiuUtilidadPct)||0, c.ivaBase||'',
+      c.condiciones||'', c.notas||'', Number(c.vigenciaDias)||0, c.diasInstalacion == null ? null : Number(c.diasInstalacion),
+      (c.items||[]).map(function(it){ return [it.descripcion||'', Number(it.cantidad)||0, Number(it.precioUnit)||0, it.unidad||'', it.categoria||'']; })]);
+  }
+  /* La misma clave, leída del formulario (se toma al abrir, ya con los datos autocompletados, para comparar al guardar). */
+  function cotClaveForm(){
+    var v = function(id){ var el = document.getElementById(id); return el ? el.value : ''; }, mode = v('cotCostingMode');
+    return cotContenidoClave({ cliente:v('cotCliente').trim(), clienteNit:v('cotClienteNit').trim(), clienteContacto:v('cotClienteContacto').trim(), clienteDireccion:v('cotClienteDireccion').trim(),
+      clienteCiudad:v('cotClienteCiudad').trim(), clienteTelefono:v('cotClienteTelefono').trim(), clienteEmail:v('cotClienteEmail').trim(), descripcion:v('cotDescripcion').trim(), costingMode:mode,
+      ivaPct:Number(v(mode === 'aiu' ? 'cotIvaAiu' : 'cotIva'))||0, aiuAdministracionPct:Number(v('cotAdminPct'))||0, aiuImprevistosPct:Number(v('cotImprevPct'))||0, aiuUtilidadPct:Number(v('cotUtilPct'))||0,
+      ivaBase:v('cotIvaBase'), condiciones:v('cotCondiciones').trim(), notas:v('cotNotas').trim(), vigenciaDias:Number(v('cotVigencia'))||15,
+      diasInstalacion: v('cotDiasInst') === '' ? null : Number(v('cotDiasInst')),
+      items:(state.items||[]).filter(function(it){ return it.descripcion || it.cantidad || it.precioUnit; }) });
+  }
+  var NOMBRES_EQUIPO = { lmgiraldo:'Lina', amberrocal:'Ángel', jlcantillo:'Jorge' };
+  function editadoTxt(x){
+    if(!x || !x.editadoEn) return '';
+    var quien = x.editadoPorId ? (NOMBRES_EQUIPO[x.editadoPorId] || x.editadoPorId) : '';
+    return ' Última edición: ' + fmtDate(String(x.editadoEn).slice(0,10)) + (quien ? ' · ' + quien : '') + '.';
+  }
   document.getElementById('cotSave').addEventListener('click', function(){
     var db = requireDb(); if(!db) return;
     var mode = document.getElementById('cotCostingMode').value;
@@ -8362,6 +8392,20 @@
       margenSobreVenta: !!state.cotMargenVenta
     };
     data.valor = cotTotal(data);
+    /* Fechas automáticas (2026-10-14): si cambió el contenido de la cotización (lo que ve el cliente),
+       su fecha pasa a hoy, salvo que esté aprobada o rechazada o que la fecha se haya cambiado a mano.
+       Si ya se había enviado, además sube la versión (salvo que se haya cambiado a mano). */
+    var autoAvisos = [], abierta = state.cotAbierta || { fecha:'', version:'1' };
+    var cambioContenido = !eraEdicionCot(prev) || (abierta.clave ? abierta.clave !== cotContenidoClave(data) : cotContenidoClave(prev) !== cotContenidoClave(data));
+    var fechaManual = document.getElementById('cotFecha').value !== abierta.fecha;
+    if(!data.fecha) data.fecha = todayIso();
+    else if(eraEdicionCot(prev) && cambioContenido && !fechaManual && data.estado !== 'aprobada' && data.estado !== 'rechazada' && data.fecha !== todayIso()){
+      data.fecha = todayIso(); autoAvisos.push('fecha actualizada a hoy');
+    }
+    if(eraEdicionCot(prev) && cambioContenido && prev.estado === 'enviada' && String(document.getElementById('cotVersion').value) === abierta.version){
+      data.version = (Number(prev.version) || 1) + 1; autoAvisos.push('versión ' + data.version);
+    }
+    data.editadoEn = new Date().toISOString(); data.editadoPorId = state.userId || null;
     /* En pausa: guarda desde cuándo y la última validación semanal (al salir de la pausa se borran). */
     if(data.estado === 'en_pausa'){
       data.pausaDesde = prev.estado === 'en_pausa' ? (prev.pausaDesde || todayIso()) : todayIso();
@@ -8377,7 +8421,7 @@
       if(newId){ state.cotizaciones.set(newId, data); syncAutoEventsFor('cotizacion', newId); }
       cotGuardarContactoEnCliente(db, data);
       var dest = (COT_TABS.filter(function(t){ return t.key === cotTabKey(newId || '', data); })[0]||{}).label;
-      toast('Cotización '+data.numero+' guardada'+(dest && prev.estado !== data.estado ? ' · pasó a "'+dest+'"' : '')); closeCotModal();
+      toast('Cotización '+data.numero+' guardada'+(dest && prev.estado !== data.estado ? ' · pasó a "'+dest+'"' : '')+(autoAvisos.length ? ' · '+autoAvisos.join(' · ') : ''), autoAvisos.length ? 4500 : undefined); closeCotModal();
       if(eraEdicion && newId) return propagarCambiosCotizacion(newId, prev, data);
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });

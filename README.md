@@ -148,3 +148,10 @@ npx wrangler dev
 - En el celular se abre como hoja desde abajo, con letra y botones más grandes, y se acomoda al teclado.
 - Teclado en computador: ↑ ↓ para moverse, → para ver los datos, Enter para usar, Esc para cerrar.
 - Código: bloque "Selector de clientes" de `web/index.html` (`cpMontar`). El campo sigue siendo el mismo `<input>`, así que guardar, validar y autocompletar funcionan igual. Administración (o cualquiera, en el contacto) puede usar un nombre escrito a mano con "Usar «…»".
+
+## Fechas automáticas (2026-10-14)
+
+- **Fecha de la cotización** (antes "Fecha de envío", campo `fecha`): al guardar, si cambió algo de lo que ve el cliente (datos del cliente, descripción, ítems, IVA/AIU, condiciones, notas, vigencia o días de instalación), pasa sola a la fecha de hoy, salvo que la cotización esté aprobada o rechazada o que la fecha se haya cambiado a mano en esa edición. Una cotización nueva sin fecha queda con la de hoy. La vigencia y el seguimiento se recalculan con esa fecha.
+- **Versión**: si la cotización ya estaba enviada y cambia su contenido, sube sola (salvo que se haya cambiado a mano).
+- Lo que se compara es el formulario tal como se abrió (ya autocompletado), así que cambiar solo el responsable, el estado o el proyecto no mueve la fecha.
+- **Última edición**: cotizaciones y órdenes guardan `editadoEn` y `editadoPorId`; se muestra bajo la fecha de la cotización y bajo la fecha de recepción de la orden. La fecha de recepción de la orden no cambia sola (es el día en que llegó).
