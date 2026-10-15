@@ -14,7 +14,7 @@ const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'fi
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
 // Precios: todos los ven; costos, márgenes y precios solo los cambia administración.
 // El equipo solo puede actualizar el stock y el contenido de los kits.
-const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'stockMin', 'ubicacion', 'componentes', 'editadoPor', 'editadoEn'];
+const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'stockMin', 'ubicacion', 'componentes', 'editadoPor', 'editadoEn', 'propuesta'];
 // Inventario: todos registran movimientos (entradas, salidas, conteos); solo administración los cambia o borra.
 const COOKIE = 'cenova_sesion';
 const MAX_INTENTOS = 5;
@@ -276,9 +276,8 @@ async function escribir(req, env, s, col, id, metodo) {
   const previo = actual ? JSON.parse(actual.data) : null;
   const ahora = Date.now();
 
-  if (col === 'precios' && !s.admin) {
-    if (metodo === 'DELETE' || !previo) return err(403, 'regla', 'Solo administración crea o borra ítems de Precios.');
-  }
+  // Precios (2026-10-14): el equipo puede crear ítems, pero quedan pendientes (pendiente: true) hasta que administración los apruebe.
+  if (col === 'precios' && !s.admin && metodo === 'DELETE') return err(403, 'regla', 'Solo administración borra ítems de Precios.');
   if (col === 'clientes' && !s.admin && (metodo === 'DELETE' || !previo)) {
     return err(403, 'regla', 'Solo administración (Lina) crea o borra clientes. Si es una persona nueva de un cliente que ya existe, agrégala como contacto.');
   }
@@ -304,11 +303,13 @@ async function escribir(req, env, s, col, id, metodo) {
     if (!previo) return err(404, 'no_existe', 'El registro no existe.');
     data = Object.assign({}, previo, data);
   }
-  if (col === 'precios' && !s.admin) {
+  if (col === 'precios' && !s.admin && (!previo || previo.pendiente)) {
+    if (data.pendiente !== true) return err(403, 'regla', 'Los ítems nuevos de Precios quedan por aprobar: solo administración los aprueba.');
+  } else if (col === 'precios' && !s.admin) {
     const llaves = new Set(Object.keys(previo).concat(Object.keys(data)));
     for (const k of llaves) {
       if (PRECIOS_CAMPOS_EQUIPO.indexOf(k) !== -1) continue;
-      if (JSON.stringify(previo[k]) !== JSON.stringify(data[k])) return err(403, 'regla', 'Los costos, márgenes y precios solo los cambia administración. Tú puedes actualizar el stock y el contenido de los kits.');
+      if (JSON.stringify(previo[k]) !== JSON.stringify(data[k])) return err(403, 'regla', 'Los costos, márgenes y precios se cambian con una propuesta que aprueba administración. Tú puedes actualizar el stock y el contenido de los kits.');
     }
   }
   if (col === 'clientes' && !s.admin && (String(data.nombre || '').trim() !== String(previo.nombre || '').trim() || String(data.nit || '') !== String(previo.nit || ''))) {
