@@ -25,12 +25,16 @@ function comunes(cargo, n0, lbl) {
     ...c('Vigencia', 'Este acuerdo rige desde su firma y por término indefinido, mientras EL SOCIO GESTOR ocupe el cargo. Cualquier cambio se hará por escrito y firmado por las partes.')
   ];
 }
+const S = (n) => B.SOCIOS[n];
+const nom = (n) => (S(n) ? S(n).nombre : n);
+const ccDe = (n) => (S(n) ? 'C.C. ' + S(n).cc : 'C.C. [número]');
 function partes(nombre, cargo) {
+  const s = S(nombre);
   return B.dosColumnas('La sociedad', B.emisor().slice(0, 4).concat([['Aprobado en', 'Acta de asamblea N° [número]']]),
-    (nombre === 'Lina Giraldo' ? 'La socia gestora' : 'El socio gestor'), [['Nombre', nombre], ['C.C.', '[número] de [ciudad]'], ['Cargo', cargo], ['Acciones', '[número] ([porcentaje] %)'], ['Dirección', '[Dirección]'], ['Email', '[correo]']]);
+    (nombre === 'Lina Giraldo' ? 'La socia gestora' : 'El socio gestor'), [['Nombre', s.nombre], ['C.C.', s.cc + ' de ' + s.ccDe], ['Cargo', cargo], ['Acciones', s.acciones + ' (' + s.pct + ' %)'], ['Dirección', s.dir], ['Teléfono', s.tel], ['Email', s.email]]);
 }
 function firmasAcuerdo(nombre, cargo, firmaSociedad, lbl) {
-  return B.firmas([[firmaSociedad[0], firmaSociedad[1], 'C.C. [número]'], [nombre, (lbl || 'EL SOCIO GESTOR') + ' · ' + cargo, 'C.C. [número]']]);
+  return B.firmas([[nom(firmaSociedad[0]), firmaSociedad[1], ccDe(firmaSociedad[0])], [nom(nombre), (lbl || 'EL SOCIO GESTOR') + ' · ' + cargo, ccDe(nombre)]]);
 }
 
 /* 12 · Gerencia General y Representación Legal */
@@ -150,7 +154,7 @@ lista.push(['CNV-FR-15_Manual-desempeno-y-salida-de-socios-gestores.docx', 'CNV-
   B.h('10. Vigencia y cambios'),
   B.p('Este manual rige desde que lo firmen los tres socios. Se puede cambiar por acuerdo escrito de los socios o por decisión de la asamblea, y cada cambio queda con nueva versión y fecha.'),
   B.h('Firmas de conocimiento y aceptación'),
-  B.firmas([['Lina Giraldo', 'Gerente General y Representante Legal', 'C.C. [número]'], ['Ángel Berrocal', 'Coordinador Técnico y de Operaciones', 'C.C. [número]'], ['Jorge Cantillo', 'Coordinador Comercial y Administrativo', 'C.C. [número]']]),
+  B.firmas(['Lina Giraldo', 'Ángel Berrocal', 'Jorge Cantillo'].map((n) => [nom(n), S(n).cargo, ccDe(n)])),
   B.nota('Revise que este manual no contradiga los estatutos de Cenova S.A.S. ni un acuerdo de accionistas; si hay diferencias, mandan los estatutos.')
 ]]);
 

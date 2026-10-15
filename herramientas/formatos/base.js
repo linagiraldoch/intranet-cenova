@@ -14,7 +14,14 @@ const NAVY = '173A73', BLUE = '2456A6', MUTED = '5B6B80', TEXT = '16233A', BODY 
 const ALT = 'EEF4FC', ROW2 = 'F6F9FD', LINE = 'E4E9F1', BOXLINE = 'CFE0F5', BAR = 'EAF1FB', FILL = 'FFF7D6';
 const FONT = 'Arial';
 const PAGE_W = 12240, MARGIN = 1080, CONTENT = PAGE_W - 2 * MARGIN; // carta, márgenes 0,75"
-const EMPRESA = { nombre: 'Cenova S.A.S.', nit: '902.114.180-1', ciudad: 'Cartagena, Bolívar', web: 'https://cenovasas.com', email: 'gerencia@cenovasas.com', tel: '+57 320 717 4937', rep: 'Lina Giraldo', repCargo: 'Gerente General y Representante Legal' };
+const EMPRESA = { nombre: 'Cenova S.A.S.', nit: '902.114.180-1', ciudad: 'Cartagena, Bolívar', web: 'https://cenovasas.com', email: 'gerencia@cenovasas.com', tel: '+57 320 717 4937', rep: 'Lina María Giraldo Chaverra', repCargo: 'Gerente General y Representante Legal' };
+
+/* Socios de Cenova: datos de contacto e identificación (documento de constitución del 2 oct 2026) */
+const SOCIOS = {
+  'Lina Giraldo': { nombre: 'Lina María Giraldo Chaverra', cc: '1.048.457.725', ccDe: 'Cartagena', cargo: 'Gerente General y Representante Legal', tel: '+57 320 717 4937', email: 'gerencia@cenovasas.com', dir: 'Ciudad Jardín, Conjunto Torres del Jardín', acciones: 360, pct: 60 },
+  'Ángel Berrocal': { nombre: 'Ángel Manuel Berrocal Hernández', cc: '1.042.606.588', ccDe: 'Arjona (Bolívar)', cargo: 'Coordinador Técnico y de Operaciones', tel: '+57 312 715 0060', email: 'aberrocal@cenovasas.com', dir: 'Plan 400 Mz 16 Lt 4', acciones: 120, pct: 20 },
+  'Jorge Cantillo': { nombre: 'Jorge Luis Cantillo Martínez', cc: '1.143.395.631', ccDe: 'Cartagena', cargo: 'Coordinador Comercial y Administrativo', tel: '+57 300 697 7756', email: 'jcantillo@cenovasas.com', dir: 'Castellana Sky', acciones: 120, pct: 20 }
+};
 
 const logo = fs.readFileSync(path.join(DIR, 'logo.png'));
 const cinta = fs.readFileSync(path.join(DIR, 'cinta.png'));
@@ -184,4 +191,4 @@ async function guardar(nombre, codigo, tituloDoc, hijos) {
   return nombre;
 }
 
-module.exports = { d, run, runs, p, vacio, h, clausula, vineta, numerado, cell, tabla, filasVacias, dosColumnas, emisor, campos, casillas, recuadro, firmas, firmaCenova, titulo, nota, guardar, EMPRESA, CONTENT, NAVY, MUTED, ALT, BODY, AlignmentType };
+module.exports = { d, run, runs, p, vacio, h, clausula, vineta, numerado, cell, tabla, filasVacias, dosColumnas, emisor, campos, casillas, recuadro, firmas, firmaCenova, titulo, nota, guardar, EMPRESA, SOCIOS, CONTENT, NAVY, MUTED, ALT, BODY, AlignmentType };
