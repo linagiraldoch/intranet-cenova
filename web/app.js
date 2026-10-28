@@ -157,6 +157,8 @@
       return null;
     });
   }};
+  /* Un archivo de soporte completo (la sincronización solo trae sus datos, sin el archivo) */
+  window.cenovaArchivo = function(c, id){ return api('GET', '/api/docs/' + c + '/' + encodeURIComponent(id)).then(function(d){ return d.data; }); };
   window.cenovaGuardarTema = function(t){ api('POST', '/api/tema', {tema: t}).catch(function(){}); };
 
   /* =================== Sesión, tarjeta y respaldo =================== */

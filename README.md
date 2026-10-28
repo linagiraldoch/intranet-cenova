@@ -36,6 +36,14 @@ Sección del menú visible solo para usuarios con `admin = 1`. El servidor no en
 
 Los pagos de clientes **no** se registran en Finanzas: se leen de la sección Pagos de cada orden de compra para no duplicarlos. Pestañas: Resumen (saldo, indicadores, puntos de mejora), Movimientos (con exportación a CSV), Gastos fijos, Rentabilidad (estado de resultados, por proyecto estimado vs. real, por cotización con precio mínimo para la meta, por tipo de ítem), Proyección a 6 meses y Cuentas y metas.
 
+### Soportes y proyectos internos (2026-10-28)
+
+- Colección `soportes` (`ref`, `clase`, `nombre`, `tipo`, `datos`, `proyectoId`, `ocId`, `privado`). El archivo (`datos`, base64, máx. ~1,2 MB; las fotos se achican en el navegador) **no viaja en `/api/sync`**: se pide uno por uno con `GET /api/docs/soportes/<id>`. Los de movimientos de Finanzas son `privado` y solo los ve o cambia administración.
+- Cobro de cliente: factura electrónica + orden de compra del cliente (o el archivo de la orden) + comprobante del pago. Cualquier otro movimiento pagado: al menos un soporte.
+- Todo movimiento va a un proyecto. Proyectos internos fijos: `interno-plataformas` (Google, SIIGO…) y `interno-administracion` (aportes, rendimientos, transferencias, trámites). Se crean solos y los movimientos viejos sin proyecto pasan al que les toca.
+- Un proyecto no se finaliza, ni su cotización pasa a Cerradas, con soportes pendientes.
+- Lo marcado «Pagado» en la orden (personal y otros pagos) sale solo en Finanzas; los renglones de la orden llevan `id` y `pagadoFecha`.
+
 ## Precios (lista de precios estándar)
 
 Menú **Precios**, visible para todo el equipo (colección `precios`). Administración crea, edita y borra; el resto solo puede actualizar el `stock` y el contenido de los kits (`componentes`). El servidor rechaza cualquier otro cambio.

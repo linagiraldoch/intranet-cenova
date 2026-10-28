@@ -1243,6 +1243,16 @@
   .pg-fecha{font-size:10px; color:var(--text-muted); margin-top:2px; white-space:nowrap;}
   .fin-det{border-top:1px solid var(--border);}
   #finKpis{grid-template-columns:repeat(3,1fr);}
+  .sop-badge{border:none; cursor:pointer; font:inherit; font-size:11px; white-space:nowrap;}
+  .sop-badge:hover{filter:brightness(.95); text-decoration:underline;}
+  .sop-check{display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:6px;}
+  .sop-req{font-size:12.5px; color:var(--text-muted); display:flex; align-items:center; gap:6px;}
+  .sop-req span{font-weight:700; color:var(--warning);}
+  .sop-req.ok{color:var(--text);} .sop-req.ok span{color:var(--success);}
+  .sop-item{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 4px; border-bottom:1px solid var(--border);}
+  .sop-item .r-main{display:flex; flex-direction:column; min-width:0;} .sop-item .r-main span{font-size:12px; color:var(--text-muted);}
+  .sop-acc{display:flex; gap:6px; align-items:center; flex:none;}
+  .sop-proy{max-height:260px; overflow:auto;}
   @media (max-width:920px){ #finKpis{grid-template-columns:repeat(2,1fr);} }
   #finKpis .kpi .value{white-space:nowrap;}
   @media (max-width:520px){ #finKpis .kpi{padding:12px 12px;} #finKpis .kpi .value, :root[data-theme="lavanda"] #view-finanzas #finKpis .kpi .value{font-size:17px;} #finKpis .kpi .label{font-size:10.5px !important;} }
@@ -2098,6 +2108,7 @@
         </div>
       </div>
       <div class="field"><label>Notas</label><textarea id="proyNotas" style="min-height:100px;" placeholder="Alcance, referencias, pendientes…"></textarea></div>
+      <div id="proySoportes" hidden></div>
     </div>
     <div class="modal-foot">
       <button class="btn" id="proyDelete" style="color:var(--critical); display:none;">Eliminar</button>
@@ -2139,6 +2150,25 @@
   </div>
 </div>
 
+<!-- Modal: Soportes de un movimiento (2026-10-28) -->
+<div class="overlay" id="sopOverlay" style="z-index:1200;">
+  <div class="modal">
+    <div class="modal-head">
+      <div><h3 id="sopTitulo">Soportes</h3><div class="no-file" id="sopSub" style="margin-top:2px;"></div></div>
+      <button class="modal-close" id="sopClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="sopCheck" class="sop-check"></div>
+      <div id="sopLista"></div>
+      <div class="filters" style="margin-top:6px;">
+        <select id="sopClase" aria-label="Tipo de soporte"></select>
+        <input type="file" id="sopArchivo" accept="application/pdf,image/*" hidden>
+        <button type="button" class="btn primary" id="sopSubir">Subir archivo</button>
+      </div>
+    </div>
+    <div class="modal-foot"><button class="btn" id="sopListo" style="margin-left:auto;">Listo</button></div>
+  </div>
+</div>
 <!-- Modal: Movimiento de dinero (Finanzas) -->
 <div class="overlay" id="finMovOverlay">
   <div class="modal">
@@ -2168,9 +2198,14 @@
         <div class="field" id="finMovDestinoField" hidden><label>Cuenta destino</label><select id="finMovDestinoSel"></select></div>
         <div class="field" id="finMovMedioField"><label>Medio</label><select id="finMovMedio"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="debito">Débito automático</option><option value="cheque">Cheque</option><option value="otro">Otro</option></select></div>
       </div>
-      <div class="field" id="finMovProyField"><label>Proyecto (si el gasto es de un proyecto)</label><select id="finMovProyecto"></select>
+      <div class="field" id="finMovProyField"><label>Proyecto</label><select id="finMovProyecto"></select>
         <div class="no-file" style="margin-top:4px;">Ligado a un proyecto cuenta como costo directo de ese proyecto. Sin proyecto, es gasto operativo de la empresa.</div></div>
-      <div class="field"><label>Nota</label><input type="text" id="finMovNota" placeholder="Factura, referencia, observación…"></div>
+      <div class="field"><label>Nota</label><input type="text" id="finMovNota" placeholder="Referencia u observación"></div>
+      <div class="field" id="finMovSopField"><label>Soporte</label>
+        <div class="filters"><select id="finMovSopClase"><option value="factura">Factura electrónica</option><option value="comprobante">Comprobante de pago</option><option value="recibo">Recibo o documento soporte</option><option value="otro">Otro</option></select>
+          <input type="file" id="finMovSopArchivo" accept="application/pdf,image/*"></div>
+        <div class="no-file" id="finMovSopHay"></div>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn" id="finMovDelete" style="color:var(--critical); display:none;">Eliminar</button>
@@ -4489,7 +4524,8 @@
     document.getElementById('proyResponsable').value = p.responsable || '';
     document.getElementById('proyEstado').value = p.estado || 'pendiente';
     document.getElementById('proyNotas').value = p.notas || '';
-    document.getElementById('proyDelete').style.display = id ? 'inline-flex' : 'none';
+    document.getElementById('proyDelete').style.display = id && !p.interno ? 'inline-flex' : 'none';
+    renderProySoportes(id || null);
     document.getElementById('proyOverlay').classList.add('open');
   }
   function closeProyModal(){ document.getElementById('proyOverlay').classList.remove('open'); state.editingProyId = null; }
@@ -4514,6 +4550,7 @@
       var n = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso' && m.proyectoId === o.proyectoId) n++; });
       if(n) out.push(n+' pago(s) pendiente(s) en Finanzas');
     }
+    try { var oid = null; state.ordenes.forEach(function(x, k){ if(x === o) oid = k; }); if(oid){ var sf = ocSoportesFaltan(oid).length; if(sf) out.push(sf+' soporte(s) por subir'); } } catch(e){}
     return out;
   }
   function cotOrdenActiva(id){ var r = null; state.ordenes.forEach(function(o, oid){ if(!r && o.cotizacionId === id && o.estado !== 'anulada') r = Object.assign({_id: oid}, o); }); return r; }
@@ -5865,7 +5902,10 @@
     var estado = document.getElementById('ocEstado').value;
     if(estado==='recibida' && f.fechaInicio) estado = 'programada';
     var pagosClean = state.ocPagos.filter(function(x){ return Number(x.monto) > 0; }).map(function(x){
-      return {fecha: x.fecha || todayIso(), concepto: x.concepto || 'abono', monto: Number(x.monto)||0, medio: x.medio || 'transferencia', nota: (x.nota||'').trim()};
+      var pg = {id: x.id || filaId(), fecha: x.fecha || todayIso(), concepto: x.concepto || 'abono', monto: Number(x.monto)||0, medio: x.medio || 'transferencia', nota: (x.nota||'').trim()};
+      if(Number(x.comision) > 0) pg.comision = Number(x.comision);   /* comisión y retención de la pasarela: antes se perdían al guardar la orden */
+      if(Number(x.retencion) > 0) pg.retencion = Number(x.retencion);
+      return pg;
     }).sort(function(a,b){ return a.fecha.localeCompare(b.fecha); });
     var valorNum = document.getElementById('ocValor').value==='' ? 0 : Number(document.getElementById('ocValor').value);
     var recibido = pagosClean.reduce(function(s,x){ return s + x.monto; }, 0);
@@ -5888,8 +5928,8 @@
       costoImprevistos: document.getElementById('ocCostoImprevistos').value==='' ? null : Number(document.getElementById('ocCostoImprevistos').value),
       causaDesvio: document.getElementById('ocCausaDesvio').value,
       causaDetalle: document.getElementById('ocCausaDetalle').value.trim(),
-      personal: state.ocPersonal.filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0, pagado:!!r.pagado, pagadoFecha: r.pagado ? (r.pagadoFecha || null) : null}; }),
-      porPagar: state.ocPorPagar.filter(function(x){ return (x.concepto||'').trim() || Number(x.monto); }).map(function(x){ return {concepto:(x.concepto||'').trim(), a:(x.a||'').trim(), monto:Number(x.monto)||0, pagado:!!x.pagado, pagadoFecha: x.pagado ? (x.pagadoFecha || null) : null}; }),
+      personal: state.ocPersonal.filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0, pagado:!!r.pagado, pagadoFecha: r.pagado ? (r.pagadoFecha || null) : null, id: r.id || filaId()}; }),
+      porPagar: state.ocPorPagar.filter(function(x){ return (x.concepto||'').trim() || Number(x.monto); }).map(function(x){ return {concepto:(x.concepto||'').trim(), a:(x.a||'').trim(), monto:Number(x.monto)||0, pagado:!!x.pagado, pagadoFecha: x.pagado ? (x.pagadoFecha || null) : null, id: x.id || filaId()}; }),
       retrasoMotivo: ocRetrasoAplica() ? document.getElementById('ocRetrasoMotivo').value || null : null,
       retrasoNota: ocRetrasoAplica() ? document.getElementById('ocRetrasoNota').value.trim() : '',
       novedades: state.ocNovedades.filter(function(n){ return (n.material||'').trim() || Number(n.costo); }).map(function(n){
@@ -6971,31 +7011,31 @@
   /* ---------- Movimientos: los registrados + los pagos de las órdenes ---------- */
   function finMovimientosTodos(){
     var out = [];
-    fin.movs.forEach(function(m, id){ out.push(Object.assign({}, m, {_id: id, fuente:'manual'})); });
+    fin.movs.forEach(function(m, id){ out.push(Object.assign({}, m, {_id: id, fuente:'manual', soporteRef: 'mov:'+id})); });
     state.ordenes.forEach(function(o, oid){
       if(o.estado === 'anulada') return;
       var c = state.cotizaciones.get(o.cotizacionId) || {}, ratio = finIvaRatio(c);
       (o.pagos||[]).forEach(function(pg, i){
         var monto = Number(pg.monto)||0; if(!monto) return;
         out.push({
-          _id: 'oc:'+oid+':'+i, fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'cobro',
+          _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'cobro',
           descripcion: 'Pago ' + (o.numero||'orden') + ' · ' + (PAGO_CONCEPTOS[pg.concepto] || 'Pago').toLowerCase(),
           tercero: o.cliente || '', monto: monto, iva: monto * ratio, cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '',
           proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: pg.nota || ''
         });
         var base = {fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'egreso', tercero: 'Pasarela de pago', iva: 0,
           cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: ''};
-        if(pgComision(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':com', categoria:'bancarios', monto: pgComision(pg),
+        if(pgComision(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':com', soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i)+':com', categoria:'bancarios', monto: pgComision(pg),
           descripcion: 'Comisión de pasarela con IVA · pago ' + (o.numero||'orden'), nota: 'Ya está en el costo de la obra (imprevistos de la orden).'}));
-        if(pgRetencion(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':ret', categoria:'retencion', monto: pgRetencion(pg),
+        if(pgRetencion(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':ret', soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i)+':ret', categoria:'retencion', monto: pgRetencion(pg),
           descripcion: 'Retención en la fuente · pago ' + (o.numero||'orden'), nota: 'Saldo a favor: se descuenta en la declaración de renta. Pedir el certificado.'}));
       });
       /* Lo que se marca «Pagado» en la orden (personal y otros pagos de la obra) sale solo como salida.
          Solo cuenta lo marcado desde que existe la fecha de pago: lo anterior ya se había registrado a mano. */
-      var gasto = function(id, fecha, cat, desc, quien, monto){ out.push({_id: 'oc:'+oid+':'+id, fuente:'orden', ocGasto:true, ocId: oid, fecha: fecha, tipo:'egreso', categoria: cat,
+      var gasto = function(id, ref, fecha, cat, desc, quien, monto){ out.push({_id: 'oc:'+oid+':'+id, soporteRef: 'oc:'+oid+':'+ref, fuente:'orden', ocGasto:true, ocId: oid, fecha: fecha, tipo:'egreso', categoria: cat,
         descripcion: desc, tercero: quien || '', monto: monto, iva: 0, cuentaId: finCuentaParaMedio('transferencia'), medio:'transferencia', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota:''}); };
-      (o.personal||[]).forEach(function(r, i){ var t = personalRowTotal(r); if(r.pagado && r.pagadoFecha && t > 0) gasto('per:'+i, r.pagadoFecha, 'personal', 'Pago a '+(r.nombre||'personal')+' · '+(o.numero||'orden'), r.nombre, t); });
-      (o.porPagar||[]).forEach(function(x, i){ var t = Number(x.monto)||0; if(x.pagado && x.pagadoFecha && t > 0) gasto('pp:'+i, x.pagadoFecha, 'obra', (x.concepto||'Pago de la obra')+' · '+(o.numero||'orden'), x.a, t); });
+      (o.personal||[]).forEach(function(r, i){ var t = personalRowTotal(r); if(r.pagado && r.pagadoFecha && t > 0) gasto('per:'+i, 'per:'+(r.id || 'i'+i), r.pagadoFecha, 'personal', 'Pago a '+(r.nombre||'personal')+' · '+(o.numero||'orden'), r.nombre, t); });
+      (o.porPagar||[]).forEach(function(x, i){ var t = Number(x.monto)||0; if(x.pagado && x.pagadoFecha && t > 0) gasto('pp:'+i, 'pp:'+(x.id || 'i'+i), x.pagadoFecha, 'obra', (x.concepto||'Pago de la obra')+' · '+(o.numero||'orden'), x.a, t); });
     });
     out.sort(function(a,b){ return String(b.fecha).localeCompare(String(a.fecha)); });
     return out;
@@ -7073,6 +7113,7 @@
     var ords = Array.from(state.ordenes.entries()).filter(function(e){ return e[1].estado !== 'anulada'; });
     var rows = [];
     state.proyectos.forEach(function(p, pid){
+      if(p.interno) return;
       var cotIds = cotizacionesDeProyecto(pid, p.cliente).map(function(e){ return e[0]; });
       var pOrds = ords.filter(function(e){ return cotIds.indexOf(e[1].cotizacionId) !== -1 || (e[1].proyectoId && e[1].proyectoId === pid); });
       var gastado = finEgresosDeProyecto(pid);
@@ -7116,7 +7157,7 @@
       if(m.tipo === 'egreso'){
         if(FIN_NO_OPERATIVOS[m.categoria]){ capital -= monto; return; }
         if(m.proyectoId && conOrden[m.proyectoId]) return; /* ya está en el costo del proyecto */
-        var k = m.proyectoId ? 'sin_orden' : m.categoria;
+        var k = m.proyectoId && !proyInterno(m.proyectoId) ? 'sin_orden' : m.categoria;
         operativos += monto; opCat[k] = (opCat[k]||0) + monto;
       } else if(m.tipo === 'ingreso'){
         if(FIN_NO_OPERATIVOS[m.categoria]) capital += monto; else otrosIng += monto;
@@ -7189,6 +7230,9 @@
     var tips = [], a = finAjustes(), hoy = todayIso();
     var add = function(nivel, html, peso){ tips.push({nivel: nivel, html: html, peso: peso || 0}); };
     if(!a.configurado) add('warning', 'Configura tus <strong>cuentas y saldos iniciales</strong> en "Cuentas" para que el saldo disponible sea real.', 100);
+    var movsT = finMovimientosTodos(), sinSop = movsT.filter(function(m){ return !movSoporte(m).ok; }).length, sinProy = movsT.filter(function(m){ return !m.proyectoId; }).length;
+    if(sinSop) add('warning', '<strong>'+sinSop+' movimiento(s) sin soporte</strong>. Súbelos en Movimientos (botón «Falta soporte»).', 98);
+    if(sinProy) add('warning', '<strong>'+sinProy+' movimiento(s) sin proyecto</strong>. Ábrelos en Movimientos y elige el proyecto.', 97);
     if(!fin.fijos.size) add('warning', 'Registra los <strong>gastos fijos</strong> (Google Workspace, dominio, contador…) para saber cuánto hay que vender al mes para no perder.', 95);
 
     /* Ítems vendidos por debajo del costo o sin margen, en cotizaciones vivas */
@@ -7396,7 +7440,7 @@
     list.forEach(function(m){ var v = Number(m.monto)||0; if(m.estado === 'pendiente'){ pend += (m.tipo==='ingreso'?v:-v); return; } if(m.tipo === 'ingreso') ent += v; else if(m.tipo === 'egreso') sal += v; });
     document.getElementById('finMovTotales').innerHTML = '<span>'+list.length+' movimiento(s)</span><span>Entradas <strong class="pos">'+finMoney(ent)+'</strong></span><span>Salidas <strong class="neg">'+finMoney(sal)+'</strong></span><span>Neto <strong class="'+(ent-sal<0?'neg':'pos')+'">'+finMoney(ent-sal)+'</strong></span>'+(pend?'<span>Pendiente neto <strong>'+finMoney(pend)+'</strong></span>':'');
     if(!list.length){ document.getElementById('finMovTabla').innerHTML = '<div class="table-wrap"><div class="empty-state">No hay movimientos con estos filtros. Registra el primer gasto con "Registrar gasto".</div></div>'; return; }
-    var h = '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proyecto</th><th>Cuenta</th><th>Estado</th><th class="num">Monto</th></tr></thead><tbody>';
+    var h = '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proyecto</th><th>Cuenta</th><th>Estado</th><th>Soporte</th><th class="num">Monto</th></tr></thead><tbody>';
     list.forEach(function(m){
       var v = Number(m.monto)||0, signo = m.tipo === 'ingreso' ? 1 : (m.tipo === 'egreso' ? -1 : 0);
       var desc = '<div class="d-title">'+escapeHtml(m.descripcion || finCatLabel(m))+'</div><div class="d-notes">'+escapeHtml([m.tercero, m.nota].filter(Boolean).join(' · '))+'</div>';
@@ -7404,8 +7448,9 @@
       var attrs = m.fuente === 'orden' ? ' class="from-oc" data-oc="'+escapeHtml(m.ocId)+'" title="Viene de la orden de compra. Se edita allá." style="cursor:pointer;"' : ' data-mov="'+escapeHtml(m._id)+'"';
       h += '<tr'+attrs+'><td class="num">'+fmtShort(m.fecha)+'<div class="d-notes">'+escapeHtml(String(m.fecha||'').slice(0,4))+'</div></td>'+
         '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">'+(m.categoria==='retencion'?'Saldo a favor':'Capital')+'</span></div>':'')+'</td>'+
-        '<td class="desc-cell">'+desc+'</td><td>'+escapeHtml(finProyNombre(m.proyectoId)||'—')+'</td><td>'+cuenta+'</td>'+
+        '<td class="desc-cell">'+desc+'</td><td>'+(finProyNombre(m.proyectoId) ? escapeHtml(finProyNombre(m.proyectoId)) : '<span class="fin-badge crit">Sin proyecto</span>')+'</td><td>'+cuenta+'</td>'+
         '<td>'+(m.estado === 'pendiente' ? '<span class="fin-badge warn">Pendiente</span>' : '<span class="fin-badge ok">Pagado</span>')+'</td>'+
+        '<td>'+movSopBadge(m)+'</td>'+
         '<td class="num '+(signo>0?'pos':signo<0?'neg':'')+'"><strong>'+(signo>0?'+':signo<0?'−':'')+finMoney(v)+'</strong></td></tr>';
     });
     h += '</tbody></table></div>';
@@ -7706,7 +7751,7 @@
       else if(m.tipo === 'egreso' && m.cuentaId === cuentaId) signo = -1;
       else if(m.tipo === 'transferencia'){ if(m.cuentaId === cuentaId) signo = -1; else if(m.cuentaDestinoId === cuentaId) signo = 1; }
       if(!signo) return;
-      var g = m.fuente === 'orden' ? String(m._id).split(':').slice(0,3).join(':') : null;
+      var g = m.fuente === 'orden' && !m.ocGasto ? String(m._id).split(':').slice(0,3).join(':') : null;
       if(g){ if(!grupos[g]){ grupos[g] = {key:g, ids:[], fecha:m.fecha, valor:0, descripcion:'', fuente:'orden'}; out.push(grupos[g]); }
         grupos[g].ids.push(m._id); grupos[g].valor += signo*(Number(m.monto)||0); if(m.tipo === 'ingreso') grupos[g].descripcion = m.descripcion + (m.tercero ? ' · '+m.tercero : ''); return; }
       out.push({key:m._id, ids:[m._id], fecha:m.fecha, valor:signo*(Number(m.monto)||0), descripcion:(m.descripcion||finCatLabel(m)) + (m.tercero ? ' · '+m.tercero : ''), fuente:'manual'});
@@ -7934,7 +7979,7 @@
       if(!ok) return;
       var db = requireDb(); if(!db) return;
       if(btn) btn.disabled = true;
-      var nueva = lista.map(function(r, j){ return j === i ? Object.assign({}, r, {pagado:true, pagadoFecha: todayIso()}) : r; });
+      var nueva = lista.map(function(r, j){ return Object.assign({}, r, {id: r.id || filaId()}, j === i ? {pagado:true, pagadoFecha: todayIso()} : {}); });
       var upd = {}; upd[campo] = nueva; upd.editadoEn = new Date().toISOString(); upd.editadoPorId = state.userId || null;
       db.collection('ordenesCompra').doc(oid).update(upd).then(function(){
         state.ordenes.set(oid, Object.assign({}, o, upd));
@@ -7943,6 +7988,213 @@
       }).catch(function(err){ if(btn) btn.disabled = false; toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
     });
   }
+
+  /* =====================================================================
+     SOPORTES (2026-10-28): cada movimiento con su documentación.
+     - Cobro de cliente: factura electrónica + orden de compra del cliente + comprobante del pago.
+       La factura y la OC pueden ir en la orden (sirven para todos sus pagos).
+     - Cualquier otro movimiento pagado: al menos un soporte (factura, comprobante, recibo o documento soporte).
+     - Todo movimiento va ligado a un proyecto (los internos: Plataformas y Administración).
+     - Un proyecto no se finaliza ni su cotización pasa a Cerradas con soportes pendientes.
+     Colección `soportes`: {ref, clase, nombre, tipo, tamano, datos, proyectoId, ocId, privado}; el archivo (datos)
+     no viaja en la sincronización, se pide con window.cenovaArchivo.
+     ===================================================================== */
+  var SOP_CLASES = {factura:'Factura electrónica', oc:'Orden de compra', comprobante:'Comprobante de pago', recibo:'Recibo o documento soporte', otro:'Otro'};
+  var PROY_INTERNOS = {
+    'interno-plataformas': {nombre:'Plataformas internas', cliente:'Cenova S.A.S.', estado:'en_ejecucion', interno:true, notas:'Google Workspace, SIIGO y demás plataformas de la empresa.'},
+    'interno-administracion': {nombre:'Administración', cliente:'Cenova S.A.S.', estado:'en_ejecucion', interno:true, notas:'Aportes, rendimientos, transferencias, trámites, contador y demás gastos de la empresa.'}
+  };
+  function filaId(){ return 'r' + Date.now().toString(36).slice(-5) + Math.random().toString(36).slice(2, 7); }
+  function proyInterno(pid){ var p = pid && state.proyectos.get(pid); return !!(p && p.interno); }
+  var _internosHechos = false;
+  function asegurarProyInternos(){
+    if(_internosHechos || !fin.admin || !state.db || !state.loaded.proyectos) return;
+    _internosHechos = true;
+    Object.keys(PROY_INTERNOS).forEach(function(id){ if(!state.proyectos.has(id)) state.db.collection('proyectos').doc(id).set(PROY_INTERNOS[id]).catch(function(){ _internosHechos = false; }); });
+  }
+  /* Una sola vez: los movimientos que quedaron sin proyecto pasan al proyecto interno que les toca
+     (siguen contando como gasto de la empresa, igual que antes). */
+  var _sinProyMigrado = false;
+  function asignarProyInternosAMovs(){
+    if(_sinProyMigrado || !fin.admin || !state.db || !fin.movsCargados || !Object.keys(PROY_INTERNOS).every(function(id){ return state.proyectos.has(id); })) return;
+    _sinProyMigrado = true;
+    fin.movs.forEach(function(m, id){
+      if(m.proyectoId) return;
+      var pid = proyPorDefecto(m.tipo, m.categoria) || 'interno-administracion';
+      state.db.collection('finMovimientos').doc(id).update({proyectoId: pid}).catch(function(){});
+    });
+  }
+  function proyPorDefecto(tipo, categoria){
+    if(categoria === 'software') return 'interno-plataformas';
+    return (tipo === 'ingreso' || tipo === 'transferencia' || !tipo) ? 'interno-administracion' : '';
+  }
+  function sopDe(ref){ var out = []; if(!ref) return out; state.soportes.forEach(function(x, id){ if(x.ref === ref) out.push(Object.assign({_id: id}, x)); }); return out; }
+  /* Estado de soportes de un movimiento: {aplica, ok, falta:[], sinFactura, n} */
+  function movSoporte(m){
+    var r = {aplica: m.estado !== 'pendiente', ok: true, falta: [], sinFactura: false, n: 0};
+    if(!r.aplica) return r;
+    if(m.categoria === 'cobro' && m.ocId){
+      var o = state.ordenes.get(m.ocId) || {}, enOc = sopDe('oc:'+m.ocId), enPago = sopDe(m.soporteRef), todos = enOc.concat(enPago);
+      var tiene = function(k){ return todos.some(function(x){ return x.clase === k; }); };
+      if(!tiene('factura')) r.falta.push('factura electrónica');
+      if(!o.archivoNombre && !tiene('oc')) r.falta.push('orden de compra del cliente');
+      if(!enPago.some(function(x){ return x.clase === 'comprobante'; })) r.falta.push('comprobante del pago');
+      r.n = todos.length + (o.archivoNombre ? 1 : 0);
+    } else {
+      var l = sopDe(m.soporteRef); r.n = l.length;
+      if(!l.length) r.falta.push('soporte (factura, comprobante o recibo)');
+      else r.sinFactura = !l.some(function(x){ return x.clase === 'factura'; });
+    }
+    r.ok = !r.falta.length;
+    return r;
+  }
+  function movSopBadge(m){
+    var s = movSoporte(m);
+    if(!s.aplica) return '';
+    return '<button type="button" class="fin-badge sop-badge '+(s.ok ? 'ok' : 'warn')+'" data-sop="'+escapeHtml(m._id)+'" title="'+escapeHtml(s.ok ? (s.sinFactura ? 'Con soporte (sin factura)' : 'Con soporte') : 'Falta: '+s.falta.join(', '))+'">'+(s.ok ? (s.sinFactura ? 'Soporte sin factura' : 'Con soporte') : 'Falta soporte')+'</button>';
+  }
+  /* Movimientos de un proyecto (o de una orden) que ya pasaron por caja y les falta soporte */
+  function soportesFaltantes(filtro){
+    return finMovimientosTodos().filter(function(m){ return filtro(m) && !movSoporte(m).ok; });
+  }
+  function proySoportesFaltan(pid){ return soportesFaltantes(function(m){ return m.proyectoId === pid; }); }
+  function ocSoportesFaltan(oid){ return soportesFaltantes(function(m){ return m.ocId === oid; }); }
+
+  /* Los renglones viejos de la orden no tienen id: se les pone antes de ligar un soporte */
+  function asegurarIdsOrden(oid){
+    var o = state.ordenes.get(oid); if(!o) return Promise.resolve(null);
+    var falta = ['pagos','personal','porPagar'].some(function(k){ return (o[k]||[]).some(function(r){ return !r.id; }); });
+    if(!falta) return Promise.resolve(o);
+    var upd = {}; ['pagos','personal','porPagar'].forEach(function(k){ if(o[k]) upd[k] = o[k].map(function(r){ return r.id ? r : Object.assign({}, r, {id: filaId()}); }); });
+    return state.db.collection('ordenesCompra').doc(oid).update(upd).then(function(){ var n = Object.assign({}, o, upd); state.ordenes.set(oid, n); return n; });
+  }
+  function movPorId(id){ return finMovimientosTodos().filter(function(m){ return m._id === id; })[0] || null; }
+
+  /* Prepara el archivo: las fotos se achican (máx. 1600 px, JPEG) para que quepan; los PDF hasta ~1,2 MB */
+  function sopLeerArchivo(file){
+    return new Promise(function(res, rej){
+      var rd = new FileReader();
+      rd.onerror = function(){ rej(new Error('No se pudo leer el archivo.')); };
+      rd.onload = function(){
+        var url = String(rd.result);
+        if(/^image\//.test(file.type) && !/gif|svg/.test(file.type)){
+          var img = new Image();
+          img.onload = function(){
+            var k = Math.min(1, 1600 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+            c.width = Math.round(img.width*k); c.height = Math.round(img.height*k);
+            var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,c.width,c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+            var out = c.toDataURL('image/jpeg', 0.82);
+            if(out.length > 1650000) out = c.toDataURL('image/jpeg', 0.6);
+            res({datos: out, tipo: 'image/jpeg', nombre: file.name.replace(/\.[^.]+$/, '') + '.jpg'});
+          };
+          img.onerror = function(){ res({datos: url, tipo: file.type, nombre: file.name}); };
+          img.src = url;
+        } else res({datos: url, tipo: file.type || 'application/octet-stream', nombre: file.name});
+      };
+      rd.readAsDataURL(file);
+    }).then(function(x){
+      if(x.datos.length > 1650000) throw new Error('El archivo pesa más de 1,2 MB. Comprime el PDF o súbelo como foto.');
+      return x;
+    });
+  }
+  /* Sube un soporte ligado a una referencia ('mov:<id>', 'oc:<orden>', 'oc:<orden>:pago:<id>'…) */
+  function sopSubir(file, ref, clase, extra){
+    var db = requireDb(); if(!db) return Promise.reject(new Error('Sin conexión'));
+    return sopLeerArchivo(file).then(function(x){
+      var data = Object.assign({ref: ref, clase: clase || 'otro', nombre: x.nombre, tipo: x.tipo, tamano: Math.round(x.datos.length*0.75), datos: x.datos,
+        fecha: todayIso(), subidoPorId: state.userId || null}, extra || {});
+      return db.collection('soportes').add(data);
+    });
+  }
+  function sopVer(id){
+    var w = null; try { w = window.open('', '_blank'); } catch(e){}
+    toast('Abriendo el soporte…', 2500);
+    window.cenovaArchivo('soportes', id).then(function(d){
+      if(!d || !d.datos) throw new Error('El archivo no está.');
+      var b64 = d.datos.slice(d.datos.indexOf(',')+1), bin = atob(b64), arr = new Uint8Array(bin.length);
+      for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([arr], {type: d.tipo || 'application/octet-stream'}));
+      if(w && !w.closed) w.location.href = url;
+      else { var a = document.createElement('a'); a.href = url; a.download = d.nombre || 'soporte'; document.body.appendChild(a); a.click(); a.remove(); }
+    }).catch(function(err){ if(w) try { w.close(); } catch(e){} toast('No se pudo abrir: ' + (err && err.message ? err.message : 'error')); });
+  }
+
+  /* ---------- Ventana de soportes de un movimiento ---------- */
+  var sopCtx = null;
+  function openSoportes(movId){
+    var m = movPorId(movId); if(!m){ toast('No encontré ese movimiento.'); return; }
+    sopCtx = {movId: movId};
+    renderSoportes();
+    document.getElementById('sopOverlay').classList.add('open');
+  }
+  function renderSoportes(){
+    var m = sopCtx && movPorId(sopCtx.movId); if(!m) return;
+    var st = movSoporte(m), esCobro = m.categoria === 'cobro' && m.ocId, o = m.ocId ? (state.ordenes.get(m.ocId) || {}) : null;
+    document.getElementById('sopTitulo').textContent = (m.descripcion || finCatLabel(m));
+    document.getElementById('sopSub').textContent = fmtDate(m.fecha) + ' · ' + finMoney(m.monto) + (finProyNombre(m.proyectoId) ? ' · ' + finProyNombre(m.proyectoId) : '');
+    var req = esCobro ? [['factura','Factura electrónica'],['oc','Orden de compra del cliente'],['comprobante','Comprobante del pago']] : [['any','Factura, comprobante o recibo']];
+    var lista = sopDe(m.soporteRef).concat(esCobro ? sopDe('oc:'+m.ocId).map(function(x){ x._deOrden = true; return x; }) : []);
+    document.getElementById('sopCheck').innerHTML = !st.aplica ? '<div class="no-file">Queda pendiente: se pide al pagarse.</div>' : req.map(function(r){
+      var ok = r[0] === 'any' ? lista.length > 0 : (lista.some(function(x){ return x.clase === r[0]; }) || (r[0] === 'oc' && o && o.archivoNombre));
+      return '<div class="sop-req '+(ok ? 'ok' : '')+'"><span>'+(ok ? '✓' : '○')+'</span>'+r[1]+(r[0] === 'oc' && o && o.archivoNombre ? ' <small>(adjunta en la orden)</small>' : '')+'</div>';
+    }).join('');
+    document.getElementById('sopLista').innerHTML = lista.length ? lista.map(function(x){
+      return '<div class="sop-item"><div class="r-main"><strong>'+escapeHtml(SOP_CLASES[x.clase] || 'Soporte')+'</strong><span>'+escapeHtml(x.nombre || '')+(x._deOrden ? ' · de la orden' : '')+' · '+fmtShort(x.fecha)+'</span></div>'+
+        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button><button type="button" class="icon-btn" data-sop-del="'+escapeHtml(x._id)+'" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>';
+    }).join('') : '<div class="empty-state" style="padding:14px;">Aún no tiene soportes.</div>';
+    var cl = document.getElementById('sopClase'), cur = cl.value;
+    var opts = esCobro ? ['factura','oc','comprobante','otro'] : (m.tipo === 'egreso' ? ['factura','comprobante','recibo','otro'] : ['comprobante','factura','recibo','otro']);
+    cl.innerHTML = opts.map(function(k){ return '<option value="'+k+'">'+SOP_CLASES[k]+'</option>'; }).join('');
+    if(opts.indexOf(cur) !== -1) cl.value = cur;
+    else if(esCobro) cl.value = st.falta.indexOf('factura electrónica') !== -1 ? 'factura' : (st.falta.indexOf('comprobante del pago') !== -1 ? 'comprobante' : 'oc');
+  }
+  function closeSoportes(){ document.getElementById('sopOverlay').classList.remove('open'); sopCtx = null; refrescarTrasSoporte(); }
+  function refrescarTrasSoporte(){
+    try { renderFinanzas(); } catch(e){}
+    if(document.getElementById('proyOverlay').classList.contains('open') && state.editingProyId) renderProySoportes(state.editingProyId);
+  }
+  document.getElementById('sopClose').addEventListener('click', closeSoportes);
+  document.getElementById('sopListo').addEventListener('click', closeSoportes);
+  document.getElementById('sopOverlay').addEventListener('click', function(e){
+    if(e.target === this){ closeSoportes(); return; }
+    var b;
+    if((b = e.target.closest('[data-sop-ver]'))){ sopVer(b.dataset.sopVer); return; }
+    if((b = e.target.closest('[data-sop-del]'))){
+      var id = b.dataset.sopDel;
+      confirmDialog('¿Quitar este soporte?', 'Quitar').then(function(ok){ if(!ok) return;
+        state.db.doc('soportes/'+id).delete().then(function(){ state.soportes.delete(id); renderSoportes(); toast('Soporte quitado.'); }).catch(function(err){ toast('No se pudo quitar: ' + (err && err.message ? err.message : 'error')); }); });
+    }
+  });
+  document.getElementById('sopSubir').addEventListener('click', function(){ document.getElementById('sopArchivo').click(); });
+  document.getElementById('sopArchivo').addEventListener('change', function(){
+    var file = this.files && this.files[0], inp = this; if(!file || !sopCtx) return;
+    var m = movPorId(sopCtx.movId); if(!m) return;
+    var clase = document.getElementById('sopClase').value, btn = document.getElementById('sopSubir');
+    btn.disabled = true; btn.textContent = 'Subiendo…';
+    /* En un cobro, la factura y la OC quedan en la orden (valen para todos sus pagos) */
+    var aOrden = m.categoria === 'cobro' && m.ocId && (clase === 'factura' || clase === 'oc');
+    var listo = m.ocId && /:i\d+/.test(m.soporteRef) ? asegurarIdsOrden(m.ocId).then(function(){ var n = movPorId(sopCtx.movId); return n ? n.soporteRef : m.soporteRef; }) : Promise.resolve(m.soporteRef);
+    listo.then(function(ref){
+      return sopSubir(file, aOrden ? 'oc:'+m.ocId : ref, clase, {proyectoId: m.proyectoId || '', ocId: m.ocId || '', privado: m.fuente === 'manual'});
+    }).then(function(){ toast('Soporte subido.'); renderSoportes(); })
+      .catch(function(err){ toast(err && err.message ? err.message : 'No se pudo subir.', 5000); })
+      .then(function(){ btn.disabled = false; btn.textContent = 'Subir archivo'; inp.value = ''; });
+  });
+
+  /* ---------- Soportes en la ventana del proyecto ---------- */
+  function renderProySoportes(pid){
+    var box = document.getElementById('proySoportes'); if(!box) return;
+    if(!pid){ box.hidden = true; return; }
+    var movs = finMovimientosTodos().filter(function(m){ return m.proyectoId === pid && m.estado !== 'pendiente'; });
+    box.hidden = false;
+    if(!movs.length){ box.innerHTML = '<div class="fieldset-label">Soportes contables</div><div class="no-file">Sin movimientos todavía.</div>'; return; }
+    var falt = movs.filter(function(m){ return !movSoporte(m).ok; }).length;
+    box.innerHTML = '<div class="fieldset-label">Soportes contables · '+(falt ? '<span style="color:var(--warning);">faltan '+falt+'</span>' : '<span style="color:var(--success);">completos</span>')+'</div>' +
+      '<div class="sop-proy">' + movs.map(function(m){ var v = Number(m.monto)||0, sg = m.tipo === 'ingreso' ? '+' : (m.tipo === 'egreso' ? '−' : '');
+        return '<div class="sop-item"><div class="r-main"><strong>'+escapeHtml(m.descripcion || finCatLabel(m))+'</strong><span>'+fmtShort(m.fecha)+' · '+sg+finMoney(v)+'</span></div>'+movSopBadge(m)+'</div>'; }).join('') + '</div>';
+  }
+  document.getElementById('proyOverlay').addEventListener('click', function(e){ var b = e.target.closest('[data-sop]'); if(b){ e.stopPropagation(); openSoportes(b.dataset.sop); } });
+  document.getElementById('view-finanzas').addEventListener('click', function(e){ var b = e.target.closest('[data-sop]'); if(b){ e.stopPropagation(); openSoportes(b.dataset.sop); } }, true);
   function libroDatos(){
     var per = fin.libroPer || todayIso().slice(0,7), rg = libroRango(per), desde = rg[0], hasta = rg[1];
     var as = libroAsientos(desde, hasta), titulo = '', cols = [], filas = [], tot = null, notas = '';
@@ -8115,7 +8367,7 @@
     cat.innerHTML = Object.keys(map).map(function(k){ return '<option value="'+k+'">'+map[k]+'</option>'; }).join('');
     if(map[cur]) cat.value = cur;
     document.getElementById('finMovCatRow').hidden = t === 'transferencia';
-    document.getElementById('finMovProyField').hidden = t !== 'egreso';
+    document.getElementById('finMovProyField').hidden = false;
     document.getElementById('finMovDestinoField').hidden = t !== 'transferencia';
     document.getElementById('finMovMedioField').hidden = t === 'transferencia';
     document.getElementById('finMovCuentaLbl').textContent = t === 'transferencia' ? 'Sale de' : (t === 'ingreso' ? 'Entra a la cuenta' : 'Se paga desde');
@@ -8128,8 +8380,8 @@
     fin.editingMovId = id || null;
     fin.movFijo = m.gastoFijoId ? {id: m.gastoFijoId, periodo: m.periodo} : null;
     var proySel = document.getElementById('finMovProyecto');
-    proySel.innerHTML = '<option value="">Sin proyecto (gasto de la empresa)</option>' + Array.from(state.proyectos.entries())
-      .sort(function(a,b){ return (a[1].estado==='finalizado') - (b[1].estado==='finalizado') || String(a[1].nombre||'').localeCompare(String(b[1].nombre||'')); })
+    proySel.innerHTML = '<option value="">Elige el proyecto…</option>' + Array.from(state.proyectos.entries())
+      .sort(function(a,b){ return (!!b[1].interno) - (!!a[1].interno) || (a[1].estado==='finalizado') - (b[1].estado==='finalizado') || String(a[1].nombre||'').localeCompare(String(b[1].nombre||'')); })
       .map(function(e){ return '<option value="'+escapeHtml(e[0])+'">'+escapeHtml((e[1].nombre||'—') + (e[1].cliente?' · '+e[1].cliente:''))+'</option>'; }).join('');
     finCuentaOptions(document.getElementById('finMovCuentaSel'), m.cuentaId);
     finCuentaOptions(document.getElementById('finMovDestinoSel'), m.cuentaDestinoId);
@@ -8143,7 +8395,10 @@
     document.getElementById('finMovTercero').value = m.tercero || '';
     document.getElementById('finMovDescripcion').value = m.descripcion || '';
     document.getElementById('finMovMedio').value = m.medio || 'transferencia';
-    proySel.value = m.proyectoId || '';
+    proySel.value = m.proyectoId || (id ? '' : proyPorDefecto(m.tipo || 'egreso', m.categoria));
+    document.getElementById('finMovSopArchivo').value = '';
+    var nSop = id ? sopDe('mov:'+id).length : 0;
+    document.getElementById('finMovSopHay').textContent = nSop ? 'Ya tiene '+nSop+' soporte(s). Puedes agregar otro.' : '';
     document.getElementById('finMovNota').value = m.nota || '';
     var info = document.getElementById('finMovFijoInfo');
     if(fin.movFijo){ var f = fin.fijos.get(fin.movFijo.id) || {}; info.hidden = false; info.innerHTML = 'Pago del gasto fijo <strong>'+escapeHtml(f.nombre||'')+'</strong> correspondiente a <strong>'+finYmLabel(fin.movFijo.periodo)+'</strong>.'; }
@@ -8162,7 +8417,7 @@
     var f = fin.fijos.get(fid); if(!f) return;
     var fecha = (finFijoPeriodos(f, periodo, periodo)[0] || {}).fecha || todayIso();
     if(fecha > todayIso()) fecha = todayIso();
-    openFinMovModal(null, {tipo:'egreso', categoria: f.categoria || 'software', monto: Number(f.monto)||0, tercero: f.proveedor || '', descripcion: f.nombre + ' · ' + finYmLabel(periodo), cuentaId: f.cuentaId, fecha: fecha, gastoFijoId: fid, periodo: periodo, medio: 'debito'});
+    openFinMovModal(null, {tipo:'egreso', proyectoId: f.proyectoId || proyPorDefecto('egreso', f.categoria || 'software') || 'interno-administracion', categoria: f.categoria || 'software', monto: Number(f.monto)||0, tercero: f.proveedor || '', descripcion: f.nombre + ' · ' + finYmLabel(periodo), cuentaId: f.cuentaId, fecha: fecha, gastoFijoId: fid, periodo: periodo, medio: 'debito'});
   }
   document.getElementById('finMovSave').addEventListener('click', function(){
     var db = requireDb(); if(!db) return;
@@ -8178,17 +8433,26 @@
       cuentaId: document.getElementById('finMovCuentaSel').value,
       cuentaDestinoId: t === 'transferencia' ? document.getElementById('finMovDestinoSel').value : null,
       medio: t === 'transferencia' ? 'transferencia' : document.getElementById('finMovMedio').value,
-      proyectoId: t === 'egreso' ? document.getElementById('finMovProyecto').value : '',
+      proyectoId: document.getElementById('finMovProyecto').value,
       nota: document.getElementById('finMovNota').value.trim(),
       gastoFijoId: fin.movFijo ? fin.movFijo.id : null, periodo: fin.movFijo ? fin.movFijo.periodo : null,
       creadoPorId: prev.creadoPorId || state.userId || null
     };
     if(t === 'transferencia' && data.cuentaId === data.cuentaDestinoId){ toast('La cuenta de origen y la de destino deben ser distintas.'); return; }
+    if(!data.proyectoId){ toast('Elige el proyecto (para lo de la empresa: Administración o Plataformas internas).', 5000); document.getElementById('finMovProyecto').focus(); return; }
+    var sopFile = document.getElementById('finMovSopArchivo').files[0], sopClase = document.getElementById('finMovSopClase').value;
     if(!data.descripcion && t !== 'transferencia') data.descripcion = finCatLabel(data) + (data.tercero ? ' · ' + data.tercero : '');
     var col = db.collection('finMovimientos');
-    var p = fin.editingMovId ? col.doc(fin.editingMovId).set(data) : col.add(data);
-    p.then(function(){ toast(t === 'ingreso' ? 'Entrada registrada' : t === 'egreso' ? 'Gasto registrado' : 'Transferencia registrada'); closeFinMovModal(); })
-      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+    var editId = fin.editingMovId;
+    var p = editId ? col.doc(editId).set(data).then(function(){ return editId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
+    var btnG = document.getElementById('finMovSave'); btnG.disabled = true;
+    p.then(function(movId){
+      /* El soporte se sube en el mismo paso: un solo registro */
+      if(sopFile && movId) return sopSubir(sopFile, 'mov:'+movId, sopClase, {proyectoId: data.proyectoId, privado: true}).then(function(){ return true; }, function(err){ toast('El movimiento quedó, pero el soporte no: ' + (err && err.message ? err.message : 'error'), 6000); return false; });
+      return null;
+    }).then(function(conSop){ if(conSop !== false) toast((t === 'ingreso' ? 'Entrada registrada' : t === 'egreso' ? 'Gasto registrado' : 'Transferencia registrada') + (conSop ? ' con su soporte' : '')); closeFinMovModal(); })
+      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); })
+      .then(function(){ btnG.disabled = false; });
   });
   document.getElementById('finMovDelete').addEventListener('click', function(){
     var db = requireDb(); if(!db || !fin.editingMovId) return;
@@ -8285,10 +8549,10 @@
     if(!window.claude || !window.claude.use) return;
     window.claude.use('user').then(function(u){ return u && u.isOwner ? u.isOwner() : false; }).then(function(esAdmin){
       if(!esAdmin) return;
-      fin.admin = true;
+      fin.admin = true; asegurarProyInternos();
       document.querySelectorAll('.fin-admin').forEach(function(el){ el.hidden = false; });
       renderPrecios(); precSembrar(); renderClientes();
-      db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); renderResumen(); });
+      db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); fin.movsCargados = true; asignarProyInternosAMovs(); renderFinanzas(); renderResumen(); });
       db.collection('finGastosFijos').onSnapshot(function(snap){ fin.fijos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); renderResumen(); });
       db.collection('finConciliaciones').onSnapshot(function(snap){ fin.conc = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
       db.collection('finAjustes').onSnapshot(function(snap){ var g = snap.docs.filter(function(d){ return d.id === 'general'; })[0]; fin.ajustes = g ? g.data() : null; renderFinanzas(); renderResumen(); });
@@ -8515,6 +8779,12 @@
     };
     var prev = state.editingProyId && state.proyectos.get(state.editingProyId);
     if(prev && prev.fueraDelTotal) data.fueraDelTotal = prev.fueraDelTotal;
+    if(prev && prev.interno){ data.interno = true; if(data.estado === 'finalizado'){ toast('Los proyectos internos no se finalizan: siguen abiertos todo el año.'); return; } }
+    /* No se finaliza un proyecto con movimientos sin soporte */
+    if(state.editingProyId && data.estado === 'finalizado' && (!prev || prev.estado !== 'finalizado')){
+      var faltan = proySoportesFaltan(state.editingProyId);
+      if(faltan.length){ toast('No se puede finalizar: faltan soportes en '+faltan.length+' movimiento(s). Súbelos abajo, en «Soportes contables».', 6000); renderProySoportes(state.editingProyId); return; }
+    }
     if(clienteNoPermitido(data.cliente, prev && prev.cliente)){ toast(MSG_CLIENTE_NO_REG, 6000); document.getElementById('proyCliente').focus(); return; }
     if(!data.nombre){ toast('Ponle un nombre al proyecto.'); return; }
     var col = db.collection('proyectos');
@@ -8615,6 +8885,7 @@
 
       db.collection('proyectos').onSnapshot(function(snap){
         state.proyectos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        state.loaded.proyectos = true; asegurarProyInternos(); try { asignarProyInternosAMovs(); } catch(e){}
         renderAll();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
@@ -8638,6 +8909,13 @@
         state.precios = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.precios = true;
         renderPrecios(); precSembrar(); invCostRefresh();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
+      db.collection('soportes').onSnapshot(function(snap){
+        state.soportes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        try { renderFinanzas(); } catch(e){}
+        if(sopCtx) renderSoportes();
+        if(document.getElementById('proyOverlay').classList.contains('open') && state.editingProyId) renderProySoportes(state.editingProyId);
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('documentos').onSnapshot(function(snap){
@@ -10184,6 +10462,7 @@
        "documentos" con su consecutivo (INF-0001, ACT-0001…).
      ===================================================================== */
   state.documentos = new Map();
+  state.soportes = new Map();
   var fmt = {spec: null, docId: null, ordenId: '', persona: -1, datos: null, fotos: []};
   var FMT_GRUPOS = [
     ['Proyectos', 'Para el cliente y la obra'],
