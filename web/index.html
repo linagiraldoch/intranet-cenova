@@ -1238,6 +1238,23 @@
     #view-costos input.cos-costo, #view-costos input.cos-prov{width:100% !important;}
     #view-costos .filters .btn, #view-inventario .filters .btn{flex:1 1 auto; justify-content:center;}
   }
+  /* Finanzas (2026-10-28): números y etiquetas sobrios, igual que el tema claro, también en «Rosa de la duquesa» */
+  #pageSub:empty{display:none;}
+  .pg-fecha{font-size:10px; color:var(--text-muted); margin-top:2px; white-space:nowrap;}
+  .fin-det{border-top:1px solid var(--border);}
+  #finKpis{grid-template-columns:repeat(3,1fr);}
+  @media (max-width:920px){ #finKpis{grid-template-columns:repeat(2,1fr);} }
+  #finKpis .kpi .value{white-space:nowrap;}
+  @media (max-width:520px){ #finKpis .kpi{padding:12px 12px;} #finKpis .kpi .value, :root[data-theme="lavanda"] #view-finanzas #finKpis .kpi .value{font-size:17px;} #finKpis .kpi .label{font-size:10.5px !important;} }
+  #finProyChart svg{max-height:240px;}
+  .fin-det > summary{cursor:pointer; padding:10px 18px; font-size:12.5px; color:var(--text-muted);}
+  .fin-det > summary:hover{color:var(--accent);}
+  #finProyPanel .panel-head .fin-check{font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px;}
+  :root[data-theme="lavanda"] #view-finanzas .kpi .label{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11.5px; letter-spacing:.06em; font-weight:500; color:var(--text-muted);}
+  :root[data-theme="lavanda"] #view-finanzas .kpi .value{font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:24px; font-weight:600; line-height:1.2; letter-spacing:0; color:var(--text);}
+  :root[data-theme="lavanda"] #view-finanzas .kpi .value.neg{color:var(--critical);}
+  :root[data-theme="lavanda"] #view-finanzas thead th{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11px; letter-spacing:.04em; color:var(--text-muted);}
+  :root[data-theme="lavanda"] #view-finanzas .num, :root[data-theme="lavanda"] #view-finanzas .r-num{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
 </style>
 
 <div class="app">
@@ -1465,7 +1482,7 @@
       <div class="kpis stats" id="statsKpis"></div>
       <div id="vkStats"></div>
       <h3 class="stats-h">Rentabilidad por proyecto</h3>
-      <div class="stats-note">Venta y costo salen de las cotizaciones que tienen orden de compra (valores sin IVA). Utilidad = venta − costo directo de los ítems − costos imprevistos. "Dejado de cobrar" = días de instalación extra × tarifa diaria de instalación cotizada. <strong>"Ítems sin costo"</strong> quiere decir que en esa cotización falta escribir cuánto le costó cada ítem a Cenova (columna "Costo"); mientras falte, la utilidad y el margen salen inflados. Haz clic en el aviso de ítems sin costo para completarlos, o en el proyecto para ver su informe: en qué se fue el dinero fuera de la cotización, margen por ítem, qué se compró, quién instaló y las notas.</div>
+      <div class="stats-note">Valores sin IVA. Toca un proyecto para ver su informe.</div>
       <div id="statsProyectos"></div>
       <h3 class="stats-h">Desvíos de ejecución</h3>
       <div class="stats-note">Órdenes con días reales distintos a los cotizados, materiales dañados o repuestos, u otros costos que no estaban previstos. Lo que está "en garantía" cuenta como pérdida hasta que marques que se recuperó.</div>
@@ -1539,10 +1556,9 @@
         <button class="subtab-btn" data-fin="movimientos">Movimientos</button>
         <button class="subtab-btn" data-fin="fijos">Gastos fijos</button>
         <button class="subtab-btn" data-fin="rentabilidad">Rentabilidad</button>
-        <button class="subtab-btn" data-fin="proyeccion">Proyección</button>
         <button class="subtab-btn" data-fin="conciliacion">Conciliación</button>
         <button class="subtab-btn" data-fin="libros">Libros contables</button>
-        <button class="subtab-btn" data-fin="ajustes">Cuentas y metas</button>
+        <button class="subtab-btn" data-fin="ajustes">Cuentas</button>
       </div>
 
       <!-- Resumen -->
@@ -1562,13 +1578,18 @@
         </div>
         <div class="fin-grid">
           <div class="panel">
+            <div class="panel-head"><h3>Por pagar y por cobrar</h3><span>próximos 30 días</span></div>
+            <div class="panel-body fin-tall" id="finProximos"></div>
+          </div>
+          <div class="panel">
             <div class="panel-head"><h3>Puntos de mejora</h3><span id="finMejorasCount"></span></div>
             <div class="panel-body fin-tall" id="finMejoras"></div>
           </div>
-          <div class="panel">
-            <div class="panel-head"><h3>Próximos pagos y cobros</h3><span>30 días</span></div>
-            <div class="panel-body fin-tall" id="finProximos"></div>
-          </div>
+        </div>
+        <div class="panel" id="finProyPanel" style="margin-top:16px;">
+          <div class="panel-head"><h3>Próximos 6 meses</h3><label class="fin-check"><input type="checkbox" id="finProyEspera"> Contar cotizaciones en espera</label></div>
+          <div class="fin-chart" id="finProyChart"></div>
+          <details class="fin-det"><summary>Ver detalle por mes</summary><div id="finProyTabla"></div></details>
         </div>
       </div>
 
@@ -1588,7 +1609,6 @@
           <button class="btn" id="finAddTransf">Transferencia entre cuentas</button>
           <button class="btn ghost" id="finExportar">Exportar CSV</button>
         </div>
-        <div class="no-file" style="margin:-6px 0 12px;">Los pagos de clientes se registran en la <strong>orden de compra</strong> (sección Pagos) y aparecen aquí solos, marcados "Desde orden". No los registres dos veces.</div>
         <div id="finMovTotales" class="fin-totales"></div>
         <div id="finMovTabla"></div>
       </div>
@@ -1596,7 +1616,7 @@
       <!-- Gastos fijos -->
       <div class="subview" id="fin-fijos">
         <div class="section-head">
-          <div class="no-file">Lo que Cenova paga siempre, haya o no proyectos: Google Workspace, dominio, contador, Cámara de Comercio, plan de celular… Con esto se calcula cuánto hay que vender al mes para no perder.</div>
+          <div></div>
           <button class="btn primary" id="finAddFijo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Nuevo gasto fijo</button>
         </div>
         <div id="finFijosResumen" class="fin-totales"></div>
@@ -1609,35 +1629,20 @@
           <select id="finRentPeriodo"></select>
         </div>
         <h3 class="stats-h" style="margin-top:0;">Estado de resultados</h3>
-        <div class="stats-note">Ventas = órdenes de compra recibidas en el periodo (sin IVA). Costo directo = lo que cuesta ejecutarlas: el costo real registrado en Movimientos si el proyecto ya tiene gastos, si no, el costo de la cotización. Gastos operativos = salidas que no son de un proyecto (fijos y demás). No incluye aportes, préstamos ni retiros de socios.</div>
         <div class="fin-pyg" id="finPyg"></div>
         <h3 class="stats-h">Por proyecto: estimado vs. real</h3>
-        <div class="stats-note">"Gastado" son las salidas registradas en Movimientos ligadas al proyecto. Si supera el costo estimado, la cotización se quedó corta.</div>
         <div id="finRentProy"></div>
         <h3 class="stats-h">Por cotización</h3>
-        <div class="stats-note">Margen bruto = (venta sin IVA − costo) ÷ venta. Precio mínimo = el precio sin IVA que haría falta para llegar a la meta de margen.</div>
         <div class="filters" style="margin-bottom:10px;">
           <select id="finRentCotEstado"><option value="">Todas menos rechazadas</option><option value="aprobada">Aprobadas</option><option value="enviada">Enviadas</option><option value="pendiente_armar">Por armar</option><option value="en_proceso">En proceso</option><option value="en_pausa">En pausa</option><option value="rechazada">Rechazadas</option></select>
         </div>
         <div id="finRentCot"></div>
         <h3 class="stats-h">Margen por tipo de ítem</h3>
-        <div class="stats-note">Suma de todas las cotizaciones aprobadas y enviadas con costo registrado. Muestra en qué se gana más y en qué menos.</div>
         <div id="finRentCat"></div>
-      </div>
-
-      <!-- Proyección -->
-      <div class="subview" id="fin-proyeccion">
-        <div class="filters" style="margin-bottom:12px;">
-          <label class="fin-check"><input type="checkbox" id="finProyEspera"> Incluir cotizaciones en espera (ponderadas por la tasa de aprobación)</label>
-        </div>
-        <div class="stats-note">Parte del saldo de hoy y suma lo que se espera cobrar (saldos de órdenes según su plazo de pago) y resta lo que se espera pagar (gastos fijos, pagos pendientes y compras que faltan para las órdenes en curso).</div>
-        <div class="panel" style="margin-bottom:16px;"><div class="fin-chart" id="finProyChart"></div></div>
-        <div id="finProyTabla"></div>
       </div>
 
       <!-- Conciliación con el estado de cuenta (2026-10-13) -->
       <div class="subview" id="fin-conciliacion">
-        <div class="stats-note">Sube el estado de cuenta que descargas del banco (PDF, Excel o CSV). La intranet lo compara línea por línea con lo registrado en esa cuenta: lo que está en el banco y falta aquí ("en qué se fue esto"), lo que está aquí y no en el banco, y si el saldo cuadra mes a mes.</div>
         <div class="filters" style="margin-bottom:12px;">
           <select id="concCuenta" aria-label="Cuenta del estado de cuenta"></select>
           <input type="file" id="concArchivo" accept=".pdf,.csv,.xlsx,.xls,.txt" hidden>
@@ -1652,11 +1657,10 @@
       <div class="subview" id="fin-libros">
         <div class="filters" style="margin-bottom:12px;">
           <select id="libroPer" aria-label="Periodo"></select>
-          <button type="button" class="btn" id="libroCsv">Descargar Excel (CSV)</button>
-          <button type="button" class="btn" id="libroPdf">Descargar PDF</button>
+          <button type="button" class="btn" id="libroCsv">Excel</button>
+          <button type="button" class="btn" id="libroPdf">PDF</button>
         </div>
         <div class="cot-flujo"><div class="cot-cadena" id="libroTabs"></div></div>
-        <div class="stats-note">Contabilidad de caja con el plan de cuentas (PUC) colombiano: cada movimiento pagado o cobrado es un asiento. Es la base para la contadora; ella hace las causaciones y ajustes.</div>
         <div id="finLibrosBody"></div>
       </div>
 
@@ -1666,22 +1670,20 @@
           <div class="panel">
             <div class="panel-head"><h3>Cuentas de dinero</h3><button class="btn sm" id="finCuentaAdd">+ Agregar cuenta</button></div>
             <div class="panel-body fin-tall" style="max-height:none;">
-              <div class="no-file" style="padding:6px 8px 10px;">Escribe cuánto había en cada cuenta en una fecha. Desde esa fecha, la intranet suma las entradas y resta las salidas. Los pagos de clientes en efectivo van a la primera cuenta de tipo Efectivo; los demás, a la primera cuenta de banco.</div>
               <div class="table-wrap"><table class="fin-edit"><thead><tr><th>Nombre</th><th>Tipo</th><th>Saldo inicial</th><th>Fecha del saldo</th><th></th></tr></thead><tbody id="finCuentasBody"></tbody></table></div>
             </div>
           </div>
           <div class="panel">
-            <div class="panel-head"><h3>Metas de rentabilidad</h3></div>
+            <div class="panel-head"><h3>Metas de margen</h3></div>
             <div class="panel-body" style="max-height:none; padding:14px 18px; display:flex; flex-direction:column; gap:12px;">
               <div class="field-row">
-                <div class="field"><label>Margen bruto meta (%)</label><input type="number" id="finMetaMargen" min="0" max="95" step="1"></div>
-                <div class="field"><label>Margen mínimo aceptable (%)</label><input type="number" id="finMargenMin" min="0" max="95" step="1"></div>
+                <div class="field"><label>Meta (%)</label><input type="number" id="finMetaMargen" min="0" max="95" step="1"></div>
+                <div class="field"><label>Mínimo (%)</label><input type="number" id="finMargenMin" min="0" max="95" step="1"></div>
               </div>
-              <div class="no-file">Las cotizaciones por debajo del mínimo salen en rojo y en "Puntos de mejora"; entre el mínimo y la meta, en amarillo.</div>
             </div>
           </div>
         </div>
-        <div style="display:flex; justify-content:flex-end; margin-top:14px;"><button class="btn primary" id="finAjustesSave">Guardar cuentas y metas</button></div>
+        <div style="display:flex; justify-content:flex-end; margin-top:14px;"><button class="btn primary" id="finAjustesSave">Guardar</button></div>
       </div>
     </section>
 
@@ -2307,7 +2309,7 @@
       <div class="fieldset-label">Ejecución y cierre</div>
       <div class="field-row three">
         <div class="field"><label>Días reales de ejecución</label><input type="number" id="ocDiasReales" min="0" step="1" placeholder="Al terminar la instalación"></div>
-        <div class="field"><label>Otros costos imprevistos ($)</label><input type="number" id="ocCostoImprevistos" min="0" step="1000" placeholder="0"><span class="no-file">Transporte, horas extra, alquileres… (los materiales van en Novedades, abajo).</span></div>
+        <div class="field"><label>Otros costos imprevistos ($)</label><input type="number" id="ocCostoImprevistos" min="0" step="1000" placeholder="0"></div>
         <div class="field"><label>Causa del desvío</label>
           <select id="ocCausaDesvio">
             <option value="">Sin desvío</option>
@@ -2343,7 +2345,7 @@
         <label>Otros pagos que Cenova debe por esta obra (reembolsos, devoluciones, viáticos aparte)</label>
         <div class="items-table-wrap"><table class="items-table"><thead><tr><th class="col-idx">#</th><th style="width:38%;">Concepto</th><th style="width:22%;">A quién</th><th>Valor</th><th style="width:9%;">Pagado</th><th class="col-rm"></th></tr></thead><tbody id="ocPorPagarBody"></tbody></table></div>
         <button type="button" class="btn sm" id="ocPorPagarAdd" style="align-self:flex-start;">+ Agregar pago pendiente</button>
-        <div class="no-file">La cotización pasa a "Cerradas" solo cuando el cliente pagó todo, el personal está marcado como pagado y no queda nada aquí sin pagar.</div>
+        <div class="no-file">Al marcar «Pagado» el pago sale solo en Finanzas.</div>
       </div>
 
       <div class="fieldset-label">Notas</div>
@@ -2678,7 +2680,7 @@
     inventario:['Inventario','Lo que Cenova tiene guardado: entradas, salidas a cada obra, conteos y alertas de stock bajo.'],
     costos:['Costos','Precios de proveedores, costos por cargar en Precios y lo que costó de verdad cada obra frente a lo cotizado.'],
     precios:['Precios','Precios estándar de servicios, personal, materiales, kits y equipos para cotizar sin volver a calcular.'],
-    finanzas:['Finanzas','Flujo de caja, gastos de la empresa y rentabilidad real. Solo administración.'],
+    finanzas:['Finanzas',''],
     ordenes:['Órdenes de compra','Órdenes recibidas, su cotización, plazos de pago e instalación.'],
     proyectos:['Proyectos y trabajos','Estado de cada proyecto en curso o por iniciar.'],
     clientes:['Clientes','Registra tus clientes una vez y autocompleta sus datos al cotizar.'],
@@ -3382,7 +3384,7 @@
   function vkFinanzas(){
     var box = document.getElementById('vkFin'); if(!box || typeof fin === 'undefined' || !fin || !fin.admin) { if(box) box.innerHTML = ''; return; }
     var anio = todayIso().slice(0,4), cat = {};
-    fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.estado !== 'pendiente' && String(m.fecha||'').slice(0,4) === anio){ var k = finCatLabel(m); cat[k] = (cat[k]||0) + (Number(m.monto)||0); } });
+    finMovsPropios().forEach(function(m){ if(m.tipo === 'egreso' && m.estado !== 'pendiente' && String(m.fecha||'').slice(0,4) === anio){ var k = finCatLabel(m); cat[k] = (cat[k]||0) + (Number(m.monto)||0); } });
     var pal = ['#1f4f99','#c88a1a','#1f8a57','#7c4dcc','#d6407a','#0b8bb0','#a86a2c','#5f6f86'];
     var segs = Object.keys(cat).sort(function(a,b){ return cat[b]-cat[a]; }).slice(0,7).map(function(k, i){ return {l:k, v:cat[k], t:rsCompact(cat[k]), c:pal[i % pal.length]}; });
     var tot = Object.keys(cat).reduce(function(s,k){ return s + cat[k]; }, 0);
@@ -5675,13 +5677,13 @@
         '<td><input type="text" class="pp-concepto" value="'+escapeHtml(x.concepto||'')+'" placeholder="Ej. devolución a Jorge por la Notaría"></td>'+
         '<td><input type="text" class="pp-a" list="equipoList" value="'+escapeHtml(x.a||'')+'" placeholder="Persona o empresa"></td>'+
         '<td><input type="number" class="pp-monto input-miles" value="'+(x.monto!=null&&x.monto!==''?x.monto:'')+'" min="0" step="1000" placeholder="0"></td>'+
-        '<td style="text-align:center;"><input type="checkbox" class="pp-pagado"'+(x.pagado?' checked':'')+'></td>'+
+        '<td style="text-align:center;"><input type="checkbox" class="pp-pagado"'+(x.pagado?' checked':'')+'>'+(x.pagado && x.pagadoFecha ? '<div class="pg-fecha">'+fmtShort(x.pagadoFecha)+'</div>' : '')+'</td>'+
         '<td class="col-rm"><button type="button" class="icon-btn pp-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
     }).join('');
     var map = {'pp-concepto':'concepto','pp-a':'a','pp-monto':'monto'};
     Object.keys(map).forEach(function(cls){ body.querySelectorAll('.'+cls).forEach(function(el){ el.addEventListener('input', function(){
       var x = state.ocPorPagar[+el.closest('tr').dataset.i]; x[map[cls]] = cls === 'pp-monto' ? (el.value === '' ? null : Number(el.value)) : el.value; }); }); });
-    body.querySelectorAll('.pp-pagado').forEach(function(el){ el.addEventListener('change', function(){ state.ocPorPagar[+el.closest('tr').dataset.i].pagado = el.checked; }); });
+    body.querySelectorAll('.pp-pagado').forEach(function(el){ el.addEventListener('change', function(){ var x = state.ocPorPagar[+el.closest('tr').dataset.i]; x.pagado = el.checked; x.pagadoFecha = el.checked ? todayIso() : null; renderOcPorPagar(); }); });
     body.querySelectorAll('.pp-rm').forEach(function(b){ b.addEventListener('click', function(){ state.ocPorPagar.splice(+b.closest('tr').dataset.i, 1); renderOcPorPagar(); }); });
   }
   document.getElementById('ocPorPagarAdd').addEventListener('click', function(){ state.ocPorPagar.push({concepto:'', a:'', monto:null, pagado:false}); renderOcPorPagar(); });
@@ -5886,8 +5888,8 @@
       costoImprevistos: document.getElementById('ocCostoImprevistos').value==='' ? null : Number(document.getElementById('ocCostoImprevistos').value),
       causaDesvio: document.getElementById('ocCausaDesvio').value,
       causaDetalle: document.getElementById('ocCausaDetalle').value.trim(),
-      personal: state.ocPersonal.filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0, pagado:!!r.pagado}; }),
-      porPagar: state.ocPorPagar.filter(function(x){ return (x.concepto||'').trim() || Number(x.monto); }).map(function(x){ return {concepto:(x.concepto||'').trim(), a:(x.a||'').trim(), monto:Number(x.monto)||0, pagado:!!x.pagado}; }),
+      personal: state.ocPersonal.filter(function(r){ return (r.nombre||'').trim() || personalRowTotal(r); }).map(function(r){ return {nombre:(r.nombre||'').trim(), tipo:r.tipo||'externo', dias:Number(r.dias)||0, pagoDia:Number(r.pagoDia)||0, almuerzoDia:Number(r.almuerzoDia)||0, transporteDia:Number(r.transporteDia)||0, otros:Number(r.otros)||0, pagado:!!r.pagado, pagadoFecha: r.pagado ? (r.pagadoFecha || null) : null}; }),
+      porPagar: state.ocPorPagar.filter(function(x){ return (x.concepto||'').trim() || Number(x.monto); }).map(function(x){ return {concepto:(x.concepto||'').trim(), a:(x.a||'').trim(), monto:Number(x.monto)||0, pagado:!!x.pagado, pagadoFecha: x.pagado ? (x.pagadoFecha || null) : null}; }),
       retrasoMotivo: ocRetrasoAplica() ? document.getElementById('ocRetrasoMotivo').value || null : null,
       retrasoNota: ocRetrasoAplica() ? document.getElementById('ocRetrasoNota').value.trim() : '',
       novedades: state.ocNovedades.filter(function(n){ return (n.material||'').trim() || Number(n.costo); }).map(function(n){
@@ -6679,7 +6681,7 @@
         '<td><input type="number" class="ps-dias" value="'+(r.dias!=null?r.dias:1)+'" min="0" step="0.5"></td>'+
         '<td>'+num('ps-pago', r.pagoDia)+'</td><td>'+num('ps-alm', r.almuerzoDia)+'</td><td>'+num('ps-trans', r.transporteDia)+'</td><td>'+num('ps-otros', r.otros)+'</td>'+
         '<td class="col-total ps-total">'+fmtMoney.format(personalRowTotal(r))+'</td>'+
-        (bodyId === 'ocPersonalBody' ? '<td style="text-align:center;"><input type="checkbox" class="ps-pagado" title="Ya se le pagó"'+(r.pagado?' checked':'')+'></td>' : '')+
+        (bodyId === 'ocPersonalBody' ? '<td style="text-align:center;"><input type="checkbox" class="ps-pagado" title="Ya se le pagó"'+(r.pagado?' checked':'')+'>'+(r.pagado && r.pagadoFecha ? '<div class="pg-fecha">'+fmtShort(r.pagadoFecha)+'</div>' : '')+'</td>' : '')+
         '<td class="col-rm"><button type="button" class="icon-btn ps-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
     }).join('');
     var map = {'ps-nombre':'nombre','ps-tipo':'tipo','ps-dias':'dias','ps-pago':'pagoDia','ps-alm':'almuerzoDia','ps-trans':'transporteDia','ps-otros':'otros'};
@@ -6694,7 +6696,7 @@
         });
       });
     });
-    body.querySelectorAll('.ps-pagado').forEach(function(el){ el.addEventListener('change', function(){ list[+el.closest('tr').dataset.i].pagado = el.checked; onChange(); }); });
+    body.querySelectorAll('.ps-pagado').forEach(function(el){ el.addEventListener('change', function(){ var r = list[+el.closest('tr').dataset.i]; r.pagado = el.checked; r.pagadoFecha = el.checked ? todayIso() : null; renderPersonalTable(bodyId, list, onChange); onChange(); }); });
     body.querySelectorAll('.ps-rm').forEach(function(b){ b.addEventListener('click', function(){ list.splice(+b.closest('tr').dataset.i, 1); renderPersonalTable(bodyId, list, onChange); onChange(); }); });
   }
   function newPersonalRow(){ return {nombre:'', tipo:'externo', dias:1, pagoDia:null, almuerzoDia:null, transporteDia:null, otros:null}; }
@@ -6877,7 +6879,7 @@
     software:'Software y suscripciones', profesionales:'Contador y servicios profesionales', legales:'Trámites legales y notariales',
     nomina:'Nómina y seguridad social', impuestos:'Impuestos', bancarios:'Gastos bancarios y 4x1000',
     herramientas:'Herramientas y equipos propios', marketing:'Publicidad y marketing', oficina:'Arriendo, servicios y oficina',
-    otro:'Otro gasto', prestamo_pago:'Pago de préstamo', retiro:'Retiro de socios / dividendos',
+    obra:'Otros gastos de la obra', otro:'Otro gasto', prestamo_pago:'Pago de préstamo', retiro:'Retiro de socios / dividendos',
     retencion:'Retención que nos hicieron (anticipo de renta)'
   };
   var FIN_CAT_INGRESO = {
@@ -6988,6 +6990,12 @@
         if(pgRetencion(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':ret', categoria:'retencion', monto: pgRetencion(pg),
           descripcion: 'Retención en la fuente · pago ' + (o.numero||'orden'), nota: 'Saldo a favor: se descuenta en la declaración de renta. Pedir el certificado.'}));
       });
+      /* Lo que se marca «Pagado» en la orden (personal y otros pagos de la obra) sale solo como salida.
+         Solo cuenta lo marcado desde que existe la fecha de pago: lo anterior ya se había registrado a mano. */
+      var gasto = function(id, fecha, cat, desc, quien, monto){ out.push({_id: 'oc:'+oid+':'+id, fuente:'orden', ocGasto:true, ocId: oid, fecha: fecha, tipo:'egreso', categoria: cat,
+        descripcion: desc, tercero: quien || '', monto: monto, iva: 0, cuentaId: finCuentaParaMedio('transferencia'), medio:'transferencia', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota:''}); };
+      (o.personal||[]).forEach(function(r, i){ var t = personalRowTotal(r); if(r.pagado && r.pagadoFecha && t > 0) gasto('per:'+i, r.pagadoFecha, 'personal', 'Pago a '+(r.nombre||'personal')+' · '+(o.numero||'orden'), r.nombre, t); });
+      (o.porPagar||[]).forEach(function(x, i){ var t = Number(x.monto)||0; if(x.pagado && x.pagadoFecha && t > 0) gasto('pp:'+i, x.pagadoFecha, 'obra', (x.concepto||'Pago de la obra')+' · '+(o.numero||'orden'), x.a, t); });
     });
     out.sort(function(a,b){ return String(b.fecha).localeCompare(String(a.fecha)); });
     return out;
@@ -7054,9 +7062,11 @@
   }
 
   /* ---------- Rentabilidad de proyectos ---------- */
+  /* Movimientos propios de Cenova: los registrados en Finanzas + los gastos marcados como pagados en las órdenes */
+  function finMovsPropios(){ return finMovimientosTodos().filter(function(m){ return m.fuente === 'manual' || m.ocGasto; }); }
   function finEgresosDeProyecto(pid){
     var tot = 0;
-    fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.proyectoId === pid && !FIN_NO_OPERATIVOS[m.categoria]) tot += Number(m.monto)||0; });
+    finMovsPropios().forEach(function(m){ if(m.tipo === 'egreso' && m.proyectoId === pid && !FIN_NO_OPERATIVOS[m.categoria]) tot += Number(m.monto)||0; });
     return tot;
   }
   function finProyectos(){
@@ -7075,8 +7085,10 @@
         cobrado += ocRecibido(o); valorOrd += Number(o.valor)||0;
         var f = o.fechaRecepcion || ''; if(f && (!primera || f < primera)) primera = f;
       });
-      var costo = gastado > 0 ? gastado : estimado;
-      rows.push({pid: pid, p: p, nOrd: pOrds.length, venta: venta, estimado: estimado, gastado: gastado, costo: costo, usaReal: gastado > 0,
+      /* El gasto real reemplaza al estimado cuando ya lo alcanzó o el proyecto terminó; antes, un primer pago (p. ej. el personal) no debe inflar la utilidad */
+      var usaReal = gastado > 0 && (gastado >= estimado || p.estado === 'finalizado' || p.estado === 'cerrado');
+      var costo = usaReal ? gastado : estimado;
+      rows.push({pid: pid, p: p, nOrd: pOrds.length, venta: venta, estimado: estimado, gastado: gastado, costo: costo, usaReal: usaReal,
         incompleto: incompleto, utilidad: venta - costo, margen: venta ? (venta - costo)/venta : null, cobrado: cobrado, valorOrd: valorOrd, fecha: primera});
     });
     rows.sort(function(a,b){ return b.venta - a.venta; });
@@ -7098,7 +7110,7 @@
     /* Proyectos con orden de compra: sus gastos ya están en el costo directo. Los demás (visitas,
        cotizaciones que no se ganaron) son gasto operativo. */
     var conOrden = {}; finProyectos().forEach(function(x){ if(x.nOrd) conOrden[x.pid] = 1; });
-    fin.movs.forEach(function(m){
+    finMovsPropios().forEach(function(m){
       if(m.estado === 'pendiente' || !finEnPeriodo(m.fecha, per)) return;
       var monto = Number(m.monto)||0;
       if(m.tipo === 'egreso'){
@@ -7176,7 +7188,7 @@
   function finMejoras(){
     var tips = [], a = finAjustes(), hoy = todayIso();
     var add = function(nivel, html, peso){ tips.push({nivel: nivel, html: html, peso: peso || 0}); };
-    if(!a.configurado) add('warning', 'Configura tus <strong>cuentas y saldos iniciales</strong> en "Cuentas y metas" para que el saldo disponible sea real.', 100);
+    if(!a.configurado) add('warning', 'Configura tus <strong>cuentas y saldos iniciales</strong> en "Cuentas" para que el saldo disponible sea real.', 100);
     if(!fin.fijos.size) add('warning', 'Registra los <strong>gastos fijos</strong> (Google Workspace, dominio, contador…) para saber cuánto hay que vender al mes para no perder.', 95);
 
     /* Ítems vendidos por debajo del costo o sin margen, en cotizaciones vivas */
@@ -7301,25 +7313,23 @@
     var entMes = 0, salMes = 0;
     movs.forEach(function(m){ if(m.estado === 'pendiente' || finYm(m.fecha) !== ym) return; if(m.tipo === 'ingreso') entMes += Number(m.monto)||0; else if(m.tipo === 'egreso') salMes += Number(m.monto)||0; });
     var cartera = 0; state.ordenes.forEach(function(o){ cartera += ocSaldo(o); });
-    var porPagar = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso') porPagar += Number(m.monto)||0; });
-    var fp = finFijosPendientes(ym); porPagar += fp.reduce(function(s,p){ return s + p.monto; }, 0);
-    var fijosMes = finFijosMensualTotal();
+    /* Por pagar = lo mismo que la lista de cuentas por pagar: pendientes de Finanzas, personal y pagos de obra sin pagar, fijos vencidos */
+    var cxp = cxpLista(), porPagar = cxp.reduce(function(s,x){ return s + x.monto; }, 0);
+    var nCobrar = 0; state.ordenes.forEach(function(o){ if(o.estado !== 'anulada' && ocSaldo(o) > 0) nCobrar++; });
     var res = finResultados(hoy.slice(0,4));
     var ivaAnio = movs.filter(function(m){ return m.fuente === 'orden' && String(m.fecha).slice(0,4) === hoy.slice(0,4); }).reduce(function(s,m){ return s + (m.iva||0); }, 0);
 
     var setup = document.getElementById('finSetup');
-    if(!a.configurado){ setup.hidden = false; setup.innerHTML = '<strong>Primer paso:</strong> en <button class="linkish fin-go" data-fin-go="ajustes" style="border:none;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;">Cuentas y metas</button> escribe tus cuentas (banco, efectivo, Nequi) con su saldo de hoy. Después registra los gastos fijos y cada gasto que haga la empresa.'; }
+    if(!a.configurado){ setup.hidden = false; setup.innerHTML = 'Falta escribir el saldo de tus cuentas en <button class="linkish fin-go" data-fin-go="ajustes" style="border:none;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;">Cuentas</button>.'; }
     else setup.hidden = true;
 
     document.getElementById('finKpis').innerHTML =
-      finKpi('Dinero disponible', finMoney(disponible), saldos.length+' cuenta(s) · hoy', disponible < 0 ? 'neg' : '') +
-      finKpi('Entradas del mes', finMoney(entMes), MESES[Number(ym.slice(5))-1]) +
-      finKpi('Salidas del mes', finMoney(salMes), 'Neto del mes: '+finMoney(entMes - salMes), salMes > entMes ? 'neg' : '') +
-      finKpi('Gastos fijos al mes', finMoney(fijosMes), finFijosActivos().length+' gasto(s) fijo(s) activos') +
-      finKpi('Por cobrar', finMoney(cartera), 'saldos de órdenes de compra') +
-      finKpi('Por pagar', finMoney(porPagar), 'pendientes + fijos sin pagar a la fecha', porPagar > 0 ? '' : '') +
-      finKpi('Utilidad operativa '+hoy.slice(0,4), finMoney(res.operativa), 'Margen bruto '+(res.margenBruto!=null?pct(res.margenBruto):'—')+' · neto '+(res.margenOp!=null?pct(res.margenOp):'—'), res.operativa < 0 ? 'neg' : '') +
-      finKpi('IVA a reservar '+hoy.slice(0,4), finMoney(ivaAnio), 'parte de lo cobrado que es de la DIAN');
+      finKpi('Dinero disponible', finMoney(disponible), ivaAnio ? 'IVA por reservar '+finMoney(ivaAnio) : 'hoy', disponible < 0 ? 'neg' : '') +
+      finKpi('Entradas de '+MESES[Number(ym.slice(5))-1].toLowerCase(), finMoney(entMes), '') +
+      finKpi('Salidas de '+MESES[Number(ym.slice(5))-1].toLowerCase(), finMoney(salMes), 'neto '+finMoney(entMes - salMes), salMes > entMes ? 'neg' : '') +
+      finKpi('Por cobrar', finMoney(cartera), nCobrar ? nCobrar+' orden(es)' : '') +
+      finKpi('Por pagar', finMoney(porPagar), cxp.length ? cxp.length+' pendiente(s)' : '') +
+      finKpi('Utilidad '+hoy.slice(0,4), finMoney(res.operativa), res.margenOp!=null ? 'margen '+pct(res.margenOp) : '', res.operativa < 0 ? 'neg' : '');
 
     /* Gráfico de 6 meses: entradas, salidas y saldo al cierre */
     var meses = []; for(var i=5;i>=0;i--) meses.push(finYmAdd(ym, -i));
@@ -7344,16 +7354,19 @@
 
     /* Próximos 30 días */
     var lim = isoAdd(hoy, 30), prox = [];
-    finFijosPendientes(finYm(lim)).forEach(function(p){ if(p.fecha <= lim) prox.push({fecha: p.fecha, txt: p.f.nombre, sub: 'Gasto fijo · ' + (FIN_FREC_LBL[p.f.frecuencia]||''), monto: -p.monto, fid: p.fid, periodo: p.periodo}); });
-    fin.movs.forEach(function(m, id){ if(m.estado === 'pendiente' && m.fecha && m.fecha <= lim) prox.push({fecha: m.fecha, txt: m.descripcion || finCatLabel(m), sub: (m.tipo==='ingreso'?'Por cobrar':'Por pagar') + (m.tercero?' · '+m.tercero:''), monto: (m.tipo==='ingreso'?1:-1)*(Number(m.monto)||0), movId: id}); });
+    finFijosPendientes(finYm(lim)).forEach(function(p){ if(p.fecha <= lim) prox.push({fecha: p.fecha, txt: p.f.nombre, sub: 'Gasto fijo', monto: -p.monto, fid: p.fid, periodo: p.periodo}); });
+    fin.movs.forEach(function(m, id){ if(m.estado === 'pendiente' && m.tipo === 'ingreso' && m.fecha && m.fecha <= lim) prox.push({fecha: m.fecha, txt: m.descripcion || finCatLabel(m), sub: m.tercero || 'Por cobrar', monto: Number(m.monto)||0}); });
+    cxp.forEach(function(x){ if(x.fijo) return; prox.push({fecha: x.fecha || hoy, txt: x.tercero !== '—' ? x.tipo+' · '+x.tercero : x.tipo, sub: x.det, monto: -x.monto, cxp: x.k}); });
     state.ordenes.forEach(function(o){ var sl = ocSaldo(o), k = ocCalc(o); if(sl > 0 && k.pago && k.pago <= lim) prox.push({fecha: k.pago, txt: 'Cobro ' + (o.numero||'') + ' · ' + (o.cliente||''), sub: 'Saldo de orden de compra', monto: sl}); });
     prox.sort(function(x,y){ return x.fecha.localeCompare(y.fecha); });
     document.getElementById('finProximos').innerHTML = prox.length ? prox.map(function(p){
-      var vencido = p.fecha < hoy;
+      var vencido = p.fecha < hoy && !p.cxp;
       return '<div class="fin-row"><div class="r-main"><strong>'+escapeHtml(p.txt)+'</strong><span>'+escapeHtml(p.sub)+' · '+(vencido?'<span style="color:var(--critical);font-weight:600;">vencido '+fmtShort(p.fecha)+'</span>':fmtShort(p.fecha))+'</span>'+
-        (p.fid ? '<div><button class="btn sm" style="margin-top:5px;" data-pagar-fijo="'+escapeHtml(p.fid)+'" data-periodo="'+p.periodo+'">Registrar pago</button></div>' : '')+
+        (p.fid ? '<div><button class="btn sm" style="margin-top:5px;" data-pagar-fijo="'+escapeHtml(p.fid)+'" data-periodo="'+p.periodo+'">Pagar</button></div>' : '')+
+        (p.cxp ? '<div><button class="btn sm" style="margin-top:5px;" data-cxp-pagar="'+escapeHtml(p.cxp)+'">Pagado</button></div>' : '')+
         '</div><div class="r-num '+(p.monto<0?'neg':'pos')+'">'+(p.monto<0?'−':'+')+finMoney(Math.abs(p.monto))+'</div></div>';
-    }).join('') : '<div class="empty-state" style="padding:24px;">Nada en los próximos 30 días.</div>';
+    }).join('') : '<div class="empty-state" style="padding:24px;">Nada pendiente.</div>';
+    renderFinProyeccion();
   }
 
   function finMovFiltrados(){
@@ -7442,9 +7455,9 @@
     h += row('− Gastos operativos', -r.operativos, '');
     Object.keys(r.opCat).sort(function(x,y){ return r.opCat[y]-r.opCat[x]; }).forEach(function(k){ h += row(k === 'sin_orden' ? 'Gastos de proyectos sin orden de compra' : (FIN_CAT_EGRESO[k]||k), -r.opCat[k], 'sub'); });
     h += row('= Utilidad operativa', r.operativa, 'total', 'Margen neto '+(r.margenOp!=null?pct(r.margenOp):'—'));
-    if(r.capital) h += '<div class="no-file" style="padding:8px 10px;">Movimientos de capital en el periodo (aportes, préstamos, retiros), fuera de la utilidad: '+finMoney(r.capital)+'</div>';
+    if(r.capital) h += '<div class="no-file" style="padding:8px 10px;">Aportes, préstamos y retiros (no cuentan en la utilidad): '+finMoney(r.capital)+'</div>';
     var fijosMes = finFijosMensualTotal();
-    if(fijosMes){ var mref = finMargenReferencia(); h += '<div class="info-box" style="margin:8px 6px 4px;">Punto de equilibrio: con '+finMoney(fijosMes)+' de gastos fijos al mes y un margen bruto de '+pct(mref)+', Cenova necesita vender <strong>'+finMoney(fijosMes/mref)+' al mes</strong> (sin IVA) para no perder.</div>'; }
+    if(fijosMes){ var mref = finMargenReferencia(); h += '<div class="info-box" style="margin:8px 6px 4px;">Punto de equilibrio: vender <strong>'+finMoney(fijosMes/mref)+' al mes</strong> sin IVA.</div>'; }
     document.getElementById('finPyg').innerHTML = h;
 
     /* Por proyecto */
@@ -7505,7 +7518,7 @@
     var a = finAjustes(), chk = document.getElementById('finProyEspera');
     chk.checked = a.incluirEspera;
     var p = finProyeccion(6);
-    var lbl = chk.parentNode; lbl.lastChild.textContent = ' Incluir cotizaciones en espera (ponderadas por la tasa de aprobación' + (p.tasa != null ? ': ' + pct(p.tasa) : '') + ')';
+    var lbl = chk.parentNode; lbl.title = 'Se suman según la tasa de aprobación' + (p.tasa != null ? ' (' + pct(p.tasa) + ')' : '');
     document.getElementById('finProyChart').innerHTML = finBarChart(p.rows.map(function(r){ return r.ym; }), [{key:'Entradas esperadas', cls:'b-in', vals: p.rows.map(function(r){ return r.entra; })}, {key:'Salidas esperadas', cls:'b-out', vals: p.rows.map(function(r){ return r.sale; })}], {linea: p.rows.map(function(r){ return r.final; }), lineaLabel:'Saldo proyectado'});
     var h = '<div class="table-wrap"><table><thead><tr><th>Mes</th><th class="num">Saldo inicial</th><th class="num">Cobros de órdenes</th>'+(a.incluirEspera?'<th class="num">Cotizaciones en espera</th>':'')+'<th class="num">Otras entradas</th><th class="num">Gastos fijos</th><th class="num">Pagos pendientes</th><th class="num">Compras de órdenes en curso</th><th class="num">Saldo final</th></tr></thead><tbody>';
     p.rows.forEach(function(r){
@@ -7513,7 +7526,7 @@
         '<td class="num pos">'+finMoney(r.x.otrasEntradas)+'</td><td class="num neg">'+finMoney(r.x.fijos)+'</td><td class="num neg">'+finMoney(r.x.pendientes)+'</td><td class="num neg">'+finMoney(r.x.compras)+'</td>'+
         '<td class="num'+(r.final<0?' neg':'')+'"><strong>'+finMoney(r.final)+'</strong></td></tr>';
     });
-    h += '</tbody></table></div><div class="stats-note" style="margin-top:8px;">Los cobros vencidos y los pagos atrasados se cuentan en el mes actual.</div>';
+    h += '</tbody></table></div>';
     document.getElementById('finProyTabla').innerHTML = h;
   }
 
@@ -7635,7 +7648,7 @@
   function concCargarArchivo(file, cuentaId){
     var db = requireDb(); if(!db) return;
     var cta = finAjustes().cuentas.filter(function(c){ return c.id === cuentaId; })[0];
-    if(!cta){ toast('Primero elige la cuenta del estado de cuenta (o créala en Cuentas y metas).', 5000); return; }
+    if(!cta){ toast('Primero elige la cuenta del estado de cuenta (o créala en Cuentas).', 5000); return; }
     var nom = (file.name||'').toLowerCase(), st = document.getElementById('concEstado');
     var aviso = function(t, k){ st.hidden = !t; st.className = 'info-box' + (k ? ' ' + k : ''); st.innerHTML = t || ''; };
     aviso('<strong>Leyendo '+escapeHtml(file.name)+'…</strong> <span class="muted">Esto toma unos segundos'+(/\.pdf$/.test(nom) ? '; un PDF largo se lee por partes con IA' : '')+'.</span>');
@@ -7844,8 +7857,8 @@
   function pucContra(m){
     var k = m.categoria;
     if(m.tipo === 'ingreso') return ({cobro:'4135', venta:'4135', rendimientos:'4210', reintegro:'4250', aporte:'3105', prestamo:'2105'})[k] || '4295';
-    if(m.proyectoId && (k === 'compras' || k === 'personal' || k === 'transporte')) return '6135';
-    return ({compras:'6135', personal:'5105', nomina:'5105', transporte:'5155', software:'5135', profesionales:'5110', legales:'5140', impuestos:'5115',
+    if(m.proyectoId && (k === 'compras' || k === 'personal' || k === 'transporte' || k === 'obra')) return '6135';
+    return ({compras:'6135', obra:'6135', personal:'5105', nomina:'5105', transporte:'5155', software:'5135', profesionales:'5110', legales:'5140', impuestos:'5115',
       bancarios:'5305', oficina:'5120', marketing:'5195', herramientas:'5195', otro:'5195', prestamo_pago:'2105', retiro:'3305', retencion:'1355'})[k] || '5195';
   }
   function libroAsientos(desde, hasta){
@@ -7894,8 +7907,8 @@
     fin.movs.forEach(function(m, id){ if(m.estado === 'pendiente' && m.tipo === 'egreso')
       out.push({k:'mov:'+id, tipo: /devoluci|reembolso|socio/i.test((m.descripcion||'')+' '+(m.nota||'')) ? 'Reembolso a socio' : 'Pago pendiente', tercero:m.tercero||'—', det:m.descripcion||finCatLabel(m), fecha:m.fecha, monto:Number(m.monto)||0, puc: /devoluci|reembolso|socio/i.test((m.descripcion||'')+' '+(m.nota||'')) ? '2380' : '2335', pagable:true}); });
     state.ordenes.forEach(function(o, oid){ if(o.estado === 'anulada') return;
-      (o.personal||[]).forEach(function(r){ var t = personalRowTotal(r); if(!r.pagado && t > 0) out.push({k:'oc:'+oid, tipo:'Personal de obra', tercero:r.nombre||'—', det:(o.numero||'Orden')+' · '+(o.cliente||''), fecha:o.fechaInicio||o.fechaRecepcion, monto:t, puc:'2335', oc:oid}); });
-      (o.porPagar||[]).forEach(function(x){ if(!x.pagado && Number(x.monto) > 0) out.push({k:'oc:'+oid, tipo:'Pago de la obra', tercero:x.a||'—', det:(x.concepto||'')+' · '+(o.numero||''), fecha:o.fechaInicio||o.fechaRecepcion, monto:Number(x.monto), puc: /socio|jorge|angel|ángel|lina/i.test(x.a||'') ? '2380' : '2335', oc:oid}); });
+      (o.personal||[]).forEach(function(r, i){ var t = personalRowTotal(r); if(!r.pagado && t > 0) out.push({k:'ocp:'+oid+':personal:'+i, tipo:'Personal de obra', tercero:r.nombre||'—', det:(o.numero||'Orden')+' · '+(o.cliente||''), fecha:o.fechaInicio||o.fechaRecepcion, monto:t, puc:'2335', oc:oid, pagable:true}); });
+      (o.porPagar||[]).forEach(function(x, i){ if(!x.pagado && Number(x.monto) > 0) out.push({k:'ocp:'+oid+':porPagar:'+i, tipo: /socio|jorge|angel|ángel|lina/i.test(x.a||'') ? 'Reembolso a socio' : 'Pago de la obra', tercero:x.a||'—', det:(x.concepto||'')+' · '+(o.numero||''), fecha:o.fechaInicio||o.fechaRecepcion, monto:Number(x.monto), puc: /socio|jorge|angel|ángel|lina/i.test(x.a||'') ? '2380' : '2335', oc:oid, pagable:true}); });
     });
     finFijosPendientes(finYm(todayIso())).forEach(function(p){ if(p.fecha <= todayIso()) out.push({k:'fijo:'+p.fid+':'+p.periodo, tipo:'Gasto fijo vencido', tercero:p.f.proveedor||p.f.nombre, det:(p.f.nombre||'')+' · '+finYmLabel(p.periodo), fecha:p.fecha, monto:p.monto, puc:'2335', fijo:p}); });
     return out.sort(function(a,b){ return String(a.fecha||'').localeCompare(String(b.fecha||'')); });
@@ -7903,6 +7916,7 @@
   function cxpPagar(k, btn){
     var p = k.split(':');
     if(p[0] === 'oc') return openOcModal(p[1]);
+    if(p[0] === 'ocp') return cxpPagarOrden(p[1], p[2], +p[3], btn);
     if(p[0] === 'fijo') return finPagarFijo(p[1], p[2]);
     var id = p.slice(1).join(':'), m = fin.movs.get(id); if(!m) return;
     confirmDialog('¿Marcar como pagado hoy "'+(m.descripcion||'')+'" por '+fmtMoney.format(Number(m.monto)||0)+' desde '+finCuentaNombre(m.cuentaId)+'? Haz primero la transferencia.', 'Ya lo pagué').then(function(ok){
@@ -7910,6 +7924,23 @@
       btn.disabled = true;
       state.db.collection('finMovimientos').doc(id).update({estado:'pagado', fechaCausacion: m.fechaCausacion || m.fecha, fecha: todayIso(), nota: ((m.nota||'') + ' Pagado el '+fmtDate(todayIso())+'.').trim()})
         .then(function(){ toast('Marcado como pagado. Ya sale en el libro diario y en el flujo de caja.'); });
+    });
+  }
+  /* Marca pagado un renglón de la orden (personal u otro pago de la obra) desde Finanzas: queda igual que marcarlo en la orden */
+  function cxpPagarOrden(oid, campo, i, btn){
+    var o = state.ordenes.get(oid), lista = o && (o[campo]||[]), x = lista && lista[i]; if(!x) return;
+    var monto = campo === 'personal' ? personalRowTotal(x) : Number(x.monto)||0, quien = campo === 'personal' ? x.nombre : x.a;
+    confirmDialog('¿Marcar como pagado hoy '+fmtMoney.format(monto)+(quien ? ' a '+quien : '')+' ('+(o.numero||'orden')+')? Haz primero la transferencia.', 'Ya lo pagué').then(function(ok){
+      if(!ok) return;
+      var db = requireDb(); if(!db) return;
+      if(btn) btn.disabled = true;
+      var nueva = lista.map(function(r, j){ return j === i ? Object.assign({}, r, {pagado:true, pagadoFecha: todayIso()}) : r; });
+      var upd = {}; upd[campo] = nueva; upd.editadoEn = new Date().toISOString(); upd.editadoPorId = state.userId || null;
+      db.collection('ordenesCompra').doc(oid).update(upd).then(function(){
+        state.ordenes.set(oid, Object.assign({}, o, upd));
+        try { syncAutoEventsFor('orden', oid); } catch(e){}
+        toast('Pagado. Ya quedó en la orden, en Movimientos y en los libros.'); renderFinanzas();
+      }).catch(function(err){ if(btn) btn.disabled = false; toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
     });
   }
   function libroDatos(){
@@ -7925,8 +7956,9 @@
       titulo = 'Libro mayor por cuenta'; cols = ['Cuenta','Nombre','Saldo anterior','Débitos','Créditos','Saldo final'];
       var ctas = {}; as.forEach(function(a){ a.lineas.forEach(function(l){ var x = ctas[l.c] = ctas[l.c] || {d:0, h:0}; x.d += l.d; x.h += l.h; }); });
       var antes = new Date(desde+'T00:00:00'); antes.setDate(antes.getDate()-1); var hastaAnt = toISODate(antes);
-      Object.keys(ctas).sort().forEach(function(c){ var ant = saldoCta(c, hastaAnt); filas.push([c, PUC[c], ant, ctas[c].d, ctas[c].h, ant + ctas[c].d - ctas[c].h]); });
-      notas = 'Saldo = débitos − créditos. En cuentas de ingreso, pasivo y patrimonio el saldo normal sale negativo (naturaleza crédito).';
+      /* Saldo según la naturaleza de la cuenta: activos, gastos, costos y retiros, débito; pasivos, patrimonio e ingresos, crédito */
+      var nat = function(c){ return (/^[156]/.test(c) || c === '3305') ? 1 : -1; };
+      Object.keys(ctas).sort().forEach(function(c){ var ant = saldoCta(c, hastaAnt); filas.push([c, PUC[c], nat(c)*ant, ctas[c].d, ctas[c].h, nat(c)*(ant + ctas[c].d - ctas[c].h)]); });
     } else if(fin.libro === 'resultados'){
       titulo = 'Estado de resultados'; cols = ['Cuenta','Concepto','Valor'];
       var suma = function(pref){ var s = {}; as.forEach(function(a){ a.lineas.forEach(function(l){ if(l.c.indexOf(pref) === 0) s[l.c] = (s[l.c]||0) + (pref === '4' ? l.h - l.d : l.d - l.h); }); }); return s; };
@@ -7935,7 +7967,6 @@
       filas.push(['','COSTOS','']); Object.keys(cos).sort().forEach(function(c){ tC += cos[c]; filas.push([c, PUC[c], -cos[c]]); }); filas.push(['','Utilidad bruta', tI - tC]);
       filas.push(['','GASTOS DE OPERACIÓN','']); Object.keys(gas).sort().forEach(function(c){ tG += gas[c]; filas.push([c, PUC[c], -gas[c]]); });
       tot = ['','UTILIDAD (PÉRDIDA) DEL PERIODO', tI - tC - tG];
-      notas = 'Base de caja desde el saldo inicial de cada cuenta: cuenta lo cobrado y lo pagado en el periodo, sin IVA. Para el resultado por proyecto (lo cotizado frente a lo gastado) usa la pestaña Rentabilidad.';
     } else if(fin.libro === 'balance'){
       titulo = 'Balance general al '+fmtDate(hasta); cols = ['Cuenta','Concepto','Valor'];
       var caja = 0; finAjustes().cuentas.forEach(function(c){ var s = Number(c.saldoInicial)||0; concMovsCuenta(c.id).forEach(function(x){ if((!c.fechaSaldo || x.fecha >= c.fechaSaldo) && x.fecha <= hasta) s += x.valor; }); caja += s; filas.push([c.tipo === 'efectivo' ? '1105' : '1110', c.nombre, s]); });
@@ -7945,12 +7976,11 @@
       var activo = caja + cxc + ret + invV; filas.push(['','TOTAL ACTIVO', activo]);
       var cxp = cxpLista(), p2335 = 0, p2380 = 0; cxp.forEach(function(x){ if(x.puc === '2380') p2380 += x.monto; else p2335 += x.monto; });
       var iva = -saldoCta('2408', hasta), oblig = -saldoCta('2105', hasta);
-      filas.push(['2335', PUC['2335'], p2335]); filas.push(['2380', PUC['2380'], p2380]); if(iva) filas.push(['2408', PUC['2408']+' (generado, sin descontar el IVA de compras)', iva]); if(oblig) filas.push(['2105', PUC['2105'], oblig]);
+      filas.push(['2335', PUC['2335'], p2335]); filas.push(['2380', PUC['2380'], p2380]); if(iva) filas.push(['2408', PUC['2408'], iva]); if(oblig) filas.push(['2105', PUC['2105'], oblig]);
       var pasivo = p2335 + p2380 + iva + oblig; filas.push(['','TOTAL PASIVO', pasivo]);
       var capital = (-saldoCta('3105', hasta) - saldoCta('3305', hasta)) || 0;
-      filas.push(['3105', 'Capital (aportes menos retiros de socios)', capital]); filas.push(['3605', 'Resultados acumulados (calculado)', activo - pasivo - capital]);
+      filas.push(['3105', 'Capital (aportes menos retiros de socios)', capital]); filas.push(['3605', 'Resultados acumulados', activo - pasivo - capital]);
       tot = ['','TOTAL PASIVO + PATRIMONIO', activo];
-      notas = 'Balance sencillo para revisión con la contadora: los resultados acumulados se calculan como la diferencia. No incluye depreciaciones ni provisiones.';
     } else if(fin.libro === 'flujo'){
       titulo = 'Flujo de caja'; cols = ['Mes','Saldo inicial','Entradas de operación','Salidas de operación','Socios y préstamos','Saldo final'];
       var y = per.slice(0,4), meses = /^\d{4}-\d{2}$/.test(per) ? [per] : [1,2,3,4,5,6,7,8,9,10,11,12].map(function(mm){ return y+'-'+String(mm).padStart(2,'0'); }).filter(function(ym){ return ym <= todayIso().slice(0,7); });
@@ -7961,7 +7991,6 @@
           if(FIN_NO_OPERATIVOS[m.categoria] && m.categoria !== 'retencion') cap += m.tipo === 'ingreso' ? v : -v; else if(m.tipo === 'ingreso') ent += v; else sal += v; });
         filas.push([finYmLabel(ym), ini, ent, -sal, cap, ini + ent - sal + cap]);
       });
-      notas = 'Las retenciones que nos hicieron cuentan como salida de operación (es plata que no llegó), aunque se recuperan en la declaración de renta.';
     } else {
       titulo = 'Cuentas por pagar'; cols = ['Desde','Tipo','A quién','Detalle','Cuenta','Valor'];
       var t = 0; cxpLista().forEach(function(x){ t += x.monto; filas.push([fmtShort(x.fecha), x.tipo, x.tercero, x.det, x.puc, x.monto, x]); });
@@ -7987,20 +8016,36 @@
     });
     if(d.tot) h += '<tr class="libro-tot">'+d.tot.map(function(v){ return '<td'+(esNum(v) ? ' class="num"' : '')+'>'+(esNum(v) ? fmtMoney.format(Math.round(v)) : escapeHtml(v))+'</td>'; }).join('')+(fin.libro === 'cxp' ? '<td></td>' : '')+'</tr>';
     h += '</tbody></table></div>';
-    if(d.notas) h += '<div class="stats-note" style="margin-top:8px;">'+escapeHtml(d.notas)+'</div>';
     box.innerHTML = h;
   }
   document.getElementById('libroPer').addEventListener('change', function(){ fin.libroPer = this.value; renderFinLibros(); });
+  /* Plantilla Cenova de los libros: encabezado de marca, periodo y tabla. Nada más. */
+  function libroPdfHtml(d, perTxt){
+    var nCols = d.cols.length, num = function(v){ return typeof v === 'number'; };
+    var esNumCol = d.cols.map(function(c, i){ return d.filas.some(function(f){ return num(f[i]); }) || (d.tot && num(d.tot[i])); });
+    var celda = function(v, i){ return '<td'+(esNumCol[i] ? ' class="r num"' : '')+'>'+(num(v) ? (v < 0 ? '−' : '')+fmtMoney.format(Math.abs(Math.round(v))) : fdE(v))+'</td>'; };
+    var info = [['NIT', EMPRESA.nit], ['Periodo', perTxt], ['Emitido', fmtDate(todayIso())]];
+    var h = '<div class="preview-head"><div class="corner-ribbon"><i></i><i></i><i></i></div>' +
+      '<div class="pv-brand"><div class="pv-mark"><img src="'+CENOVA_LOGO_B64+'" alt="Cenova"></div><div><div class="pv-brandname">CENOVA</div><div class="pv-sub">Cenova S.A.S. · '+fdE(EMPRESA.ciudad)+'</div></div></div>' +
+      '<div class="doc-info-box">' + info.map(function(r){ return '<div class="di-row"><span>'+fdE(r[0])+'</span><span>'+fdE(r[1])+'</span></div>'; }).join('') + '</div></div>' +
+      '<div class="preview-title-row"><h2>'+fdE(d.titulo)+'</h2></div><div class="preview-body">';
+    h += '<table class="preview-table"><thead><tr>' + d.cols.map(function(c, i){ return '<th'+(esNumCol[i] ? ' class="r"' : '')+'>'+fdE(c)+'</th>'; }).join('') + '</tr></thead><tbody>';
+    if(!d.filas.length) h += '<tr><td colspan="'+nCols+'" class="c">Sin movimientos en el periodo.</td></tr>';
+    d.filas.forEach(function(f){
+      var enc = f[0] === '' && f[2] === '' && typeof f[1] === 'string' && f[1] === f[1].toUpperCase();
+      h += enc ? '<tr class="cat-row"><td colspan="'+nCols+'">'+fdE(f[1])+'</td></tr>' : '<tr>' + f.slice(0, nCols).map(celda).join('') + '</tr>';
+    });
+    if(d.tot) h += '<tr class="fd-tot">' + d.tot.slice(0, nCols).map(celda).join('') + '</tr>';
+    h += '</tbody></table>';
+    if(fin.libro === 'resultados' || fin.libro === 'balance') h += '<div class="fd-firmas" style="grid-template-columns:1fr 1fr;"><div class="fd-firma">Lina María Giraldo Chaverra<small>Representante Legal</small></div><div class="fd-firma">&nbsp;<small>Contador(a) · T.P.</small></div></div>';
+    return h + fdFoot();
+  }
   function libroExportar(tipo, btn){
     var d = libroDatos(), per = /^\d{4}-\d{2}$/.test(d.per) ? finYmLabel(d.per) : 'Año '+d.per;
     var nombre = d.titulo.replace(/ al .*$/, '') + ' ' + (fin.libro === 'cxp' ? fmtDate(todayIso()) : per);
     var filas = d.filas.map(function(f){ return f.slice(0, d.cols.length).map(function(v){ return typeof v === 'number' ? Math.round(v) : v; }); });
     if(tipo === 'csv'){ csvDescargar([['Cenova S.A.S. · NIT '+EMPRESA.nit], [nombre], d.cols].concat(filas).concat(d.tot ? [d.tot] : []), slugFile(nombre)+'.csv'); return; }
-    var num = function(v){ return typeof v === 'number' ? '<td class="n">'+fmtMoney.format(Math.round(v))+'</td>' : '<td>'+escapeHtml(v == null ? '' : v)+'</td>'; };
-    var html = '<!doctype html><html><head><meta charset="utf-8"><title>'+escapeHtml(nombre)+' — Cenova S.A.S.</title><style>body{font-family:Helvetica,Arial,sans-serif;color:#15202f;margin:28px;font-size:11px}h1{font-size:18px;margin:0}p{margin:2px 0 14px;color:#5f6d80}table{width:100%;border-collapse:collapse}th{text-align:left;background:#f0f3f7;padding:6px;border-bottom:1px solid #cfd7e3;font-size:10px;text-transform:uppercase}td{padding:5px 6px;border-bottom:1px solid #e1e6ee}td.n{text-align:right;font-family:Courier,monospace}tr.t td{font-weight:bold;background:#f0f3f7}.nota{margin-top:10px;color:#5f6d80}</style></head><body>'+
-      '<h1>'+escapeHtml(d.titulo)+'</h1><p>Cenova S.A.S. · NIT '+escapeHtml(EMPRESA.nit)+' · '+escapeHtml(fin.libro === 'cxp' ? 'Al '+fmtDate(todayIso()) : per)+' · Generado el '+fmtDate(todayIso())+' desde la intranet</p>'+
-      '<table><thead><tr>'+d.cols.map(function(c){ return '<th>'+escapeHtml(c)+'</th>'; }).join('')+'</tr></thead><tbody>'+filas.map(function(f){ return '<tr>'+f.map(num).join('')+'</tr>'; }).join('')+
-      (d.tot ? '<tr class="t">'+d.tot.map(num).join('')+'</tr>' : '')+'</tbody></table>'+(d.notas ? '<p class="nota">'+escapeHtml(d.notas)+'</p>' : '')+'</body></html>';
+    var html = buildPrintDocument(libroPdfHtml(d, fin.libro === 'cxp' ? 'Al '+fmtDate(todayIso()) : per)).replace('<title>Cotización — Cenova S.A.S.</title>', '<title>'+escapeHtml(nombre)+' — Cenova S.A.S.</title>');
     offerPdfDownload(slugFile(nombre)+'.pdf', html, nombre+' descargado en PDF.', btn);
   }
 
@@ -8011,7 +8056,6 @@
     else if(t === 'movimientos') renderFinMovimientos();
     else if(t === 'fijos') renderFinFijos();
     else if(t === 'rentabilidad') renderFinRentabilidad();
-    else if(t === 'proyeccion') renderFinProyeccion();
     else if(t === 'ajustes') renderFinAjustes();
     else if(t === 'conciliacion') renderFinConciliacion();
     else if(t === 'libros') renderFinLibros();
@@ -8019,7 +8063,7 @@
   function finShowTab(t){
     fin.tab = t;
     document.querySelectorAll('#finSubtabs .subtab-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.fin === t); });
-    ['resumen','movimientos','fijos','rentabilidad','proyeccion','conciliacion','libros','ajustes'].forEach(function(n){ document.getElementById('fin-'+n).classList.toggle('active', n === t); });
+    ['resumen','movimientos','fijos','rentabilidad','conciliacion','libros','ajustes'].forEach(function(n){ document.getElementById('fin-'+n).classList.toggle('active', n === t); });
     if(t === 'ajustes') fin.cuentasEdit = null;
     renderFinanzas();
   }
@@ -8232,7 +8276,7 @@
     var meta = Number(document.getElementById('finMetaMargen').value), min = Number(document.getElementById('finMargenMin').value);
     if(!(meta > 0 && meta < 95) || !(min >= 0 && min <= meta)){ toast('Revisa las metas: el mínimo debe ser menor o igual a la meta.'); return; }
     var data = Object.assign({}, fin.ajustes || {}, {cuentas: cuentas, metaMargen: meta, margenMinimo: min});
-    db.collection('finAjustes').doc('general').set(data).then(function(){ fin.ajustes = data; fin.cuentasEdit = null; toast('Cuentas y metas guardadas'); renderFinAjustes(); })
+    db.collection('finAjustes').doc('general').set(data).then(function(){ fin.ajustes = data; fin.cuentasEdit = null; toast('Cuentas guardadas'); renderFinAjustes(); })
       .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
 
