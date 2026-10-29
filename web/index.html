@@ -1779,7 +1779,7 @@
           <select id="finMovTipo"><option value="">Entradas y salidas</option><option value="ingreso">Solo entradas</option><option value="egreso">Solo salidas</option><option value="transferencia">Transferencias</option></select>
           <select id="finMovCat"><option value="">Todas las categorías</option></select>
           <select id="finMovCuenta"><option value="">Todas las cuentas</option></select>
-          <select id="finMovEstado"><option value="">Pagado y pendiente</option><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option></select>
+          <select id="finMovEstado"><option value="">Pagado y pendiente</option><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option><option value="sin_soporte">Sin soporte</option></select>
           <input type="search" id="finMovBuscar" placeholder="Buscar descripción, tercero, proyecto…">
         </div>
         <div class="filters" style="margin-bottom:14px;">
@@ -2388,7 +2388,7 @@
         <div class="field" id="finMovMedioField"><label>Medio</label><select id="finMovMedio"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="debito">Débito automático</option><option value="cheque">Cheque</option><option value="otro">Otro</option></select></div>
       </div>
       <div class="field" id="finMovProyField"><label>Proyecto</label><select id="finMovProyecto"></select><span class="campo-error" id="finMovProyErr" hidden>Elige el proyecto. Si es de la empresa: Administración o Plataformas internas.</span>
-        <div class="no-file" style="margin-top:4px;">Ligado a un proyecto cuenta como costo directo de ese proyecto. Sin proyecto, es gasto operativo de la empresa.</div></div>
+</div>
       <div class="field"><label>Nota</label><input type="text" id="finMovNota" placeholder="Referencia u observación"></div>
       <div class="field" id="finMovSopField"><label>Soporte</label>
         <div class="filters"><select id="finMovSopClase"><option value="factura">Factura electrónica</option><option value="comprobante">Comprobante de pago</option><option value="recibo">Recibo o documento soporte</option><option value="otro">Otro</option></select>
@@ -3275,14 +3275,18 @@
       sel.value = current;
     });
   }
-  function proyectoOptionsRefresh(){
-    proyectoSelectRefresh(document.getElementById('evtProyecto'));
+  function proyectoOptionsRefresh(keepId){
+    proyectoSelectRefresh(document.getElementById('evtProyecto'), null, keepId);
   }
-  function proyectoSelectRefresh(sel, emptyLabel){
-    var current = sel.value;
+  /* Para ligar algo a un proyecto solo salen los activos (2026-10-29): los finalizados y rechazados no,
+     salvo el que ya tenía ligado el registro que se está editando. */
+  function proyCerrado(p){ return !!p && !p.interno && (p.estado === 'finalizado' || p.estado === 'rechazado'); }
+  function proyectoSelectRefresh(sel, emptyLabel, keepId){
+    var current = keepId != null ? keepId : sel.value;
     var opts = '<option value="">'+(emptyLabel||'Ninguno')+'</option>';
     Array.from(state.proyectos.entries()).forEach(function(e){
-      opts += '<option value="'+e[0]+'">'+escapeHtml((e[1].cliente?e[1].cliente+' — ':'')+e[1].nombre)+'</option>';
+      if(proyCerrado(e[1]) && e[0] !== current) return;
+      opts += '<option value="'+e[0]+'">'+escapeHtml((e[1].cliente?e[1].cliente+' — ':'')+e[1].nombre)+(proyCerrado(e[1]) ? ' ('+(PROY_ESTADOS[e[1].estado]||'').toLowerCase()+')' : '')+'</option>';
     });
     sel.innerHTML = opts;
     sel.value = current;
@@ -4734,7 +4738,7 @@
     document.getElementById('provIvaModo').value = p.ivaModo || 'antes';
     document.getElementById('provIvaPct').value = (p.ivaPct != null ? p.ivaPct : 19);
     setProvExtractStatus('');
-    proyectoSelectRefresh(document.getElementById('provProyecto'), 'Ninguno');
+    proyectoSelectRefresh(document.getElementById('provProyecto'), 'Ninguno', p.proyectoId || '');
     document.getElementById('provProyecto').value = p.proyectoId || '';
     cotizacionSelectRefresh(document.getElementById('provCotizacion'));
     document.getElementById('provCotizacion').value = p.cotizacionId || '';
@@ -5165,8 +5169,8 @@
     botonOrdenCot(document.getElementById('cotRegistrarOcBtn'), id);
     document.getElementById('cotVersion').value = c.version || 1;
     document.getElementById('cotVigencia').value = c.vigenciaDias || 15;
-    proyectoSelectRefresh(document.getElementById('cotProyecto'), 'Elige un proyecto…');
     var proyId = id ? (c.proyectoId || '') : (presetProyectoId || '');
+    proyectoSelectRefresh(document.getElementById('cotProyecto'), 'Elige un proyecto…', proyId);
     document.getElementById('cotProyecto').value = proyId;
     var presetProy = (!id && proyId) ? state.proyectos.get(proyId) : null;
     document.getElementById('cotCliente').value = c.cliente || (presetProy ? (presetProy.cliente||'') : '');
@@ -6114,7 +6118,7 @@
     document.getElementById('evtFecha').value = e.fecha || presetDate || state.selectedDate;
     document.getElementById('evtHora').value = e.hora || '';
     document.getElementById('evtCliente').value = e.cliente || '';
-    proyectoOptionsRefresh();
+    proyectoOptionsRefresh(e.proyectoId || '');
     document.getElementById('evtProyecto').value = e.proyectoId || '';
     document.getElementById('evtLugar').value = e.lugar || '';
     document.getElementById('evtModo').value = e.modo || 'presencial';
@@ -8319,7 +8323,8 @@
       if(tipo && m.tipo !== tipo) return false;
       if(cat && m.categoria !== cat) return false;
       if(cuenta && m.cuentaId !== cuenta && m.cuentaDestinoId !== cuenta) return false;
-      if(est && (m.estado||'pagado') !== est) return false;
+      if(est === 'sin_soporte'){ var sp = movSoporte(m); if(!sp.aplica || sp.ok) return false; }   /* pagados a los que les falta su soporte */
+      else if(est && (m.estado||'pagado') !== est) return false;
       if(q && !passFilter([m.descripcion, m.tercero, m.nota, finProyNombre(m.proyectoId), finCatLabel(m)].join(' '), q)) return false;
       return true;
     });
@@ -9344,8 +9349,9 @@
     fin.movFijo = m.gastoFijoId ? {id: m.gastoFijoId, periodo: m.periodo} : null;
     var proySel = document.getElementById('finMovProyecto');
     proySel.innerHTML = '<option value="">Elige el proyecto…</option>' + Array.from(state.proyectos.entries())
-      .sort(function(a,b){ return (!!b[1].interno) - (!!a[1].interno) || (a[1].estado==='finalizado') - (b[1].estado==='finalizado') || String(a[1].nombre||'').localeCompare(String(b[1].nombre||'')); })
-      .map(function(e){ return '<option value="'+escapeHtml(e[0])+'">'+escapeHtml((e[1].nombre||'—') + (e[1].cliente?' · '+e[1].cliente:''))+'</option>'; }).join('');
+      .filter(function(e){ return !proyCerrado(e[1]) || e[0] === (m.proyectoId || ''); })
+      .sort(function(a,b){ return (!!b[1].interno) - (!!a[1].interno) || String(a[1].nombre||'').localeCompare(String(b[1].nombre||'')); })
+      .map(function(e){ return '<option value="'+escapeHtml(e[0])+'">'+escapeHtml((e[1].nombre||'—') + (e[1].cliente?' · '+e[1].cliente:'') + (proyCerrado(e[1]) ? ' ('+(PROY_ESTADOS[e[1].estado]||'').toLowerCase()+')' : ''))+'</option>'; }).join('');
     finCuentaOptions(document.getElementById('finMovCuentaSel'), m.cuentaId);
     finCuentaOptions(document.getElementById('finMovDestinoSel'), m.cuentaDestinoId);
     var terceros = {}; fin.movs.forEach(function(x){ if(x.tercero) terceros[x.tercero] = 1; }); state.cotizacionesProveedor.forEach(function(p){ if(p.proveedor) terceros[p.proveedor] = 1; });
