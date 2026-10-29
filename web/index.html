@@ -4049,6 +4049,27 @@
     });
   }
 
+  /* Una sola vez, con administración (2026-10-29): los $378.000 de los trámites personales de Lina que salieron de la cajita Nu
+     no son gasto de Cenova sino un préstamo a socio que ella devuelve. La salida pasa a «Préstamo a socio» y el pendiente
+     «Reintegro» pasa a «Socio devuelve préstamo» (si la salida no estaba registrada, se registra con la fecha del pendiente). */
+  var _prestLinaHecho = false;
+  function corregirPrestamoLina(){
+    if(_prestLinaHecho || !fin.admin || !state.db || !fin.movsCargados) return;
+    var es = function(m){ return Number(m.monto) === 378000 && /tr[aá]mites de cenova a nombre de lina/i.test(m.descripcion||''); };
+    var sal = null, dev = null;
+    fin.movs.forEach(function(m, id){ if(!es(m)) return; if(m.tipo === 'egreso') sal = sal || [id, m]; else if(m.tipo === 'ingreso') dev = dev || [id, m]; });
+    if(!sal && !dev) return;
+    _prestLinaHecho = true;
+    var col = state.db.collection('finMovimientos'), ops = [], base = (dev || sal)[1];
+    if(sal && sal[1].categoria !== 'prestamo_socio') ops.push(col.doc(sal[0]).update({categoria:'prestamo_socio', descripcion:'Préstamo a Lina Giraldo (trámites personales)', tercero:'Lina Giraldo'}));
+    if(!sal) ops.push(col.add({tipo:'egreso', fecha: base.fecha || '2026-10-28', monto:378000, estado:'pagado', categoria:'prestamo_socio',
+      descripcion:'Préstamo a Lina Giraldo (trámites personales)', tercero:'Lina Giraldo', cuentaId: base.cuentaId || '', cuentaDestinoId:null, medio: base.medio || 'transferencia',
+      proyectoId: base.proyectoId || 'interno-administracion', nota:'Salió de la cajita Nu de Cenova. Lina lo devuelve.', gastoFijoId:null, periodo:null, creadoPorId: state.userId || null}));
+    if(dev && dev[1].categoria !== 'devolucion_socio') ops.push(col.doc(dev[0]).update({categoria:'devolucion_socio', descripcion:'Lina Giraldo devuelve el préstamo de los trámites', tercero:'Lina Giraldo',
+      nota:'Préstamo de $378.000 que salió de la cajita Nu el 28 oct. Márcalo «Pagado» cuando hagas la transferencia y sube el comprobante.'}));
+    Promise.all(ops).catch(function(){ _prestLinaHecho = false; });
+  }
+
   /* Una sola vez, con administración: las órdenes viejas OC-xxxx pasan a orden interna ONT-xxxx (mismo consecutivo).
      IKONICA quedó autorizada por llamada: su orden no lleva OC del cliente. */
   var _ontMigrado = false;
@@ -7783,14 +7804,27 @@
     nomina:'Nómina y seguridad social', impuestos:'Impuestos', bancarios:'Gastos bancarios y 4x1000',
     herramientas:'Herramientas y equipos propios', marketing:'Publicidad y marketing', oficina:'Arriendo, servicios y oficina',
     obra:'Otros gastos de la obra', otro:'Otro gasto', prestamo_pago:'Pago de préstamo', retiro:'Retiro de socios / dividendos',
-    retencion:'Retención que nos hicieron (anticipo de renta)'
+    retencion:'Retención que nos hicieron (anticipo de renta)', prestamo_socio:'Préstamo a socio (lo devuelve)'
   };
   var FIN_CAT_INGRESO = {
     venta:'Venta sin orden de compra', reintegro:'Reintegro o devolución', rendimientos:'Rendimientos financieros',
-    otro:'Otro ingreso', aporte:'Aporte de socios', prestamo:'Préstamo recibido'
+    otro:'Otro ingreso', aporte:'Aporte de socios', prestamo:'Préstamo recibido', devolucion_socio:'Socio devuelve préstamo'
   };
-  /* Movimientos de capital: mueven caja pero no son ganancia ni gasto del negocio */
-  var FIN_NO_OPERATIVOS = {aporte:1, prestamo:1, prestamo_pago:1, retiro:1, retencion:1};
+  /* Movimientos de capital: mueven caja pero no son ganancia ni gasto del negocio.
+     Préstamo a socio (2026-10-29): plata de Cenova que un socio sacó y debe devolver. Es una cuenta por cobrar (PUC 1325),
+     no un gasto; la devolución la cancela y tampoco es ingreso. */
+  var FIN_NO_OPERATIVOS = {aporte:1, prestamo:1, prestamo_pago:1, retiro:1, retencion:1, prestamo_socio:1, devolucion_socio:1};
+  var FIN_PRESTAMO_SOCIO = {prestamo_socio:1, devolucion_socio:1};
+  /* Lo que cada socio le debe hoy a Cenova por préstamos (salidas pagadas menos devoluciones pagadas). */
+  function finPrestamosSocios(hasta){
+    var por = {};
+    finMovsPropios().forEach(function(m){
+      if(!FIN_PRESTAMO_SOCIO[m.categoria] || m.estado === 'pendiente' || (hasta && m.fecha > hasta)) return;
+      var k = (m.tercero || 'Socio').trim(), v = Number(m.monto)||0;
+      por[k] = (por[k]||0) + (m.categoria === 'prestamo_socio' ? v : -v);
+    });
+    return por;
+  }
   var FIN_FREC = {mensual:1, bimestral:2, trimestral:3, semestral:6, anual:12};
   var FIN_FREC_LBL = {mensual:'Mensual', bimestral:'Cada 2 meses', trimestral:'Trimestral', semestral:'Semestral', anual:'Anual'};
   var FIN_TIPO_CUENTA = {banco:'Banco', efectivo:'Efectivo / caja menor', billetera:'Nequi / Daviplata', otra:'Otra'};
@@ -8223,6 +8257,7 @@
     /* Por pagar = lo mismo que la lista de cuentas por pagar: pendientes de Finanzas, personal y pagos de obra sin pagar, fijos vencidos */
     var cxp = cxpLista(), porPagar = cxp.reduce(function(s,x){ return s + x.monto; }, 0);
     var nCobrar = 0; state.ordenes.forEach(function(o){ if(o.estado !== 'anulada' && ocSaldo(o) > 0) nCobrar++; });
+    var socPor = finPrestamosSocios(), socDebe = Object.keys(socPor).reduce(function(t,k){ return t + Math.max(0, socPor[k]); }, 0);
     var res = finResultados(hoy.slice(0,4));
     var ivaAnio = movs.filter(function(m){ return m.fuente === 'orden' && String(m.fecha).slice(0,4) === hoy.slice(0,4); }).reduce(function(s,m){ return s + (m.iva||0); }, 0);
 
@@ -8234,7 +8269,7 @@
       finKpi('Dinero disponible', finMoney(disponible), ivaAnio ? 'IVA por reservar '+finMoney(ivaAnio) : 'hoy', disponible < 0 ? 'neg' : '') +
       finKpi('Entradas de '+MESES[Number(ym.slice(5))-1].toLowerCase(), finMoney(entMes), '') +
       finKpi('Salidas de '+MESES[Number(ym.slice(5))-1].toLowerCase(), finMoney(salMes), 'neto '+finMoney(entMes - salMes), salMes > entMes ? 'neg' : '') +
-      finKpi('Por cobrar', finMoney(cartera), nCobrar ? nCobrar+' orden(es)' : '') +
+      finKpi('Por cobrar', finMoney(cartera + socDebe), [nCobrar ? nCobrar+' orden(es)' : '', socDebe ? 'socios '+finMoney(socDebe) : ''].filter(Boolean).join(' · ')) +
       finKpi('Por pagar', finMoney(porPagar), cxp.length ? cxp.length+' pendiente(s)' : '') +
       finKpi('Utilidad '+hoy.slice(0,4), finMoney(res.operativa), res.margenOp!=null ? 'margen '+pct(res.margenOp) : '', res.operativa < 0 ? 'neg' : '');
 
@@ -8310,7 +8345,7 @@
       var cuenta = m.tipo === 'transferencia' ? escapeHtml(finCuentaNombre(m.cuentaId))+' → '+escapeHtml(finCuentaNombre(m.cuentaDestinoId)) : escapeHtml(finCuentaNombre(m.cuentaId));
       var attrs = m.fuente === 'orden' ? ' class="from-oc" data-oc="'+escapeHtml(m.ocId)+'" title="Viene de la orden de compra. Se edita allá." style="cursor:pointer;"' : ' data-mov="'+escapeHtml(m._id)+'"';
       h += '<tr'+attrs+'><td class="num">'+fmtShort(m.fecha)+'<div class="d-notes">'+escapeHtml(String(m.fecha||'').slice(0,4))+'</div></td>'+
-        '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">'+(m.categoria==='retencion'?'Saldo a favor':'Capital')+'</span></div>':'')+'</td>'+
+        '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">'+(m.categoria==='retencion'?'Saldo a favor':(FIN_PRESTAMO_SOCIO[m.categoria]?'Por cobrar a socio':'Capital'))+'</span></div>':'')+'</td>'+
         '<td class="desc-cell">'+desc+'</td><td>'+(finProyNombre(m.proyectoId) ? escapeHtml(finProyNombre(m.proyectoId)) : '<span class="fin-badge crit">Sin proyecto</span>')+'</td><td>'+cuenta+'</td>'+
         '<td>'+(m.estado === 'pendiente' ? '<span class="fin-badge warn">Pendiente</span>' : '<span class="fin-badge ok">Pagado</span>')+'</td>'+
         '<td>'+movSopBadge(m)+'</td>'+
@@ -8754,7 +8789,7 @@
      Contabilidad de caja simplificada con el PUC colombiano: cada movimiento pagado es un asiento.
      La contadora hace los ajustes (causaciones, depreciaciones, impuestos) sobre esta base. */
   var PUC = {
-    '1105':'Caja', '1110':'Bancos', '1305':'Clientes', '1355':'Anticipo de impuestos y retenciones a favor', '1435':'Inventario de mercancías',
+    '1105':'Caja', '1110':'Bancos', '1305':'Clientes', '1325':'Cuentas por cobrar a socios', '1355':'Anticipo de impuestos y retenciones a favor', '1435':'Inventario de mercancías',
     '2105':'Obligaciones financieras', '2335':'Costos y gastos por pagar', '2380':'Acreedores varios (reembolsos a socios)', '2408':'IVA por pagar',
     '3105':'Capital suscrito y pagado', '3305':'Retiros de socios', '3710':'Saldo de apertura (resultados anteriores)', '3605':'Utilidad o pérdida del ejercicio',
     '4135':'Ingresos por ventas y servicios', '4210':'Ingresos financieros', '4250':'Recuperaciones', '4295':'Otros ingresos',
@@ -8764,10 +8799,10 @@
   function pucCuentaDinero(cuentaId){ var c = finAjustes().cuentas.filter(function(x){ return x.id === cuentaId; })[0]; return (c && c.tipo === 'efectivo') ? '1105' : '1110'; }
   function pucContra(m){
     var k = m.categoria;
-    if(m.tipo === 'ingreso') return ({cobro:'4135', venta:'4135', rendimientos:'4210', reintegro:'4250', aporte:'3105', prestamo:'2105'})[k] || '4295';
+    if(m.tipo === 'ingreso') return ({cobro:'4135', venta:'4135', rendimientos:'4210', reintegro:'4250', aporte:'3105', prestamo:'2105', devolucion_socio:'1325'})[k] || '4295';
     if(m.proyectoId && (k === 'compras' || k === 'personal' || k === 'transporte' || k === 'obra')) return '6135';
     return ({compras:'6135', obra:'6135', personal:'5105', nomina:'5105', transporte:'5155', software:'5135', profesionales:'5110', legales:'5140', impuestos:'5115',
-      bancarios:'5305', oficina:'5120', marketing:'5195', herramientas:'5195', otro:'5195', prestamo_pago:'2105', retiro:'3305', retencion:'1355'})[k] || '5195';
+      bancarios:'5305', oficina:'5120', marketing:'5195', herramientas:'5195', otro:'5195', prestamo_pago:'2105', retiro:'3305', retencion:'1355', prestamo_socio:'1325'})[k] || '5195';
   }
   function libroAsientos(desde, hasta){
     var asientos = [], n = 0, apertura = {};
@@ -9151,6 +9186,7 @@
       var caja = 0; finAjustes().cuentas.forEach(function(c){ var s = Number(c.saldoInicial)||0; concMovsCuenta(c.id).forEach(function(x){ if((!c.fechaSaldo || x.fecha >= c.fechaSaldo) && x.fecha <= hasta) s += x.valor; }); caja += s; filas.push([c.tipo === 'efectivo' ? '1105' : '1110', c.nombre, s]); });
       var cxc = 0; state.ordenes.forEach(function(o){ cxc += ocSaldo(o); }); filas.push(['1305', 'Clientes (saldos de órdenes por cobrar)', cxc]);
       var ret = saldoCta('1355', hasta); if(ret) filas.push(['1355', PUC['1355'], ret]);
+      var socios = saldoCta('1325', hasta); if(socios) filas.push(['1325', PUC['1325'], socios]); ret += socios;
       var invV = 0; try { invArticulos().forEach(function(p){ var s = precNum(p.stock), k = precNum(p.costo); if(s != null && k != null) invV += s*k; }); } catch(e){} if(invV) filas.push(['1435', PUC['1435'], invV]);
       var activo = caja + cxc + ret + invV; filas.push(['','TOTAL ACTIVO', activo]);
       var cxp = cxpLista(), p2335 = 0, p2380 = 0; cxp.forEach(function(x){ if(x.puc === '2380') p2380 += x.monto; else p2335 += x.monto; });
@@ -9486,7 +9522,7 @@
       fin.admin = true; asegurarProyInternos(); migrarOrdenesAOnt();
       document.querySelectorAll('.fin-admin').forEach(function(el){ el.hidden = false; });
       renderPrecios(); precSembrar(); renderClientes();
-      db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); fin.movsCargados = true; asignarProyInternosAMovs(); renderFinanzas(); renderResumen(); });
+      db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); fin.movsCargados = true; asignarProyInternosAMovs(); corregirPrestamoLina(); renderFinanzas(); renderResumen(); });
       db.collection('finGastosFijos').onSnapshot(function(snap){ fin.fijos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); renderResumen(); });
       db.collection('finConciliaciones').onSnapshot(function(snap){ fin.conc = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); renderFinanzas(); });
       db.collection('finAjustes').onSnapshot(function(snap){ var g = snap.docs.filter(function(d){ return d.id === 'general'; })[0]; fin.ajustes = g ? g.data() : null; renderFinanzas(); renderResumen(); });
