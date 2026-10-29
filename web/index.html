@@ -11899,6 +11899,13 @@
     html.menu-plegado .session-card .ses-row > div:not(.avatar),
     html.menu-plegado .session-card .ses-actions{display:none;}
     html.menu-plegado .session-card .avatar{width:30px; height:30px; font-size:11px;}
+    /* Tema Rosa con la barra recogida: logo sin fondo y una rayita dorada entre secciones */
+    html.menu-plegado[data-theme="lavanda"][data-dama] .brand{background:transparent !important; box-shadow:none !important; padding:14px 0 0 !important; border-radius:0;}
+    html.menu-plegado[data-theme="lavanda"][data-dama] .brand-mark{width:42px; height:42px; background:transparent !important; border-radius:0; box-shadow:none !important; overflow:visible;}
+    html.menu-plegado[data-theme="lavanda"][data-dama] .brand-mark img{filter:drop-shadow(0 2px 4px rgba(95,47,134,.25));}
+    html.menu-plegado[data-theme="lavanda"][data-dama] .nav-label{font-size:0 !important; letter-spacing:0; height:1px; margin:10px 14px; padding:0; display:block; overflow:hidden; background:linear-gradient(90deg,transparent,var(--d-oro),transparent);}
+    html.menu-plegado[data-theme="lavanda"][data-dama] .nav-label::before,
+    html.menu-plegado[data-theme="lavanda"][data-dama] .nav-label::after{display:none !important;}
   }
   @media print{ .sb-toggle{display:none !important;} }
 </style>
