@@ -1270,6 +1270,28 @@
   :root[data-theme="lavanda"] thead th, :root[data-theme="lavanda"][data-dama] thead th{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11px; letter-spacing:.04em; color:var(--text-muted);}
   :root[data-theme="lavanda"] .num, :root[data-theme="lavanda"][data-dama] .num, :root[data-theme="lavanda"] .r-num, :root[data-theme="lavanda"][data-dama] .r-num, :root[data-theme="lavanda"] .mono, :root[data-theme="lavanda"][data-dama] .mono, :root[data-theme="lavanda"] .vk-v, :root[data-theme="lavanda"][data-dama] .vk-v, :root[data-theme="lavanda"] .vk-hb-v, :root[data-theme="lavanda"][data-dama] .vk-hb-v, :root[data-theme="lavanda"] .rs-emb-v, :root[data-theme="lavanda"][data-dama] .rs-emb-v, :root[data-theme="lavanda"] .nav-btn .count, :root[data-theme="lavanda"][data-dama] .nav-btn .count{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
   @media (max-width:520px){ :root[data-theme="lavanda"] .kpi .value, :root[data-theme="lavanda"][data-dama] .kpi .value{font-size:19px;} :root[data-theme="lavanda"] .rs-kpi-v, :root[data-theme="lavanda"][data-dama] .rs-kpi-v{font-size:18px;} }
+  /* Cotizaciones (2026-10-28): selección para unir, estado desde la tabla, reemplazadas */
+  .pill.st-reemplazada{background:var(--surface-2); color:var(--text-muted); box-shadow:inset 0 0 0 1px var(--border);}
+  .pill.st-clic{cursor:pointer; border:none; font:inherit; font-size:11.5px; font-weight:600;}
+  .pill.st-clic::after{content:""; width:0; height:0; border-left:3.5px solid transparent; border-right:3.5px solid transparent; border-top:4px solid currentColor; opacity:.6; margin-left:1px;}
+  .pill.st-clic:hover{filter:brightness(.96); box-shadow:inset 0 0 0 1px currentColor;}
+  td.cot-chk, th.cot-chk{width:34px; padding-right:0 !important;}
+  td.cot-chk input, th.cot-chk input{width:16px; height:16px; accent-color:var(--accent); cursor:pointer; margin:0;}
+  tr.cot-sel td{background:color-mix(in srgb, var(--accent) 7%, transparent);}
+  .cot-selbar{display:flex; align-items:center; flex-wrap:wrap; gap:8px; padding:10px 14px; margin-bottom:12px; border-radius:12px; background:var(--accent-soft); border:1px solid color-mix(in srgb, var(--accent) 25%, transparent);}
+  .cot-selbar strong{font-size:13px; margin-right:auto;}
+  .cot-selbar strong small{display:block; font-weight:400; font-size:12px; color:var(--text-muted);}
+  .cot-selbar .btn:disabled{opacity:.45; cursor:not-allowed; filter:grayscale(.4);}
+  .cot-reemp{font-size:12px; color:var(--text-muted); margin-top:2px;}
+  .cot-reemp a{color:var(--accent); cursor:pointer; text-decoration:underline;}
+  tr.cot-fila-reemp td:not(:last-child){opacity:.72;}
+  .st-menu{position:absolute; z-index:400; min-width:190px; background:var(--surface); border:1px solid var(--border); border-radius:12px; box-shadow:0 12px 32px rgba(20,20,40,.18); padding:6px;}
+  .st-menu button{display:flex; align-items:center; gap:8px; width:100%; text-align:left; background:none; border:none; font:inherit; font-size:13px; color:var(--text); padding:8px 10px; border-radius:8px; cursor:pointer;}
+  .st-menu button:hover{background:var(--surface-2);}
+  .st-menu button .d{width:8px; height:8px; border-radius:50%; flex:none;}
+  .st-menu hr{border:none; border-top:1px solid var(--border); margin:4px 2px;}
+  .cot-unir-nota{font-size:12.5px; padding:8px 12px; border-radius:10px; background:var(--accent-soft); color:var(--text); margin-bottom:10px;}
+  @media (max-width:760px){ .cot-selbar .btn{flex:1 1 auto; justify-content:center;} table.mc td.cot-chk{display:block !important; position:absolute; top:15px; left:14px; padding:0 !important; width:auto;} table.mc tr:has(td.cot-chk input) td.mc-title{padding-left:28px;} table.mc tr.cot-sel{box-shadow:0 0 0 2px var(--accent), var(--shadow);} table.mc tr.cot-sel td{background:none;} }
 </style>
 
 <div class="app">
@@ -1649,7 +1671,7 @@
         <div id="finRentProy"></div>
         <h3 class="stats-h">Por cotización</h3>
         <div class="filters" style="margin-bottom:10px;">
-          <select id="finRentCotEstado"><option value="">Todas menos rechazadas</option><option value="aprobada">Aprobadas</option><option value="enviada">Enviadas</option><option value="pendiente_armar">Por armar</option><option value="en_proceso">En proceso</option><option value="en_pausa">En pausa</option><option value="rechazada">Rechazadas</option></select>
+          <select id="finRentCotEstado"><option value="">Todas menos rechazadas y reemplazadas</option><option value="aprobada">Aprobadas</option><option value="enviada">Enviadas</option><option value="pendiente_armar">Por armar</option><option value="en_proceso">En proceso</option><option value="en_pausa">En pausa</option><option value="rechazada">Rechazadas</option></select>
         </div>
         <div id="finRentCot"></div>
         <h3 class="stats-h">Margen por tipo de ítem</h3>
@@ -1777,6 +1799,7 @@
             <option value="aprobada">Aprobada</option>
             <option value="rechazada">Rechazada</option>
             <option value="en_pausa">En pausa (a futuro)</option>
+            <option value="reemplazada">Reemplazada por otra</option>
           </select>
           <span class="no-file" id="cotEstadoHint"></span>
         </div>
@@ -1790,6 +1813,10 @@
         <div class="field"><label>Días de instalación estimados</label><input type="number" id="cotDiasInst" min="0" step="1" placeholder="Ej. 5"><span class="no-file">Se usa para programar la instalación cuando llegue la orden de compra.</span></div>
         <div class="field"><label>Fecha de aceptación</label><input type="date" id="cotFechaAceptacion"><span class="no-file">Día en que el cliente la autorizó. Se llena sola si está vacía.</span></div>
         <div class="field" id="cotInicioEstWrap" hidden><label>Inicio estimado de la obra</label><input type="date" id="cotInicioEstimado"><span class="no-file">Si la obra arranca después, la orden pedirá el motivo del retraso.</span></div>
+      </div>
+      <div class="cot-unir-nota" id="cotUnirNota" hidden></div>
+      <div class="field-row" id="cotReemplazoWrap" hidden>
+        <div class="field"><label>La reemplaza la cotización</label><select id="cotReemplazoPor"><option value="">Elige la cotización…</option></select></div>
       </div>
       <div class="field-row" id="cotRechazoWrap" hidden>
         <div class="field"><label>Motivo del rechazo</label><select id="cotRechazoMotivo"><option value="">Elige el motivo…</option></select></div>
@@ -2457,6 +2484,19 @@
   </div>
 </div>
 
+<!-- Elegir una opción (2026-10-28): motivo de rechazo o cotización que reemplaza, desde la tabla -->
+<div class="overlay" id="elegirOverlay">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-head"><h3 id="elegirTitle"></h3></div>
+    <div class="modal-body" style="padding:14px 20px 4px;">
+      <p id="elegirMsg" style="margin:0 0 10px; font-size:13.5px; line-height:1.5; color:var(--text-muted);"></p>
+      <div class="field"><select id="elegirSelect"></select></div>
+      <div class="field" id="elegirNotaWrap" style="margin-top:10px;"><input type="text" id="elegirNota" placeholder="Qué pasó (opcional)"></div>
+    </div>
+    <div class="modal-foot"><div></div><div style="display:flex; gap:8px;"><button class="btn" id="elegirCancel">Cancelar</button><button class="btn primary" id="elegirOk">Guardar</button></div></div>
+  </div>
+</div>
+
 <!-- Confirmación (reemplazo de confirm() nativo, bloqueado dentro del artifact) -->
 <div class="overlay" id="confirmOverlay">
   <div class="modal" style="max-width:380px;">
@@ -2586,14 +2626,17 @@
 (function(){
   /* "En proceso" = la estamos trabajando. "En pausa" = el cliente la pidió para más adelante, sin vigencia ni prisa:
      cada semana sale un recordatorio para validar si sigue en pausa. */
-  var COT_ESTADOS = {enviada:"Enviada", pendiente_armar:"Por armar", en_proceso:"En proceso", en_pausa:"En pausa", aprobada:"Aprobada", rechazada:"Rechazada"};
+  var COT_ESTADOS = {enviada:"Enviada", pendiente_armar:"Por armar", en_proceso:"En proceso", en_pausa:"En pausa", aprobada:"Aprobada", rechazada:"Rechazada", reemplazada:"Reemplazada"};
+  /* Reemplazada (2026-10-28): la idea se cotizó de nuevo en otra cotización (p. ej. varias individuales unidas en una completa).
+     No es negocio perdido ni aprobado: no cuenta en estadísticas, totales ni rentabilidad; solo se ve en "Todas". */
+  function cotNoCuenta(c){ return !c || c.estado === 'rechazada' || c.estado === 'reemplazada'; }
   var COT_ESTADO_HINT = {
     pendiente_armar:'Pedida por el cliente; falta empezar a armarla.',
     en_proceso:'La estamos trabajando (precios, visita, ajustes).',
     en_pausa:'El cliente la quiere a futuro, sin prisa. Cada lunes la gerencia valida si sigue en pausa.'
   };
   /* Pestañas del flujo (2026-10-13): color y regla de recordatorios de cada estado. */
-  var COT_TAB_COLOR = {pendiente_armar:'#8a94a6', en_proceso:'#3d6fd0', enviada:'#c88a1a', aprobada:'#1f8a57', cerrada:'#6b7685', en_pausa:'#8d6fc4', rechazada:'#c0473f', todas:'var(--text-muted)'};
+  var COT_TAB_COLOR = {pendiente_armar:'#8a94a6', en_proceso:'#3d6fd0', enviada:'#c88a1a', aprobada:'#1f8a57', cerrada:'#6b7685', en_pausa:'#8d6fc4', rechazada:'#c0473f', todas:'var(--text-muted)', reemplazada:'#9aa0ab'};
   var COT_TAB_REGLA = {
     pendiente_armar:'<b>Ideas por armar.</b> Cada lunes la gerencia pregunta si sigue siendo idea o ya se inicia. Si se inicia, pasa a En proceso.',
     en_proceso:'<b>El cliente la está esperando.</b> Cada 3 días desde que entró aquí sale un aviso para verificar el avance o enviarla.',
@@ -3443,6 +3486,7 @@
 
   /* ---------- Cotizaciones ---------- */
   function renderCotizaciones(){
+    if(!state.cotSel) state.cotSel = new Set();
     var q = document.getElementById('cotSearch').value.trim().toLowerCase();
     var respF = document.getElementById('cotRespFilter').value;
 
@@ -3484,17 +3528,20 @@
     }
 
     var html = (state.cotTab === 'rechazada' ? cotMejoraHtml(rows) : '') +
-      '<div class="table-wrap"><table><thead><tr><th>N.°</th><th>Cliente</th><th>Descripción</th><th>Responsable</th><th>Fecha</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
+      cotSelBarHtml() +
+      '<div class="table-wrap"><table><thead><tr><th class="cot-chk"><input type="checkbox" id="cotChkAll" title="Seleccionar todas"></th><th>N.°</th><th>Cliente</th><th>Descripción</th><th>Responsable</th><th>Fecha</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
     rows.forEach(function(e){
       var id = e[0], c = e[1]; var total = cotTotal(c);
-      html += '<tr data-id="'+id+'">'+
+      var reemp = c.estado === 'reemplazada', selOk = cotSeleccionable(id, c);
+      html += '<tr data-id="'+id+'" class="'+(state.cotSel.has(id)?'cot-sel ':'')+(reemp?'cot-fila-reemp':'')+'">'+
+        '<td class="cot-chk">'+(selOk ? '<input type="checkbox" class="cot-chk-i"'+(state.cotSel.has(id)?' checked':'')+' aria-label="Seleccionar '+escapeHtml(c.numero||'')+'">' : '')+'</td>'+
         '<td class="num">'+escapeHtml(c.numero||'—')+'</td>'+
         '<td>'+escapeHtml(c.cliente||'—')+'</td>'+
-        '<td class="desc-cell"><div class="d-title">'+escapeHtml(c.descripcion||'—')+'</div>'+(c.items&&c.items.length?'<div class="d-notes">'+c.items.length+' ítem(s)</div>':'')+(c.estado==='en_pausa'?pausaInfoHtml(id, c):'')+cotProximoHtml(id, c)+'</td>'+
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml(c.descripcion||'—')+'</div>'+(c.items&&c.items.length?'<div class="d-notes">'+c.items.length+' ítem(s)</div>':'')+(c.estado==='en_pausa'?pausaInfoHtml(id, c):'')+cotReempHtml(c)+cotProximoHtml(id, c)+'</td>'+
         '<td>'+escapeHtml(c.responsable||'—')+'</td>'+
         '<td class="num">'+fmtDate(c.fecha)+'</td>'+
         '<td class="num">'+(total?fmtMoney.format(total):'—')+'</td>'+
-        (cotTabKey(id, c) === 'cerrada' ? '<td><span class="pill st-cerrada">Cerrada</span></td>' : '<td><span class="pill st-'+c.estado+'">'+(COT_ESTADOS[c.estado]||c.estado)+'</span></td>')+
+        (cotTabKey(id, c) === 'cerrada' ? '<td><span class="pill st-cerrada">Cerrada</span></td>' : '<td><button type="button" class="pill st-clic st-'+c.estado+'" title="Cambiar estado">'+(COT_ESTADOS[c.estado]||c.estado)+'</button></td>')+
         '<td><div class="row-actions">'+
           '<button class="icon-btn view-cot" title="Vista previa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>'+
           '<button class="icon-btn edit-cot" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/></svg></button>'+
@@ -3506,6 +3553,203 @@
     container.querySelectorAll('.edit-cot').forEach(function(btn){ btn.addEventListener('click', function(){ openCotModal(btn.closest('tr').dataset.id); }); });
     container.querySelectorAll('.view-cot').forEach(function(btn){ btn.addEventListener('click', function(){ openPreview(btn.closest('tr').dataset.id); }); });
     bindPausaBtns(container);
+    cotBindSeleccion(container, rows);
+  }
+
+  /* ===== Cotizaciones · menos pasos (2026-10-28) =====
+     - Selección de varias filas para unirlas en una completa nueva, o marcarlas como reemplazadas por una existente.
+     - El estado se cambia desde la etiqueta de la tabla (sin abrir la cotización).
+     - Al aprobar (en la tabla o en el formulario) se ofrece registrar la orden de compra de una vez. */
+  var COT_ORDEN_AVANCE = ['pendiente_armar','en_proceso','en_pausa','enviada','aprobada'];
+  var COT_MENU_ESTADOS = ['pendiente_armar','en_proceso','enviada','aprobada','en_pausa','rechazada','reemplazada'];
+  function cotMismoCliente(a, b){ return String(a||'').trim().toLowerCase() === String(b||'').trim().toLowerCase(); }
+  function cotSeleccionable(id, c){ return c.estado !== 'reemplazada'; }
+  function cotSelIds(){ return Array.from(state.cotSel).filter(function(id){ return state.cotizaciones.has(id); }); }
+  function cotSelBarHtml(){
+    var ids = cotSelIds(); if(!ids.length) return '';
+    var cots = ids.map(function(id){ return state.cotizaciones.get(id); });
+    var mismo = cots.every(function(c){ return cotMismoCliente(c.cliente, cots[0].cliente); });
+    var nums = cots.map(function(c){ return c.numero||''; }).sort().join(', ');
+    return '<div class="cot-selbar"><strong>'+ids.length+' seleccionada'+(ids.length>1?'s':'')+'<small>'+escapeHtml(nums)+(mismo ? '' : ' · deben ser del mismo cliente')+'</small></strong>'+
+      '<button type="button" class="btn primary sm" id="cotSelUnir"'+(mismo && ids.length > 1 ? '' : ' disabled')+'>Unir en una nueva</button>'+
+      '<button type="button" class="btn sm" id="cotSelReemp"'+(mismo ? '' : ' disabled')+'>Reemplazada por otra…</button>'+
+      '<button type="button" class="btn sm" id="cotSelClear">Quitar selección</button></div>';
+  }
+  function cotReempHtml(c){
+    if(c.estado === 'reemplazada' && c.reemplazadaPor){
+      var r = state.cotizaciones.get(c.reemplazadaPor);
+      return '<div class="cot-reemp">Reemplazada por <a data-cot-go="'+escapeHtml(c.reemplazadaPor)+'">'+escapeHtml((r && r.numero) || c.reemplazadaPorNumero || 'otra cotización')+'</a></div>';
+    }
+    if(c.reemplazaA && c.reemplazaA.length){
+      return '<div class="cot-reemp">Reemplaza a '+c.reemplazaA.map(function(x){ var r = state.cotizaciones.get(x); return r ? '<a data-cot-go="'+escapeHtml(x)+'">'+escapeHtml(r.numero||'')+'</a>' : ''; }).filter(Boolean).join(', ')+'</div>';
+    }
+    return '';
+  }
+  function cotReemplazoOpciones(selfId, cliente, cur, excluir){
+    excluir = excluir || [];
+    var h = '<option value="">Elige la cotización…</option>';
+    Array.from(state.cotizaciones.entries())
+      .filter(function(e){ return e[0] === cur || (e[0] !== selfId && excluir.indexOf(e[0]) === -1 && e[1].estado !== 'reemplazada' && cotMismoCliente(e[1].cliente, cliente)); })
+      .sort(function(a,b){ return String(b[1].numero||'').localeCompare(String(a[1].numero||'')); })
+      .forEach(function(e){ var c = e[1], t = cotTotal(c);
+        h += '<option value="'+escapeHtml(e[0])+'">'+escapeHtml((c.numero||'Sin N°')+' — '+(c.descripcion||'').slice(0,60)+(t ? ' · '+fmtMoney.format(t) : '')+' · '+(COT_ESTADOS[c.estado]||c.estado))+'</option>'; });
+    return h;
+  }
+  function cotBindSeleccion(container, rows){
+    var all = document.getElementById('cotChkAll');
+    var visibles = rows.filter(function(e){ return cotSeleccionable(e[0], e[1]); }).map(function(e){ return e[0]; });
+    if(all){
+      var n = visibles.filter(function(id){ return state.cotSel.has(id); }).length;
+      all.checked = !!visibles.length && n === visibles.length; all.indeterminate = n > 0 && n < visibles.length;
+      all.addEventListener('change', function(){ visibles.forEach(function(id){ if(all.checked) state.cotSel.add(id); else state.cotSel.delete(id); }); renderCotizaciones(); });
+    }
+    container.querySelectorAll('.cot-chk-i').forEach(function(ch){ ch.addEventListener('change', function(){
+      var id = ch.closest('tr').dataset.id; if(ch.checked) state.cotSel.add(id); else state.cotSel.delete(id); renderCotizaciones();
+    }); });
+    container.querySelectorAll('.pill.st-clic').forEach(function(b){ b.addEventListener('click', function(ev){ ev.stopPropagation(); cotMenuEstado(b, b.closest('tr').dataset.id); }); });
+    container.querySelectorAll('[data-cot-go]').forEach(function(a){ a.addEventListener('click', function(){ openCotModal(a.dataset.cotGo); }); });
+    var bu = document.getElementById('cotSelUnir'); if(bu) bu.addEventListener('click', function(){ cotUnirAbrir(cotSelIds()); });
+    var br = document.getElementById('cotSelReemp'); if(br) br.addEventListener('click', function(){ cotReemplazarPorExistente(cotSelIds()); });
+    var bc = document.getElementById('cotSelClear'); if(bc) bc.addEventListener('click', function(){ state.cotSel.clear(); renderCotizaciones(); });
+  }
+
+  /* Diálogo con una lista: devuelve {value, nota} o null. */
+  var _pickResolve = null;
+  function pickDialog(o){
+    document.getElementById('elegirTitle').textContent = o.title || '';
+    document.getElementById('elegirMsg').textContent = o.msg || ''; document.getElementById('elegirMsg').hidden = !o.msg;
+    document.getElementById('elegirSelect').innerHTML = o.options;
+    document.getElementById('elegirNotaWrap').hidden = !o.nota; document.getElementById('elegirNota').value = '';
+    document.getElementById('elegirOk').textContent = o.ok || 'Guardar';
+    document.getElementById('elegirOverlay').classList.add('open');
+    return new Promise(function(resolve){ _pickResolve = resolve; });
+  }
+  function _closePick(r){ document.getElementById('elegirOverlay').classList.remove('open'); var f = _pickResolve; _pickResolve = null; if(f) f(r); }
+  document.getElementById('elegirCancel').addEventListener('click', function(){ _closePick(null); });
+  document.getElementById('elegirOverlay').addEventListener('click', function(e){ if(e.target === this) _closePick(null); });
+  document.getElementById('elegirOk').addEventListener('click', function(){
+    var v = document.getElementById('elegirSelect').value;
+    if(!v){ toast('Elige una opción.'); document.getElementById('elegirSelect').focus(); return; }
+    _closePick({value: v, nota: document.getElementById('elegirNota').value.trim()});
+  });
+
+  /* Cambia el estado de una cotización con las mismas reglas del formulario (fechas, pausa, en proceso, rechazo, reemplazo). */
+  function cotAplicarEstado(id, nuevo, extra){
+    var db = requireDb(), prev = state.cotizaciones.get(id);
+    if(!db || !prev) return Promise.reject({message:'sin conexión'});
+    if(nuevo === 'reemplazada' && cotOrdenActiva(id)) return Promise.reject({message:(prev.numero||'')+' tiene orden de compra activa: anúlala antes de marcarla como reemplazada'});
+    var d = Object.assign({}, prev, extra || {}), hoy = todayIso();
+    d.estado = nuevo;
+    if(nuevo === 'aprobada' && !d.fechaAceptacion) d.fechaAceptacion = hoy;
+    if(nuevo === 'enviada' && prev.estado !== 'enviada') d.fecha = hoy;
+    if(nuevo !== 'rechazada'){ d.rechazoMotivo = null; d.rechazoNota = null; d.fechaRechazo = null; }
+    else d.fechaRechazo = prev.estado === 'rechazada' ? (prev.fechaRechazo || hoy) : hoy;
+    if(nuevo !== 'reemplazada'){ d.reemplazadaPor = null; d.reemplazadaPorNumero = null; d.fechaReemplazo = null; }
+    else d.fechaReemplazo = hoy;
+    if(nuevo === 'en_pausa'){ d.pausaDesde = prev.estado === 'en_pausa' ? (prev.pausaDesde || hoy) : hoy; d.pausaRevisada = prev.estado === 'en_pausa' ? (prev.pausaRevisada || null) : null; }
+    else { d.pausaDesde = null; d.pausaRevisada = null; }
+    d.procesoDesde = nuevo === 'en_proceso' ? (prev.estado === 'en_proceso' ? (prev.procesoDesde || hoy) : hoy) : null;
+    if(nuevo !== prev.estado){ delete d.actualizacionPedida; delete d.inicioDesdeAgenda; }
+    d.editadoEn = new Date().toISOString(); d.editadoPorId = state.userId || null;
+    return db.collection('cotizaciones').doc(id).set(d).then(function(){
+      state.cotizaciones.set(id, d); syncAutoEventsFor('cotizacion', id); return d;
+    });
+  }
+  function cotCambiarEstado(id, nuevo){
+    var c = state.cotizaciones.get(id); if(!c || c.estado === nuevo) return;
+    var paso;
+    if(nuevo === 'rechazada'){
+      paso = pickDialog({title:'Rechazada · '+(c.numero||''), msg:'Con el motivo se arman los puntos de mejora.', nota:true,
+        options:'<option value="">Elige el motivo…</option>'+Object.keys(COT_RECHAZO).map(function(k){ return '<option value="'+k+'">'+escapeHtml(COT_RECHAZO[k])+'</option>'; }).join('')})
+        .then(function(r){ return r ? {rechazoMotivo:r.value, rechazoNota:r.nota || null} : null; });
+    } else if(nuevo === 'reemplazada'){
+      paso = pickDialog({title:'Reemplazada · '+(c.numero||''), msg:'No cuenta como rechazada ni como aprobada.', options:cotReemplazoOpciones(id, c.cliente, '')})
+        .then(function(r){ return r ? {reemplazadaPor:r.value, reemplazadaPorNumero:(state.cotizaciones.get(r.value)||{}).numero||''} : null; });
+    } else paso = Promise.resolve({});
+    paso.then(function(extra){
+      if(!extra) return;
+      return cotAplicarEstado(id, nuevo, extra).then(function(d){
+        if(nuevo === 'reemplazada') cotAnotarReemplazo(extra.reemplazadaPor, [id]);
+        var dest = (COT_TABS.filter(function(t){ return t.key === cotTabKey(id, d); })[0]||{}).label;
+        toast((d.numero||'Cotización')+' · '+(COT_ESTADOS[nuevo]||nuevo)+(dest ? ' · pasó a "'+dest+'"' : ''));
+        renderAll();
+        if(nuevo === 'aprobada') return cotOfrecerOrden(id);
+      });
+    }).catch(function(err){ toast('No se pudo cambiar: ' + (err && err.message ? err.message : 'error'), 5500); });
+  }
+  function cotMenuEstado(anchor, id){
+    var c = state.cotizaciones.get(id); if(!c) return;
+    var old = document.getElementById('cotStMenu'); if(old){ var mismo = old.dataset.id === id; old.remove(); if(mismo) return; }
+    var m = document.createElement('div'); m.className = 'st-menu'; m.id = 'cotStMenu'; m.dataset.id = id;
+    m.innerHTML = COT_MENU_ESTADOS.filter(function(k){ return k !== c.estado; }).map(function(k){
+      return (k === 'rechazada' ? '<hr>' : '')+'<button type="button" data-st="'+k+'"><span class="d" style="background:'+(COT_TAB_COLOR[k]||'var(--text-muted)')+'"></span>'+
+        (k === 'aprobada' && !cotOrdenActiva(id) ? 'Aprobada · registrar orden' : (k === 'reemplazada' ? 'Reemplazada por otra…' : (k === 'rechazada' ? 'Rechazada…' : COT_ESTADOS[k])))+'</button>';
+    }).join('');
+    document.body.appendChild(m);
+    var r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
+    var left = Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - w - 8);
+    var top = r.bottom + window.scrollY + 4; if(r.bottom + h + 8 > window.innerHeight) top = r.top + window.scrollY - h - 4;
+    m.style.left = Math.max(8, left) + 'px'; m.style.top = top + 'px';
+    var cerrar = function(){ m.remove(); document.removeEventListener('click', fuera, true); document.removeEventListener('keydown', esc); window.removeEventListener('resize', cerrar); };
+    var fuera = function(e){ if(!m.contains(e.target) && e.target !== anchor) cerrar(); };
+    var esc = function(e){ if(e.key === 'Escape') cerrar(); };
+    setTimeout(function(){ document.addEventListener('click', fuera, true); document.addEventListener('keydown', esc); window.addEventListener('resize', cerrar); }, 0);
+    m.addEventListener('click', function(e){ var b = e.target.closest('button[data-st]'); if(!b) return; cerrar(); cotCambiarEstado(id, b.dataset.st); });
+  }
+  function cotOfrecerOrden(id){
+    if(cotOrdenActiva(id)) return Promise.resolve();
+    var c = state.cotizaciones.get(id) || {};
+    return confirmDialog((c.numero||'La cotización')+' quedó aprobada. ¿Registrar ya su orden de compra?', 'Registrar orden')
+      .then(function(ok){ if(ok) openOcModal(null, id); });
+  }
+  /* Guarda en la cotización completa a cuáles reemplaza (para enlazarlas en ambos sentidos). */
+  function cotAnotarReemplazo(porId, ids){
+    var db = requireDb(), c = state.cotizaciones.get(porId); if(!db || !c) return Promise.resolve();
+    var lista = (c.reemplazaA || []).slice(); ids.forEach(function(x){ if(lista.indexOf(x) === -1) lista.push(x); });
+    return db.collection('cotizaciones').doc(porId).update({reemplazaA: lista}).then(function(){ c.reemplazaA = lista; renderAll(); }).catch(function(){});
+  }
+  function cotMarcarReemplazadas(ids, porId){
+    var por = state.cotizaciones.get(porId) || {}, hechas = [], saltadas = [];
+    var cadena = Promise.resolve();
+    ids.forEach(function(id){ cadena = cadena.then(function(){
+      var c = state.cotizaciones.get(id); if(!c || id === porId) return;
+      if(cotOrdenActiva(id)){ saltadas.push(c.numero||id); return; }
+      return cotAplicarEstado(id, 'reemplazada', {reemplazadaPor: porId, reemplazadaPorNumero: por.numero || ''}).then(function(){ hechas.push(id); });
+    }); });
+    return cadena.then(function(){ return hechas.length ? cotAnotarReemplazo(porId, hechas) : null; }).then(function(){
+      state.cotSel.clear(); renderAll();
+      var nums = hechas.map(function(x){ return (state.cotizaciones.get(x)||{}).numero||''; }).join(', ');
+      toast((nums ? nums+' quedaron como reemplazadas por '+(por.numero||'') : 'No se marcó ninguna')+(saltadas.length ? ' · no se tocaron (tienen orden de compra): '+saltadas.join(', ') : ''), 6000);
+    }).catch(function(err){ toast('No se pudo marcar: ' + (err && err.message ? err.message : 'error'), 5500); });
+  }
+  function cotReemplazarPorExistente(ids){
+    if(!ids.length) return;
+    var c0 = state.cotizaciones.get(ids[0]);
+    var opts = cotReemplazoOpciones(null, c0.cliente, '', ids);
+    if(opts.indexOf('<option value="">') === 0 && opts.split('<option').length <= 2){ toast('No hay otra cotización de '+(c0.cliente||'este cliente')+' que las reemplace. Usa «Unir en una nueva».', 5000); return; }
+    pickDialog({title:'¿Cuál cotización las reemplaza?', msg:'Las seleccionadas quedan como «Reemplazada»: no cuentan como rechazadas ni como aprobadas.', options:opts, ok:'Marcar'})
+      .then(function(r){ if(r) return cotMarcarReemplazadas(ids, r.value); });
+  }
+  /* Arma una cotización nueva con los ítems de las seleccionadas (en orden de número). Se revisa y se guarda en el formulario. */
+  function cotUnirAbrir(ids){
+    if(ids.length < 2) return;
+    var cots = ids.map(function(id){ return [id, state.cotizaciones.get(id)]; }).sort(function(a,b){ return String(a[1].numero||'').localeCompare(String(b[1].numero||'')); });
+    var base = cots[0][1];
+    if(cots.some(function(e){ return (e[1].costingMode||'simple') !== (base.costingMode||'simple'); })) toast('Ojo: no todas usan el mismo tipo de costeo; quedó el de '+(base.numero||'la primera')+'.', 5000);
+    var avance = cots.reduce(function(m, e){ return Math.max(m, COT_ORDEN_AVANCE.indexOf(e[1].estado)); }, 0);
+    var copia = function(x){ return JSON.parse(JSON.stringify(x || [])); };
+    var pl = {};
+    ['proyectoId','cliente','clienteNit','clienteContacto','clienteDireccion','clienteCiudad','clienteTelefono','clienteEmail','responsable','vigenciaDias',
+     'costingMode','ivaPct','aiuAdministracionPct','aiuImprevistosPct','aiuUtilidadPct','ivaBase','condiciones','margenCat','margenPct','margenSobreVenta'].forEach(function(k){ if(base[k] !== undefined) pl[k] = base[k]; });
+    pl.estado = COT_ORDEN_AVANCE[Math.max(0, avance)] || 'en_proceso';
+    if(pl.estado === 'en_pausa') pl.estado = 'en_proceso';
+    pl.descripcion = 'Cotización completa: ' + cots.map(function(e){ return e[1].descripcion || e[1].numero; }).join(' + ');
+    pl.items = [].concat.apply([], cots.map(function(e){ return copia(e[1].items); }));
+    pl.personal = [].concat.apply([], cots.map(function(e){ return copia(e[1].personal); }));
+    pl.costosAdicionales = [].concat.apply([], cots.map(function(e){ return copia(e[1].costosAdicionales); }));
+    pl.notas = cots.map(function(e){ return (e[1].notas||'').trim(); }).filter(Boolean).filter(function(v, i, a){ return a.indexOf(v) === i; }).join('\n');
+    state.cotUnir = cots.map(function(e){ return e[0]; });
+    openCotModal(null, pl.proyectoId || '', pl);
   }
 
   /* Próximo paso visible en cada fila (2026-10-13). */
@@ -3586,7 +3830,7 @@
     cotizacionesDeProyecto(proyId, p && p.cliente).forEach(function(e){
       var id = e[0], c = e[1];
       r.todas++;
-      if(c.estado === 'rechazada' || fuera.indexOf(id) !== -1) return;
+      if(cotNoCuenta(c) || fuera.indexOf(id) !== -1) return;
       var an = finCotAnalisis(c);
       r.incluidas++; r.cuentan.push(id);
       r.total += cotTotal(c); r.venta += an.venta; r.costo += an.costo;
@@ -3649,10 +3893,10 @@
       if(expanded){
         var cotsHtml = cots.length ? cots.map(function(ce){
           var cid = ce[0], c = ce[1]; var total = cotTotal(c);
-          var an = finCotAnalisis(c), rech = c.estado === 'rechazada', suma = tot.cuentan.indexOf(cid) !== -1;
+          var an = finCotAnalisis(c), rech = cotNoCuenta(c), suma = tot.cuentan.indexOf(cid) !== -1;
           var sem = (an.completo && an.margen != null) ? finSemaforo(an.margen) : '';
           return '<div class="list-row proy-cot-row'+(suma?'':' proy-cot-fuera')+'" data-cid="'+cid+'" style="cursor:pointer;">'+
-            (rech ? '<span class="proy-suma" title="Las rechazadas no suman">—</span>'
+            (rech ? '<span class="proy-suma" title="Las rechazadas y reemplazadas no suman">—</span>'
                   : '<label class="proy-suma" title="Sumar esta cotización al total del proyecto"><input type="checkbox" class="proy-suma-chk" data-proy="'+id+'" data-cid="'+cid+'"'+(suma?' checked':'')+'></label>')+
             '<div class="main-txt"><div class="title">'+escapeHtml(c.numero||'Sin N°')+' · '+escapeHtml(c.descripcion||'Cotización')+'</div>'+
             '<div class="meta">'+fmtDate(c.fecha)+(total?' · '+fmtMoney.format(total):'')+
@@ -4398,6 +4642,8 @@
     document.getElementById('cotEstadoHint').textContent = t;
     document.getElementById('cotInicioEstWrap').hidden = v !== 'aprobada';
     document.getElementById('cotRechazoWrap').hidden = v !== 'rechazada';
+    var rw = document.getElementById('cotReemplazoWrap'); rw.hidden = v !== 'reemplazada';
+    if(v === 'reemplazada'){ var rs = document.getElementById('cotReemplazoPor'), cur = rs.value || c.reemplazadaPor || ''; rs.innerHTML = cotReemplazoOpciones(state.editingCotId, document.getElementById('cotCliente').value, cur); rs.value = cur; }
   }
   (function(){
     var sel = document.getElementById('cotRechazoMotivo');
@@ -4442,12 +4688,17 @@
     root.querySelectorAll('.pausa-go').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); b.disabled = true; pausaReactivar(b.dataset.cid); }); });
   }
 
-  function openCotModal(id, presetProyectoId){
+  function openCotModal(id, presetProyectoId, plantilla){
     setTimeout(function(){ if(state.cotAbierta) state.cotAbierta.clave = cotClaveForm(); }, 0);
     if(id && !state.cotizaciones.get(id)){ toast('No se pudo cargar esa cotización — vuelve a intentar.'); return; }
     state.editingCotId = id || null;
-    var c = id ? (state.cotizaciones.get(id) || {}) : {};
-    document.getElementById('cotModalTitle').textContent = id ? 'Editar cotización' : 'Nueva cotización';
+    var c = id ? (state.cotizaciones.get(id) || {}) : (plantilla || {});
+    if(!plantilla) state.cotUnir = null;
+    var un = document.getElementById('cotUnirNota'); un.hidden = !(plantilla && state.cotUnir && state.cotUnir.length);
+    if(!un.hidden) un.textContent = 'Une '+state.cotUnir.map(function(x){ return (state.cotizaciones.get(x)||{}).numero||''; }).join(', ')+'. Al guardar, esas quedan como «Reemplazada» por esta y salen de las estadísticas.';
+    document.getElementById('cotReemplazoPor').innerHTML = '<option value="">Elige la cotización…</option>'+(c.reemplazadaPor ? '<option value="'+c.reemplazadaPor+'">'+escapeHtml(c.reemplazadaPorNumero||'')+'</option>' : '');
+    document.getElementById('cotReemplazoPor').value = c.reemplazadaPor || '';
+    document.getElementById('cotModalTitle').textContent = id ? 'Editar cotización' : (plantilla ? 'Nueva cotización completa' : 'Nueva cotización');
     document.getElementById('cotNumero').value = c.numero || '';
     document.getElementById('cotNumero').placeholder = id ? 'Sin número' : 'Se asigna al guardar (' + nextCotNumero() + ')';
     document.getElementById('cotDiasInst').value = (c.diasInstalacion != null ? c.diasInstalacion : '');
@@ -4494,7 +4745,7 @@
         document.getElementById(MARGEN_INPUT_IDS[cat]).value = (v != null ? v : '');
       });
     })();
-    state.cotMargenVenta = id ? !!c.margenSobreVenta : true;
+    state.cotMargenVenta = (id || plantilla) ? !!c.margenSobreVenta : true;
     document.getElementById('itMargenHelp').innerHTML = state.cotMargenVenta
       ? 'Margen sobre el precio de venta, igual que en Finanzas: con costo $100.000 y 30 % el precio es $142.857. Cada % de categoría se aplica a sus ítems manuales que tengan costo; en "% Margen" puedes poner uno propio para un ítem. Los ítems "Desde Precios" ya traen su margen fijado y solo se ajusta ese %.'
       : 'Cotización anterior: el % se suma sobre el costo (costo + %). Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual. Los ítems "Desde Precios" sí usan margen sobre la venta.';
@@ -5463,6 +5714,9 @@
     } else if(c.estado === 'rechazada'){
       out.push(Object.assign({}, base, {fecha:seg, estado:'cancelado', fechaCumplido:null, etiqueta:num+' rechazada',
         titulo:num+' rechazada · '+(c.cliente||''), motivo:'Seguimiento cerrado: cotización rechazada.'}));
+    } else if(c.estado === 'reemplazada'){
+      out.push(Object.assign({}, base, {fecha:seg, estado:'cancelado', fechaCumplido:null, etiqueta:num+' reemplazada',
+        titulo:num+' reemplazada · '+(c.cliente||''), motivo:'Seguimiento cerrado: la reemplazó '+(c.reemplazadaPorNumero||'otra cotización')+'.'}));
     }
     return out;
   }
@@ -5830,7 +6084,7 @@
     state.ordenes.forEach(function(o, oid){ if(o.cotizacionId && o.estado!=='anulada' && oid!==state.editingOcId) usadas.add(o.cotizacionId); });
     var opts = '<option value="">Elige una cotización…</option>';
     Array.from(state.cotizaciones.entries())
-      .filter(function(e){ return e[0]===selectedId || (!usadas.has(e[0]) && e[1].estado!=='rechazada'); })
+      .filter(function(e){ return e[0]===selectedId || (!usadas.has(e[0]) && !cotNoCuenta(e[1])); })
       .sort(function(a,b){ return String(b[1].numero||'').localeCompare(String(a[1].numero||'')); })
       .forEach(function(e){ var c=e[1]; opts += '<option value="'+e[0]+'">'+escapeHtml((c.numero||'Sin N°')+' — '+(c.cliente||'')+(c.descripcion?' · '+c.descripcion.slice(0,50):''))+'</option>'; });
     sel.innerHTML = opts;
@@ -6196,7 +6450,7 @@
       var sample = r[0], text = String(r[1]||'').slice(0, 14000);
       if(!sample){ throw {code:'unavailable'}; }
       if(isPdf && text.replace(/\s/g,'').length < 40){ throw {code:'no_text'}; }
-      var cots = Array.from(state.cotizaciones.values()).filter(function(c){ return c.estado!=='rechazada'; })
+      var cots = Array.from(state.cotizaciones.values()).filter(function(c){ return !cotNoCuenta(c); })
         .map(function(c){ return (c.numero||'')+' | '+(c.cliente||'')+' | NIT '+(c.clienteNit||'—')+' | '+(c.descripcion||'')+' | total '+Math.round(cotTotal(c)); }).join('\n');
       var prompt = 'Eres un asistente que lee órdenes de compra (o correos de aprobación) recibidas por CENOVA S.A.S., empresa colombiana de tecnología. '+
         'Extrae los datos del documento y responde SOLO un objeto JSON con estas claves (usa null si el dato no aparece; no inventes):\n'+
@@ -6358,7 +6612,7 @@
       if(!pc.length) return;
       var cotIds = pc.map(function(e){ return e[0]; });
       var pOrds = ords.filter(function(e){ return cotIds.indexOf(e[1].cotizacionId) !== -1; });
-      var cotizado = pc.filter(function(e){ return e[1].estado!=='pendiente_armar'; }).reduce(function(s,e){ return s + cotSubtotalVenta(e[1]); }, 0);
+      var cotizado = pc.filter(function(e){ return e[1].estado!=='pendiente_armar' && e[1].estado!=='reemplazada'; }).reduce(function(s,e){ return s + cotSubtotalVenta(e[1]); }, 0);
       var venta = 0, costo = 0, incompleto = false, faltanCosto = 0, cotSinCosto = null, extra = 0, noCob = 0, imp = 0, facturado = 0;
       pOrds.forEach(function(e){
         var o = e[1], c = state.cotizaciones.get(o.cotizacionId) || {};
@@ -7242,7 +7496,7 @@
 
     /* Ítems vendidos por debajo del costo o sin margen, en cotizaciones vivas */
     state.cotizaciones.forEach(function(c, id){
-      if(['rechazada'].indexOf(c.estado) !== -1) return;
+      if(cotNoCuenta(c)) return;
       var an = finCotAnalisis(c);
       an.bajoCosto.forEach(function(it){
         add('critical', '<strong>'+escapeHtml(c.numero||'')+'</strong> ('+escapeHtml(c.cliente||'')+'): "'+escapeHtml(it.desc||'ítem')+'" se vende a '+finMoney(it.precio)+' y cuesta '+finMoney(it.costo)+'. Se pierden '+finMoney((it.costo-it.precio)*it.cant)+'. <button class="linkish" data-open-cot="'+escapeHtml(id)+'">Abrir</button>', 90);
@@ -7532,7 +7786,7 @@
 
     /* Por cotización */
     var est = document.getElementById('finRentCotEstado').value;
-    var cots = Array.from(state.cotizaciones.entries()).filter(function(e){ return est ? e[1].estado === est : e[1].estado !== 'rechazada'; });
+    var cots = Array.from(state.cotizaciones.entries()).filter(function(e){ return est ? e[1].estado === est : !cotNoCuenta(e[1]); });
     cots.sort(function(x,y){ return String(y[1].numero||'').localeCompare(String(x[1].numero||'')); });
     if(!cots.length) document.getElementById('finRentCot').innerHTML = '<div class="table-wrap"><div class="empty-state">Sin cotizaciones en este estado.</div></div>';
     else {
@@ -8680,6 +8934,14 @@
     if(estadoNuevo === 'rechazada' && !document.getElementById('cotRechazoMotivo').value){
       toast('Elige el motivo del rechazo: con eso armamos los puntos de mejora.', 4500); document.getElementById('cotRechazoMotivo').focus(); return;
     }
+    var reempPor = estadoNuevo === 'reemplazada' ? document.getElementById('cotReemplazoPor').value : '';
+    if(estadoNuevo === 'reemplazada' && !reempPor){
+      toast('Elige la cotización que la reemplaza.', 4500); document.getElementById('cotReemplazoPor').focus(); return;
+    }
+    if(estadoNuevo === 'reemplazada' && state.editingCotId && cotOrdenActiva(state.editingCotId)){
+      toast('Esta cotización tiene orden de compra activa: anúlala antes de marcarla como reemplazada.', 5500); return;
+    }
+    var unirIds = (!state.editingCotId && state.cotUnir) ? state.cotUnir.slice() : null;
     var fechaAcept = document.getElementById('cotFechaAceptacion').value;
     if(estadoNuevo === 'aprobada' && !fechaAcept) fechaAcept = toISODate(new Date());
     var data = {
@@ -8692,6 +8954,10 @@
       rechazoMotivo: estadoNuevo === 'rechazada' ? document.getElementById('cotRechazoMotivo').value : null,
       rechazoNota: estadoNuevo === 'rechazada' ? document.getElementById('cotRechazoNota').value.trim() : null,
       fechaRechazo: estadoNuevo === 'rechazada' ? (prev.estado === 'rechazada' ? (prev.fechaRechazo || todayIso()) : todayIso()) : null,
+      reemplazadaPor: reempPor || null,
+      reemplazadaPorNumero: reempPor ? ((state.cotizaciones.get(reempPor)||{}).numero || '') : null,
+      fechaReemplazo: reempPor ? (prev.estado === 'reemplazada' && prev.reemplazadaPor === reempPor ? (prev.fechaReemplazo || todayIso()) : todayIso()) : null,
+      reemplazaA: prev.reemplazaA || null,
       creadoPorId: prev.creadoPorId || state.userId || null,
       vigenciaDias: Number(document.getElementById('cotVigencia').value)||15,
       proyectoId: document.getElementById('cotProyecto').value,
@@ -8752,7 +9018,9 @@
       cotGuardarContactoEnCliente(db, data);
       var dest = (COT_TABS.filter(function(t){ return t.key === cotTabKey(newId || '', data); })[0]||{}).label;
       toast('Cotización '+data.numero+' guardada'+(dest && prev.estado !== data.estado ? ' · pasó a "'+dest+'"' : '')+(autoAvisos.length ? ' · '+autoAvisos.join(' · ') : ''), autoAvisos.length ? 4500 : undefined); closeCotModal();
-      if(eraEdicion && newId) return propagarCambiosCotizacion(newId, prev, data);
+      var sigue = (eraEdicion && newId) ? propagarCambiosCotizacion(newId, prev, data) : Promise.resolve();
+      return sigue.then(function(){ return unirIds && newId ? cotMarcarReemplazadas(unirIds, newId) : null; })
+        .then(function(){ if(newId && data.estado === 'aprobada' && prev.estado !== 'aprobada') return cotOfrecerOrden(newId); });
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
 
