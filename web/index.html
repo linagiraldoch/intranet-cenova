@@ -1243,6 +1243,8 @@
   .pg-fecha{font-size:10px; color:var(--text-muted); margin-top:2px; white-space:nowrap;}
   .fin-det{border-top:1px solid var(--border);}
   #finKpis{grid-template-columns:repeat(3,1fr);}
+  .campo-error{font-size:12px; color:var(--critical); margin-top:4px;}
+  select.campo-mal{border-color:var(--critical) !important; box-shadow:0 0 0 3px color-mix(in srgb, var(--critical) 18%, transparent);}
   .sop-badge{border:none; cursor:pointer; font:inherit; font-size:11px; white-space:nowrap;}
   .sop-badge:hover{filter:brightness(.95); text-decoration:underline;}
   .sop-check{display:flex; flex-wrap:wrap; gap:6px 14px; margin-bottom:6px;}
@@ -2198,7 +2200,7 @@
         <div class="field" id="finMovDestinoField" hidden><label>Cuenta destino</label><select id="finMovDestinoSel"></select></div>
         <div class="field" id="finMovMedioField"><label>Medio</label><select id="finMovMedio"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="debito">Débito automático</option><option value="cheque">Cheque</option><option value="otro">Otro</option></select></div>
       </div>
-      <div class="field" id="finMovProyField"><label>Proyecto</label><select id="finMovProyecto"></select>
+      <div class="field" id="finMovProyField"><label>Proyecto</label><select id="finMovProyecto"></select><span class="campo-error" id="finMovProyErr" hidden>Elige el proyecto. Si es de la empresa: Administración o Plataformas internas.</span>
         <div class="no-file" style="margin-top:4px;">Ligado a un proyecto cuenta como costo directo de ese proyecto. Sin proyecto, es gasto operativo de la empresa.</div></div>
       <div class="field"><label>Nota</label><input type="text" id="finMovNota" placeholder="Referencia u observación"></div>
       <div class="field" id="finMovSopField"><label>Soporte</label>
@@ -7857,7 +7859,7 @@
       if(par && par.value){ concGuardarLinea(cid, i, {match: par.value, ignorar:false}).then(function(){ toast('Emparejado.'); }); return; }
       b.disabled = true;
       var mov = {tipo: l.valor > 0 ? 'ingreso' : 'egreso', fecha: l.fecha, monto: Math.abs(l.valor), estado:'pagado', categoria: tr.querySelector('.conc-cat').value,
-        descripcion: l.descripcion || 'Movimiento del banco', tercero:'', cuentaId: c.cuentaId, cuentaDestinoId:null, medio:'transferencia', proyectoId:'',
+        descripcion: l.descripcion || 'Movimiento del banco', tercero:'', cuentaId: c.cuentaId, cuentaDestinoId:null, medio:'transferencia', proyectoId:'interno-administracion',
         nota:'Registrado desde la conciliación del estado de cuenta ('+(c.nombreArchivo||'')+').', gastoFijoId:null, periodo:null, conciliacionId: cid, creadoPorId: state.userId || null};
       /* Si es el cobro de un gasto fijo pendiente (mismo valor), queda como su pago del periodo. */
       if(l.valor < 0){ var fx = finFijosPendientes(finYm(l.fecha)).filter(function(p){ return Math.abs(p.monto - Math.abs(l.valor)) < 1 && finYm(p.fecha) <= finYm(l.fecha); })[0];
@@ -8396,6 +8398,7 @@
     document.getElementById('finMovDescripcion').value = m.descripcion || '';
     document.getElementById('finMovMedio').value = m.medio || 'transferencia';
     proySel.value = m.proyectoId || (id ? '' : proyPorDefecto(m.tipo || 'egreso', m.categoria));
+    proySel.classList.remove('campo-mal'); document.getElementById('finMovProyErr').hidden = true;
     document.getElementById('finMovSopArchivo').value = '';
     var nSop = id ? sopDe('mov:'+id).length : 0;
     document.getElementById('finMovSopHay').textContent = nSop ? 'Ya tiene '+nSop+' soporte(s). Puedes agregar otro.' : '';
@@ -8408,6 +8411,7 @@
     setTimeout(function(){ document.getElementById('finMovMonto').focus(); }, 50);
   }
   function closeFinMovModal(){ document.getElementById('finMovOverlay').classList.remove('open'); fin.editingMovId = null; fin.movFijo = null; }
+  document.getElementById('finMovProyecto').addEventListener('change', function(){ if(this.value){ this.classList.remove('campo-mal'); document.getElementById('finMovProyErr').hidden = true; } });
   document.getElementById('finAddEgreso').addEventListener('click', function(){ openFinMovModal(null, {tipo:'egreso'}); });
   document.getElementById('finAddIngreso').addEventListener('click', function(){ openFinMovModal(null, {tipo:'ingreso', categoria:'otro'}); });
   document.getElementById('finAddTransf').addEventListener('click', function(){ openFinMovModal(null, {tipo:'transferencia'}); });
@@ -8439,7 +8443,12 @@
       creadoPorId: prev.creadoPorId || state.userId || null
     };
     if(t === 'transferencia' && data.cuentaId === data.cuentaDestinoId){ toast('La cuenta de origen y la de destino deben ser distintas.'); return; }
-    if(!data.proyectoId){ toast('Elige el proyecto (para lo de la empresa: Administración o Plataformas internas).', 5000); document.getElementById('finMovProyecto').focus(); return; }
+    if(!data.proyectoId){
+      /* Aviso dentro de la ventana (no solo un mensaje que se va): sin proyecto no se guarda */
+      var ps = document.getElementById('finMovProyecto'); ps.classList.add('campo-mal'); document.getElementById('finMovProyErr').hidden = false;
+      ps.scrollIntoView({block:'center'}); ps.focus();
+      toast('Aún no se guardó: falta elegir el proyecto.', 6000); return;
+    }
     var sopFile = document.getElementById('finMovSopArchivo').files[0], sopClase = document.getElementById('finMovSopClase').value;
     if(!data.descripcion && t !== 'transferencia') data.descripcion = finCatLabel(data) + (data.tercero ? ' · ' + data.tercero : '');
     var col = db.collection('finMovimientos');
