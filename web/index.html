@@ -5520,7 +5520,7 @@
     return html;
   }
 
-  function slugFile(s){ return String(s||'').trim().replace(/[^a-z0-9\-_. ]+/gi,'').replace(/\s+/g,'-'); }
+  function slugFile(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/[^a-z0-9\-_. ]+/gi,'').replace(/\s+/g,'-'); }
 
   async function offerHtmlDownload(filename, html, savedMsg){
     if(!window.claude || !window.claude.use){
