@@ -8631,7 +8631,7 @@
   }
   function movPorId(id){ return finMovimientosTodos().filter(function(m){ return m._id === id; })[0] || null; }
 
-  /* Prepara el archivo: las fotos se achican (máx. 1600 px, JPEG) para que quepan; los PDF hasta ~1,2 MB */
+  /* Prepara el archivo: las fotos se achican (máx. 1600 px, JPEG) para que quepan; los PDF y demás archivos hasta ~14 MB (los grandes se guardan en partes) */
   function sopLeerArchivo(file){
     return new Promise(function(res, rej){
       var rd = new FileReader();
@@ -8654,9 +8654,15 @@
       };
       rd.readAsDataURL(file);
     }).then(function(x){
-      if(x.datos.length > 1650000) throw new Error('El archivo pesa más de 1,2 MB. Comprime el PDF o súbelo como foto.');
+      if(x.datos.length > 20000000) throw new Error('El archivo pesa más de 14 MB. Comprímelo e inténtalo de nuevo.');
       return x;
     });
+  }
+  /* Si el archivo es grande, se guarda en partes y el documento solo lleva la lista de partes */
+  function sopPartir(data){
+    if(!data.datos || data.datos.length <= 1500000) return Promise.resolve(data);
+    toast('Subiendo archivo grande…', 4000);
+    return window.cenovaSubirPartes(data.datos, 1500000).then(function(ids){ data.partes = ids; data.datos = ''; return data; });
   }
   /* Sube un soporte ligado a una referencia ('mov:<id>', 'oc:<orden>', 'oc:<orden>:pago:<id>'…) */
   function sopSubir(file, ref, clase, extra){
@@ -8664,7 +8670,7 @@
     return sopLeerArchivo(file).then(function(x){
       var data = Object.assign({ref: ref, clase: clase || 'otro', nombre: x.nombre, tipo: x.tipo, tamano: Math.round(x.datos.length*0.75), datos: x.datos,
         fecha: todayIso(), subidoPorId: state.userId || null}, extra || {});
-      return db.collection('soportes').add(data);
+      return sopPartir(data).then(function(d2){ return db.collection('soportes').add(d2); });
     });
   }
   function sopVer(id){
@@ -11651,7 +11657,7 @@
     sopLeerArchivo(file).then(function(x){
       var data = Object.assign({}, de.pend, {archivoNombre: x.nombre, tipoArchivo: x.tipo, datos: x.datos, fecha: todayIso(), subidoPorId: state.userId || null});
       if(!data.nombre) data.nombre = data.tipo;
-      return db.collection('docsEmpresa').add(data);
+      return sopPartir(data).then(function(d2){ return db.collection('docsEmpresa').add(d2); });
     }).then(function(){ toast('Documento guardado.'); de.form = false; de.pend = null; renderDocsEmpresa(); })
       .catch(function(err){ toast(err && err.message ? err.message : 'No se pudo subir.', 5000); })
       .then(function(){ inp.value = ''; });

@@ -158,7 +158,24 @@
     });
   }};
   /* Un archivo de soporte completo (la sincronización solo trae sus datos, sin el archivo) */
-  window.cenovaArchivo = function(c, id){ return api('GET', '/api/docs/' + c + '/' + encodeURIComponent(id)).then(function(d){ return d.data; }); };
+  /* Archivos grandes: se guardan en partes ("fragmentos") y se rearman al abrirlos */
+  window.cenovaArchivo = function(c, id){
+    return api('GET', '/api/docs/' + c + '/' + encodeURIComponent(id)).then(function(d){
+      var doc = d.data;
+      if(!doc || !Array.isArray(doc.partes) || !doc.partes.length) return doc;
+      var trozos = [];
+      return doc.partes.reduce(function(p, pid, i){
+        return p.then(function(){ return api('GET', '/api/docs/fragmentos/' + encodeURIComponent(pid)).then(function(r){ trozos[i] = (r.data && r.data.d) || ''; }); });
+      }, Promise.resolve()).then(function(){ doc.datos = trozos.join(''); return doc; });
+    });
+  };
+  window.cenovaSubirPartes = function(texto, tam){
+    var partes = [], ids = [];
+    for(var i = 0; i < texto.length; i += tam) partes.push(texto.slice(i, i + tam));
+    return partes.reduce(function(p, trozo){
+      return p.then(function(){ return api('POST', '/api/docs/fragmentos', {data: {d: trozo}}).then(function(r){ ids.push(r.id); }); });
+    }, Promise.resolve()).then(function(){ return ids; });
+  };
   window.cenovaGuardarTema = function(t){ api('POST', '/api/tema', {tema: t}).catch(function(){}); };
 
   /* =================== Sesión, tarjeta y respaldo =================== */

@@ -10,7 +10,7 @@
 
 import { calcularAlertas } from './alertas.js';
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
@@ -266,7 +266,7 @@ async function sync(req, env, s) {
   const url = new URL(req.url);
   const desde = Math.max(0, (Number(url.searchParams.get('desde')) || 0) - 3000);
   const ahora = Date.now();
-  const docs = await env.DB.prepare('SELECT col, id, data, actualizado FROM docs WHERE actualizado > ?').bind(desde).all();
+  const docs = await env.DB.prepare('SELECT col, id, data, actualizado FROM docs WHERE actualizado > ? AND col != \'fragmentos\'').bind(desde).all();
   const borr = desde ? await env.DB.prepare('SELECT col, id, ts FROM borrados WHERE ts > ?').bind(desde).all() : { results: [] };
   return json({
     ahora,
@@ -303,6 +303,9 @@ async function escribir(req, env, s, col, id, metodo) {
   if (metodo === 'DELETE') {
     if (col === 'ordenesCompra' && !s.admin) return err(403, 'regla', 'Las órdenes de compra no se borran: cámbiala a "Anulada".');
     if (col === 'prefacturas' && !s.admin) return err(403, 'regla', 'Las prefacturas no se borran: son un registro con número consecutivo.');
+    if (previo && Array.isArray(previo.partes) && previo.partes.length < 40) {
+      for (const pid of previo.partes) await env.DB.prepare('DELETE FROM docs WHERE col = ? AND id = ?').bind('fragmentos', String(pid)).run();
+    }
     await env.DB.batch([
       env.DB.prepare('DELETE FROM docs WHERE col = ? AND id = ?').bind(col, id),
       env.DB.prepare('INSERT OR REPLACE INTO borrados (col, id, ts, usuario) VALUES (?,?,?,?)').bind(col, id, ahora, s.usuario_id)
@@ -522,6 +525,11 @@ export default {
         if (m) {
           const col = m[1], id = m[2] ? decodeURIComponent(m[2]) : null;
           if (req.method === 'POST' && !id) return await escribir(req, env, s, col, null, 'PUT');
+          if (req.method === 'GET' && id && col === 'fragmentos') {
+            const r = await env.DB.prepare('SELECT data FROM docs WHERE col = ? AND id = ?').bind(col, id).first();
+            if (!r) return err(404, 'no_existe', 'Falta una parte del archivo.');
+            return json({ ok: true, data: JSON.parse(r.data) });
+          }
           if (req.method === 'GET' && id && (col === 'soportes' || col === 'docsEmpresa')) {
             const r = await env.DB.prepare('SELECT data FROM docs WHERE col = ? AND id = ?').bind(col, id).first();
             const d = r ? JSON.parse(r.data) : null;
