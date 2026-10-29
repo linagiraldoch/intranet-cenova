@@ -5335,7 +5335,7 @@
     lista.innerHTML = pfs.map(function(it){
       var d = it.data;
       return '<div class="oc-pf-item"><span><b>'+escapeHtml(d.numero||'')+'</b> · '+fmtDate(d.fecha)+' · '+escapeHtml(PF_CONCEPTO_LBL[d.concepto]||'Cobro')+'</span>'+
-        '<span><b>'+fmtMoney.format(Number(d.valor)||0)+'</b></span>'+
+        '<span><b>'+fmtMoney.format(Number(d.valor)||0)+'</b>'+(d.desactualizada ? ' <span class="pill st-rechazada" title="'+escapeHtml(d.desactualizadaMotivo||'')+'">Desactualizada</span>' : '')+'</span>'+
         '<button type="button" class="btn sm" data-pf-ver="'+escapeHtml(it.id)+'">Ver / descargar</button></div>';
     }).join('');
     if(!o){ btn.disabled = true; monto.value = ''; nota.textContent = 'Guarda la orden primero para poder generar su prefactura.'; return; }
@@ -9044,7 +9044,7 @@
     var oldTot = Math.round(cotTotal(prev)), newTot = Math.round(cotTotal(nueva));
     var ordenes = [];
     state.ordenes.forEach(function(o, oid){ if(o.cotizacionId === cotId && o.estado !== 'anulada') ordenes.push({id: oid, o: o}); });
-    var hechos = [];
+    var hechos = [], valorCambio = false;
     var cadena = Promise.resolve();
     ordenes.forEach(function(it){
       cadena = cadena.then(function(){
@@ -9052,6 +9052,7 @@
         if((o.cliente||'') !== (nueva.cliente||'')) upd.cliente = nueva.cliente || '';
         if((o.cotizacionNumero||'') !== (nueva.numero||'')) upd.cotizacionNumero = nueva.numero || '';
         if((o.proyectoId||'') !== (nueva.proyectoId||'')) upd.proyectoId = nueva.proyectoId || '';
+        if((nueva.responsable||'') !== (prev.responsable||'') && nueva.responsable && (!o.responsable || o.responsable === prev.responsable)) upd.responsable = nueva.responsable;
         if(nueva.diasInstalacion != null && nueva.diasInstalacion !== prev.diasInstalacion &&
            (o.diasInstalacion == null || o.diasInstalacion === '' || Number(o.diasInstalacion) === Number(prev.diasInstalacion))) upd.diasInstalacion = nueva.diasInstalacion;
         var pasoValor = Promise.resolve(false);
@@ -9064,7 +9065,7 @@
         }
         return pasoValor.then(function(cambiarValor){
           if(cambiarValor){
-            upd.valor = newTot;
+            upd.valor = newTot; valorCambio = true;
             /* El estado de pago depende del valor: si con el nuevo valor queda saldada o deja de estarlo, se ajusta */
             var pagos = o.pagos || [], recibido = ocRecibido(o);
             if(pagos.length && recibido >= newTot && newTot > 0 && o.estado !== 'pagada'){
@@ -9083,6 +9084,42 @@
           });
         });
       });
+    });
+    /* El resto de documentos ligados (2026-10-29): para no ir de ventana en ventana. */
+    var ids = ordenes.map(function(x){ return x.id; });
+    cadena = cadena.then(function(){
+      var tareas = [], ant = prev.cliente || '', nuevoCli = nueva.cliente || '';
+      /* Prefacturas ya emitidas: son la foto del cobro, no se reescriben; si el valor cambió quedan marcadas para generar una nueva */
+      if(valorCambio){
+        state.prefacturas.forEach(function(pf, pid){
+          if(ids.indexOf(pf.ordenId) === -1 || pf.desactualizada) return;
+          var d = Object.assign({}, pf, {desactualizada: true, desactualizadaMotivo: 'La cotización cambió de '+fmtMoney.format(oldTot)+' a '+fmtMoney.format(newTot)+' el '+fmtDate(todayIso())});
+          tareas.push(db.collection('prefacturas').doc(pid).update({desactualizada: true, desactualizadaMotivo: d.desactualizadaMotivo}).then(function(){ state.prefacturas.set(pid, d); }));
+        });
+        var nPf = 0; state.prefacturas.forEach(function(pf){ if(ids.indexOf(pf.ordenId) !== -1) nPf++; });
+        if(nPf) hechos.push(nPf+' prefactura(s) marcada(s) para generar de nuevo');
+      }
+      /* Soportes de la orden: siguen a su proyecto (el cierre del proyecto los cuenta por proyecto) */
+      if((prev.proyectoId||'') !== (nueva.proyectoId||'')){
+        state.soportes.forEach(function(sp, sid){
+          if(ids.indexOf(sp.ocId) !== -1 && (sp.proyectoId||'') !== (nueva.proyectoId||'')){
+            tareas.push(db.collection('soportes').doc(sid).update({proyectoId: nueva.proyectoId || ''}).then(function(){ state.soportes.set(sid, Object.assign({}, sp, {proyectoId: nueva.proyectoId || ''})); }));
+          }
+        });
+      }
+      /* Cliente: el proyecto (si esta cotización es la única) y los eventos manuales ligados */
+      if(ant !== nuevoCli && nuevoCli){
+        var py = nueva.proyectoId && state.proyectos.get(nueva.proyectoId), otras = 0;
+        state.cotizaciones.forEach(function(c, cid){ if(cid !== cotId && c.proyectoId === nueva.proyectoId) otras++; });
+        if(py && !otras && (py.cliente||'') === ant){
+          tareas.push(db.collection('proyectos').doc(nueva.proyectoId).update({cliente: nuevoCli}).then(function(){ state.proyectos.set(nueva.proyectoId, Object.assign({}, py, {cliente: nuevoCli})); hechos.push('proyecto'); }));
+        }
+        state.eventos.forEach(function(ev, eid){
+          if(!ev.auto && nueva.proyectoId && ev.proyectoId === nueva.proyectoId && (ev.cliente||'') === ant)
+            tareas.push(db.collection('eventos').doc(eid).update({cliente: nuevoCli}).then(function(){ state.eventos.set(eid, Object.assign({}, ev, {cliente: nuevoCli})); }));
+        });
+      }
+      return Promise.all(tareas);
     });
     return cadena.then(function(){
       if(hechos.length) toast('También se actualizó: '+hechos.join(' · '), 5000);
