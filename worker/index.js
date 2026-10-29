@@ -8,6 +8,8 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
+import { calcularAlertas } from './alertas.js';
+
 const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
@@ -449,6 +451,23 @@ async function resumenDiario(env) {
   return enviados;
 }
 
+/* Alertas de vencidos (2026-10-29): corre con el resumen diario; ver worker/alertas.js */
+async function alertasVencidos(env) {
+  const leer = async (col) => (await env.DB.prepare('SELECT id, data FROM docs WHERE col = ?').bind(col).all()).results.map((r) => ({ id: r.id, d: JSON.parse(r.data) }));
+  const eventos = (await leer('eventos')).map((x) => x.d);
+  const origenes = {};
+  for (const x of await leer('cotizaciones')) origenes['c:' + x.id] = x.d;
+  for (const x of await leer('ordenesCompra')) origenes['o:' + x.id] = x.d;
+  const usuarios = (await env.DB.prepare('SELECT id, nombre, email, admin FROM usuarios WHERE activo = 1').all()).results;
+  const correos = calcularAlertas({ eventos, origenes, usuarios, hoy: hoyBogota(), url: env.INTRANET_URL });
+  let enviados = 0;
+  for (const c of correos) {
+    try { await enviarResend(env, c); enviados++; } catch (e) { console.log('alerta: no se pudo enviar a', c.to.join(','), e.message); }
+  }
+  await auditar(env, 'sistema', 'alertas_vencidos', null, null, enviados + ' correo(s)');
+  return enviados;
+}
+
 /* ======================= enrutador ======================= */
 async function pagina(env, req, ruta) {
   const url = new URL(req.url); url.pathname = ruta;
@@ -549,6 +568,6 @@ export default {
     }
   },
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(resumenDiario(env));
+    ctx.waitUntil(Promise.allSettled([resumenDiario(env), alertasVencidos(env)]));
   }
 };
