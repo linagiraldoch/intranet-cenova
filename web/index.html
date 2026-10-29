@@ -1418,6 +1418,10 @@
   .st-menu button:hover{background:var(--surface-2);}
   .st-menu button .d{width:8px; height:8px; border-radius:50%; flex:none;}
   .st-menu hr{border:none; border-top:1px solid var(--border); margin:4px 2px;}
+  .vig-amp{display:flex; flex-direction:column; gap:6px;}
+  .vig-fin{font-size:13px; padding:9px 12px; border:1px solid var(--border); border-radius:10px; background:var(--accent-soft); color:var(--text);}
+  .vig-fin b{font-weight:600;}
+  .vig-btns{display:flex; flex-wrap:wrap; gap:6px;}
   .cot-unir-nota{font-size:12.5px; padding:8px 12px; border-radius:10px; background:var(--accent-soft); color:var(--text); margin-bottom:10px;}
   @media (max-width:760px){ .cot-selbar .btn{flex:1 1 auto; justify-content:center;} table.mc td.cot-chk{display:block !important; position:absolute; top:15px; left:14px; padding:0 !important; width:auto;} table.mc tr:has(td.cot-chk input) td.mc-title{padding-left:28px;} table.mc tr.cot-sel{box-shadow:0 0 0 2px var(--accent), var(--shadow);} table.mc tr.cot-sel td{background:none;} }
 </style>
@@ -1945,7 +1949,11 @@
       <div class="field-row three">
         <div class="field"><label>Responsable</label><input type="text" id="cotResponsable" list="equipoList"></div>
         <div class="field"><label>Fecha de la cotización</label><input type="date" id="cotFecha"><span class="no-file" id="cotFechaHint">Se pone sola con la fecha de hoy cada vez que guardas cambios en la cotización (mientras no esté aprobada ni rechazada).</span></div>
-        <div class="field"><label>Vigencia (días hábiles)</label><input type="number" id="cotVigencia" min="1" step="1" value="15"></div>
+        <div class="field"><label id="cotVigLabel">Vigencia (días hábiles)</label><input type="number" id="cotVigencia" min="1" step="1" value="15"><span class="no-file" id="cotVigManualHint">Cuenta los tiempos de entrega de materiales, instalación y demás.</span>
+          <div class="vig-amp" id="cotVigAmp" hidden>
+            <div class="vig-fin" id="cotVigFinTxt"></div>
+            <div class="vig-btns"><button type="button" class="btn sm vig-mas" data-d="5">+5 días</button><button type="button" class="btn sm vig-mas" data-d="10">+10 días</button><button type="button" class="btn sm vig-mas" data-d="15">+15 días</button><button type="button" class="btn sm vig-mas" data-d="20">+20 días</button><button type="button" class="btn sm vig-quitar" id="cotVigQuitar" hidden>Quitar ampliación</button></div>
+          </div></div>
       </div>
       <div class="field-row three">
         <div class="field"><label>Días de instalación estimados</label><input type="number" id="cotDiasInst" min="0" step="1" placeholder="Ej. 5"><span class="no-file">Se usa para programar la instalación cuando llegue la orden de compra.</span></div>
@@ -3317,7 +3325,16 @@
     while(c < n){ d.setDate(d.getDate()+1); if(esHabil(toISODate(d))) c++; }
     return toISODate(d);
   }
-  function cotVigDias(c){ return Number(c.vigenciaDias)||15; }
+  /* Vigencia (2026-10-29): vigenciaDias = los días que se pusieron al crearla; vigenciaExtraDias = las ampliaciones
+     (+5, +10…) que se dan después de enviada. La vigencia total es la suma, contada desde la fecha de la cotización. */
+  function cotVigExtra(c){ return Math.max(0, Number(c.vigenciaExtraDias)||0); }
+  function cotVigDias(c){ return (Number(c.vigenciaDias)||15) + cotVigExtra(c); }
+  /* Días hábiles entre dos fechas (sin contar la primera). */
+  function habilesEntre(a, b){
+    var n = 0, d = new Date(a+'T00:00:00'), fin = new Date(b+'T00:00:00');
+    while(d < fin){ d.setDate(d.getDate()+1); if(esHabil(toISODate(d))) n++; }
+    return n;
+  }
   function cotVigFin(c){ return c.fecha ? habilesAdd(c.fecha, cotVigDias(c)) : null; }
   /* Seguimiento: 2 días hábiles antes de que venza (el día 13 de 15). */
   function cotSegFecha(c){ return c.fecha ? habilesAdd(c.fecha, Math.max(1, cotVigDias(c) - 2)) : null; }
@@ -4845,7 +4862,62 @@
     if(v === 'enviada' && c.estado !== 'enviada') document.getElementById('cotFecha').value = todayIso();
     if(v === 'aprobada' && !document.getElementById('cotFechaAceptacion').value) document.getElementById('cotFechaAceptacion').value = todayIso();
     cotEstadoHintRefresh();
+    cotVigRefresh();
   });
+
+  /* Vigencia con dos formatos (2026-10-29):
+     · Al crearla (o mientras no se ha enviado): los días se escriben a mano, pensando en entrega de materiales, instalación, etc.
+     · Ya enviada: solo se amplía el plazo (+5, +10, +15, +20 días hábiles). Ampliar no cambia la fecha ni la versión.
+       Si ya venció, la ampliación cuenta desde hoy. */
+  function cotVigModo(){
+    var c = state.editingCotId ? (state.cotizaciones.get(state.editingCotId) || {}) : {};
+    if(!c.numero) return 'manual';
+    if(c.estado === 'enviada') return 'ampliar';
+    if(c.estado === 'aprobada' || c.estado === 'rechazada' || c.estado === 'reemplazada') return 'fija';
+    return 'manual';
+  }
+  function cotVigExtraForm(){
+    var c = state.editingCotId ? (state.cotizaciones.get(state.editingCotId) || {}) : {};
+    var a = state.cotAbierta || {}, amp = state.cotVigAmp || {pedido:0, total:0};
+    var mismaFecha = document.getElementById('cotFecha').value === (a.fecha || '');
+    return (mismaFecha ? cotVigExtra(c) + amp.total : amp.pedido);
+  }
+  function cotVigRefresh(){
+    var modo = cotVigModo(), inp = document.getElementById('cotVigencia'), box = document.getElementById('cotVigAmp');
+    var amp = state.cotVigAmp || {pedido:0, total:0};
+    inp.hidden = modo === 'ampliar';
+    inp.disabled = modo === 'fija';
+    document.getElementById('cotVigManualHint').hidden = modo !== 'manual';
+    box.hidden = modo !== 'ampliar';
+    document.getElementById('cotVigLabel').textContent = modo === 'ampliar' ? 'Vigencia · ampliar el plazo' : 'Vigencia (días hábiles)';
+    if(modo !== 'ampliar') return;
+    var fecha = document.getElementById('cotFecha').value, base = Number(inp.value)||15, extra = cotVigExtraForm();
+    var fin = fecha ? habilesAdd(fecha, base + extra) : null;
+    var alDia = amp.total - amp.pedido, txt;
+    if(!fin) txt = 'Pon la fecha de la cotización para calcular el vencimiento.';
+    else if(alDia > 0) txt = 'Vence el <b>'+fmtDate(fin)+'</b> · estaba vencida, así que la ampliación cuenta desde hoy.';
+    else txt = 'Vence el <b>'+fmtDate(fin)+'</b> · '+(base+extra)+' días hábiles desde el '+fmtDate(fecha)+
+      ' ('+base+' iniciales'+(extra ? ' + '+extra+' de ampliación' : '')+')';
+    if(fin && fin < todayIso()) txt += ' · <b>ya venció</b>: la ampliación cuenta desde hoy.';
+    if(amp.pedido) txt += '<br>Al guardar queda ampliada '+amp.pedido+' días hábiles.';
+    document.getElementById('cotVigFinTxt').innerHTML = txt;
+    document.getElementById('cotVigQuitar').hidden = !amp.pedido;
+  }
+  document.querySelectorAll('#cotVigAmp .vig-mas').forEach(function(b){
+    b.addEventListener('click', function(){
+      var n = Number(b.dataset.d)||0, fecha = document.getElementById('cotFecha').value;
+      if(!fecha){ toast('Pon primero la fecha de la cotización.'); return; }
+      var amp = state.cotVigAmp || (state.cotVigAmp = {pedido:0, total:0});
+      var base = Number(document.getElementById('cotVigencia').value)||15;
+      var fin = habilesAdd(fecha, base + cotVigExtraForm()), hoy = todayIso();
+      /* Si ya venció, primero se cubren los días hasta hoy y la ampliación arranca desde hoy. */
+      var ponerAlDia = fin < hoy ? habilesEntre(fin, hoy) : 0;
+      amp.pedido += n; amp.total += ponerAlDia + n;
+      cotVigRefresh();
+    });
+  });
+  document.getElementById('cotVigQuitar').addEventListener('click', function(){ state.cotVigAmp = {pedido:0, total:0}; cotVigRefresh(); });
+  document.getElementById('cotFecha').addEventListener('change', cotVigRefresh);
 
   /* Acciones rápidas de la revisión semanal de una cotización en pausa. */
   function pausaValidar(id){
@@ -4919,6 +4991,8 @@
     cotEstadoHintRefresh();
     document.getElementById('cotFecha').value = c.fecha || '';
     state.cotAbierta = { fecha: c.fecha || '', version: String(c.version || 1) };
+    state.cotVigAmp = { pedido:0, total:0 };
+    cotVigRefresh();
     document.getElementById('cotFechaHint').textContent = 'Se pone sola con la fecha de hoy cada vez que guardas cambios en la cotización (mientras no esté aprobada ni rechazada).' + editadoTxt(c);
     document.getElementById('cotCostingMode').value = c.costingMode || 'simple';
     document.getElementById('cotIva').value = (c.ivaPct != null ? c.ivaPct : 19);
@@ -5667,7 +5741,7 @@
           '<div class="di-row"><span>Cotización N°</span><span>'+escapeHtml(c.numero||'—')+'</span></div>'+
           '<div class="di-row"><span>Versión</span><span>'+(c.version||1)+'</span></div>'+
           '<div class="di-row"><span>Fecha</span><span>'+fmtDate(c.fecha)+'</span></div>'+
-          '<div class="di-row"><span>Vigencia oferta</span><span>'+(c.vigenciaDias||15)+' días hábiles</span></div>'+
+          '<div class="di-row"><span>Vigencia oferta</span><span>'+cotVigDias(c)+' días hábiles'+(cotVigExtra(c) && cotVigFin(c) ? ' (hasta el '+fmtDate(cotVigFin(c))+')' : '')+'</span></div>'+
         '</div>'+
       '</div>'+
       '<div class="preview-title-row"><h2>Cotización de Servicio</h2></div>'+
@@ -9404,6 +9478,15 @@
     if(eraEdicionCot(prev) && cambioContenido && prev.estado === 'enviada' && String(document.getElementById('cotVersion').value) === abierta.version){
       data.version = (Number(prev.version) || 1) + 1; autoAvisos.push('versión ' + data.version);
     }
+    /* Ampliaciones de la vigencia: se conservan mientras la fecha no cambie; si la fecha cambia (nueva versión o
+       reenvío), la vigencia vuelve a contar desde la nueva fecha con solo lo que se amplió ahora. */
+    var vamp = state.cotVigAmp || {pedido:0, total:0};
+    if(data.fecha === (prev.fecha || '')) data.vigenciaExtraDias = cotVigExtra(prev) + vamp.total;
+    else data.vigenciaExtraDias = vamp.pedido;
+    if(vamp.pedido){
+      data.vigenciaAmpliaciones = (prev.vigenciaAmpliaciones || []).concat([{fecha: todayIso(), dias: vamp.pedido, porId: state.userId || null}]);
+      autoAvisos.push('vigencia ampliada '+vamp.pedido+' días · vence el '+fmtDate(cotVigFin(data)));
+    } else if(prev.vigenciaAmpliaciones) data.vigenciaAmpliaciones = prev.vigenciaAmpliaciones;
     data.editadoEn = new Date().toISOString(); data.editadoPorId = state.userId || null;
     /* En pausa: guarda desde cuándo y la última validación semanal (al salir de la pausa se borran). */
     if(data.estado === 'en_pausa'){
