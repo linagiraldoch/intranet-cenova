@@ -2438,6 +2438,7 @@
         <div class="field"><label>Valor de la orden</label><input type="number" id="ocValor" min="0" step="1000"></div>
         <div class="field"><label>Plazo de pago (días desde la recepción)</label><input type="number" id="ocPlazoPago" min="0" step="1" value="30"></div>
       </div>
+      <div class="info-box warn" id="ocValorAlerta" hidden></div>
 
       <div class="fieldset-label">Pagos del cliente</div>
       <div class="field-row three">
@@ -6108,6 +6109,17 @@
     document.getElementById(fid).addEventListener('change', renderOcCalc);
   });
 
+  /* Alerta en vivo (2026-10-29): la OC debe valer EXACTO lo mismo que su cotización; si no, no se guarda ni se factura. */
+  function renderOcValorAlerta(){
+    var box = document.getElementById('ocValorAlerta'); if(!box) return;
+    var cid = document.getElementById('ocCotizacion').value, v = document.getElementById('ocValor').value;
+    if(!cid || v === '' || document.getElementById('ocEstado').value === 'anulada'){ box.hidden = true; return; }
+    var c = ocCuadra({cotizacionId: cid}, v);
+    if(c.ok){ box.hidden = true; return; }
+    box.hidden = false;
+    box.innerHTML = '<strong>La OC no coincide con la cotización.</strong> '+escapeHtml(c.motivo||'')+' <span class="muted">No se puede guardar ni facturar hasta que sean idénticas: corrige la cotización o pide al cliente una OC con el valor correcto.</span>';
+  }
+  ['ocValor','ocCotizacion','ocEstado'].forEach(function(id){ var el = document.getElementById(id); el.addEventListener('input', renderOcValorAlerta); el.addEventListener('change', renderOcValorAlerta); });
   function renderOcCotInfo(fillDefaults){
     var cid = document.getElementById('ocCotizacion').value;
     var c = cid ? state.cotizaciones.get(cid) : null;
@@ -6252,7 +6264,7 @@
     state.ocArchivoRemoved = false;
     renderOcFileCurrent(); renderOcDiasSemana();
     renderOcCotInfo(!id);
-    renderOcCalc();
+    renderOcCalc(); renderOcValorAlerta();
     renderOcPersonalSummary();
     renderOcPagos();
     renderOcRetraso();
@@ -6551,6 +6563,23 @@
     });
   }
 
+  /* PDF escaneado (sin texto): se dibujan sus primeras páginas y se leen como imagen */
+  function pdfPaginasComoImagen(file, max){
+    return file.arrayBuffer().then(function(buf){
+      return loadPdfJs().then(function(pdfjs){ return pdfjs.getDocument({data: new Uint8Array(buf)}).promise; });
+    }).then(function(pdf){
+      var n = Math.min(pdf.numPages, max || 3), jobs = [];
+      for(var i = 1; i <= n; i++) jobs.push(pdf.getPage(i).then(function(pg){
+        var v0 = pg.getViewport({scale: 1}), k = Math.min(2, 1600 / Math.max(v0.width, v0.height)), v = pg.getViewport({scale: k});
+        var cv = document.createElement('canvas'); cv.width = Math.round(v.width); cv.height = Math.round(v.height);
+        return pg.render({canvasContext: cv.getContext('2d'), viewport: v}).promise.then(function(){
+          return new Promise(function(res){ cv.toBlob(function(b){ res(b); }, 'image/jpeg', 0.8); });
+        });
+      }));
+      return Promise.all(jobs);
+    });
+  }
+
   function setOcExtractStatus(html, kind){
     var el = document.getElementById('ocExtractStatus');
     el.style.display = html ? 'block' : 'none';
@@ -6576,7 +6605,7 @@
     Promise.all([samplePromise, textPromise]).then(function(r){
       var sample = r[0], text = String(r[1]||'').slice(0, 14000);
       if(!sample){ throw {code:'unavailable'}; }
-      if(isPdf && text.replace(/\s/g,'').length < 40){ throw {code:'no_text'}; }
+      var escaneado = isPdf && text.replace(/\s/g,'').length < 40;
       var cots = Array.from(state.cotizaciones.values()).filter(function(c){ return !cotNoCuenta(c); })
         .map(function(c){ return (c.numero||'')+' | '+(c.cliente||'')+' | NIT '+(c.clienteNit||'—')+' | '+(c.descripcion||'')+' | total '+Math.round(cotTotal(c)); }).join('\n');
       var prompt = 'Eres un asistente que lee órdenes de compra (o correos de aprobación) recibidas por CENOVA S.A.S., empresa colombiana de tecnología. '+
@@ -6588,6 +6617,12 @@
         'Cotizaciones de Cenova disponibles (número | cliente | NIT | descripción | total):\n'+cots+'\n\n'+
         (text ? 'Texto del documento:\n"""\n'+text+'\n"""' : 'El documento va como imagen adjunta.');
       var opts = {modelTier:'default'};
+      if(escaneado){
+        return sample.limits().catch(function(){ return null; }).then(function(lim){
+          if(!lim || !lim.images){ throw {code:'no_text'}; }
+          return pdfPaginasComoImagen(file, 3).then(function(blobs){ opts.images = blobs; return sample.json(prompt, opts); });
+        });
+      }
       if(isImg){
         return sample.limits().catch(function(){ return null; }).then(function(lim){
           if(!lim || !lim.images){ throw {code:'images_unavailable'}; }
@@ -6625,9 +6660,14 @@
       var warn = '';
       if(!cotSel.value) warn = '<br><strong style="color:var(--warning);">No se identificó la cotización con seguridad: elígela tú.</strong>';
       var cSel = cotSel.value ? state.cotizaciones.get(cotSel.value) : null;
-      if(cSel && d.valorTotal && Math.abs(Number(d.valorTotal) - cotTotal(cSel)) > Math.max(1000, cotTotal(cSel)*0.01)){
-        warn += '<br><strong style="color:var(--warning);">El valor de la orden ('+fmtMoney.format(Number(d.valorTotal))+') no coincide con el cotizado ('+fmtMoney.format(cotTotal(cSel))+'). Revísalo.</strong>';
+      if(cSel && d.valorTotal && Math.round(Number(d.valorTotal)) !== Math.round(cotTotal(cSel))){
+        warn += '<br><strong style="color:var(--critical);">El valor de la orden ('+fmtMoney.format(Number(d.valorTotal))+') no coincide con el cotizado ('+fmtMoney.format(cotTotal(cSel))+'). No se podrá guardar así.</strong>';
       }
+      var dig = function(x){ return String(x||'').replace(/\D/g,'').replace(/\d$/,''); };   /* sin dígito de verificación */
+      if(cSel && d.nit && cSel.clienteNit && dig(d.nit) && dig(cSel.clienteNit) && dig(d.nit) !== dig(cSel.clienteNit)){
+        warn += '<br><strong style="color:var(--critical);">El NIT de la orden ('+escapeHtml(String(d.nit))+') es distinto al de la cotización ('+escapeHtml(String(cSel.clienteNit))+'): la factura debe salir al NIT correcto.</strong>';
+      }
+      renderOcValorAlerta();
       setOcExtractStatus(filled.length ? ('<strong>Datos llenados desde la orden:</strong> '+filled.join(', ')+'. <span class="muted">Revisa los campos resaltados antes de guardar.</span>'+warn)
         : 'No se encontraron datos claros en el documento. Llena los campos a mano.', filled.length ? 'ok' : '');
     }).catch(function(err){
