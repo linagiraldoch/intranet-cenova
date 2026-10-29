@@ -329,6 +329,10 @@ async function escribir(req, env, s, col, id, metodo) {
   if (col === 'clientes' && !s.admin && (String(data.nombre || '').trim() !== String(previo.nombre || '').trim() || String(data.nit || '') !== String(previo.nit || ''))) {
     return err(403, 'regla', 'El nombre y el NIT del cliente solo los cambia administración. Puedes agregar o editar contactos.');
   }
+  // La alerta comercial de un cliente (lista negra suave) solo la escribe administración; el resto la ve.
+  if (col === 'clientes' && !s.admin && previo && JSON.stringify(previo.alerta || null) !== JSON.stringify(data.alerta || null)) {
+    return err(403, 'regla', 'La alerta comercial de un cliente solo la escribe administración.');
+  }
   // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
   if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero) {
     return err(403, 'regla', 'El número de registro ' + previo.numero + ' no se puede modificar.');

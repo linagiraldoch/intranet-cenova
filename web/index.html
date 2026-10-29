@@ -220,6 +220,13 @@
   .section-head h2{margin:0; font-size:18px; font-weight:800;}
 
   .subtabs{display:flex; gap:4px; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:3px; margin-bottom:16px; width:fit-content;}
+  .alerta-cli{margin-top:6px; padding:8px 12px; border-radius:10px; font-size:12.5px; line-height:1.4; border:1px solid transparent;}
+  .alerta-cli.atencion{background:var(--warning-soft); color:var(--warning); border-color:color-mix(in srgb, var(--warning) 30%, transparent);}
+  .alerta-cli.cuidado{background:var(--critical-soft); color:var(--critical); border-color:color-mix(in srgb, var(--critical) 30%, transparent);}
+  .alerta-cli b{font-weight:700;}
+  .alerta-cli-form{border:1px dashed var(--border); border-radius:12px; padding:12px; margin-bottom:12px;}
+  .cli-badge{display:inline-block; margin-left:8px; font-size:11px; font-weight:700; padding:1px 8px; border-radius:99px; vertical-align:middle;}
+  .cli-badge.atencion{background:var(--warning-soft); color:var(--warning);} .cli-badge.cuidado{background:var(--critical-soft); color:var(--critical);}
   .de-tabs{flex-wrap:wrap; width:auto;}
   .de-head{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px;}
   .de-head h3{margin:0; font-size:16px;} .de-head span{color:var(--text-muted); font-size:13px;}
@@ -1939,7 +1946,7 @@
 
       <div class="fieldset-label">Datos del cliente</div>
       <div class="field-row">
-        <div class="field"><label>Cliente</label><input type="text" id="cotCliente" list="clientesList" placeholder="Nombre del cliente"></div>
+        <div class="field"><label>Cliente</label><input type="text" id="cotCliente" list="clientesList" placeholder="Nombre del cliente"><div class="alerta-cli" id="cotClienteAlerta" hidden></div></div>
         <div class="field"><label>NIT</label><input type="text" id="cotClienteNit" placeholder="000.000.000-0"></div>
       </div>
       <div class="field-row">
@@ -2233,7 +2240,7 @@
       <button class="modal-close" id="proyClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="field"><label>Cliente</label><input type="text" id="proyCliente" list="clientesList" placeholder="Nombre del cliente"></div>
+      <div class="field"><label>Cliente</label><input type="text" id="proyCliente" list="clientesList" placeholder="Nombre del cliente"><div class="alerta-cli" id="proyClienteAlerta" hidden></div></div>
       <div class="field"><label>Nombre del proyecto</label><input type="text" id="proyNombre" placeholder="Ej. Sistema de reconocimiento facial"></div>
       <div class="field-row">
         <div class="field"><label>Responsable</label><input type="text" id="proyResponsable" list="equipoList"></div>
@@ -2279,6 +2286,14 @@
       <div id="cliContactosBox"></div>
       <button type="button" class="btn sm" id="cliAddContacto" style="align-self:flex-start;">+ Agregar contacto</button>
       <div class="no-file" id="cliNoAdminNota" style="display:none;">El nombre y el NIT solo los cambia administración. Puedes agregar o corregir contactos.</div>
+      <div class="alerta-cli-form" id="cliAlertaAdmin" hidden>
+        <div class="fieldset-label">Alerta comercial · solo la escribe administración; el equipo la ve al atender a este cliente</div>
+        <div class="field-row">
+          <div class="field"><label>Nivel</label><select id="cliAlertaNivel"><option value="">Sin alerta</option><option value="atencion">Atención</option><option value="cuidado">Cuidado</option></select></div>
+        </div>
+        <div class="field"><label>Qué debe saber quien lo atienda</label><textarea id="cliAlertaTexto" placeholder="Ej. Cotiza mucho pero casi nunca aprueba: no gastar horas de levantamiento sin OC."></textarea></div>
+      </div>
+      <div class="alerta-cli" id="cliAlertaVista" hidden></div>
       <div class="field"><label>Notas</label><textarea id="cliNotas" placeholder="Observaciones, preferencias, referencias…"></textarea></div>
     </div>
     <div class="modal-foot">
@@ -2951,6 +2966,20 @@
     if(nombre.toLowerCase() === String(nombreAnterior||'').trim().toLowerCase()) return false;
     return !findClienteByNombre(nombre);
   }
+  /* Alerta comercial del cliente (2026-10-29): la escribe solo administración; el servidor lo hace cumplir. */
+  var ALERTA_NIVELES = {atencion:'Atención', cuidado:'Cuidado'};
+  function alertaDeCliente(nombre){ var c = findClienteByNombre(nombre); return (c && c.alerta && c.alerta.texto) ? c.alerta : null; }
+  function alertaHtml(a){ return '<b>'+(a.nivel === 'cuidado' ? '⚠ Cuidado con este cliente' : 'Ten en cuenta con este cliente')+':</b> '+escapeHtml(a.texto); }
+  function pintarAlertaCliente(boxId, nombre){
+    var box = document.getElementById(boxId); if(!box) return;
+    var a = alertaDeCliente(nombre);
+    if(!a){ box.hidden = true; box.className = 'alerta-cli'; box.innerHTML = ''; return; }
+    box.hidden = false; box.className = 'alerta-cli ' + (a.nivel === 'cuidado' ? 'cuidado' : 'atencion'); box.innerHTML = alertaHtml(a);
+  }
+  [['cotCliente','cotClienteAlerta'],['proyCliente','proyClienteAlerta']].forEach(function(par){
+    var el = document.getElementById(par[0]);
+    ['input','change','blur'].forEach(function(ev){ el.addEventListener(ev, function(){ pintarAlertaCliente(par[1], el.value); }); });
+  });
   var MSG_CLIENTE_NO_REG = 'Ese cliente no está registrado. Elígelo de la lista; si es un cliente nuevo, pídele a Lina que lo cree. Si es otra persona de un cliente existente, agrégala como contacto.';
   function cotContactosRefresh(){
     var c = findClienteByNombre(document.getElementById('cotCliente').value);
@@ -4096,7 +4125,7 @@
     rows.forEach(function(e){
       var id = e[0], c = e[1];
       html += '<tr data-id="'+id+'">'+
-        '<td><div class="d-title">'+escapeHtml(c.nombre||'—')+'</div></td>'+
+        '<td><div class="d-title">'+escapeHtml(c.nombre||'—')+(c.alerta && c.alerta.texto ? '<span class="cli-badge '+(c.alerta.nivel === 'cuidado' ? 'cuidado' : 'atencion')+'" title="'+escapeHtml(c.alerta.texto)+'">'+(c.alerta.nivel === 'cuidado' ? '⚠ Cuidado' : 'Atención')+'</span>' : '')+'</div></td>'+
         '<td>'+escapeHtml(c.nit||'—')+'</td>'+
         '<td>'+escapeHtml(c.ciudad||'—')+'</td>'+
         (function(){
@@ -4134,6 +4163,14 @@
     document.getElementById('cliNit').disabled = !adm && !!id;
     document.getElementById('cliNoAdminNota').style.display = adm ? 'none' : 'block';
     document.getElementById('cliDelete').style.display = (id && adm) ? 'inline-flex' : 'none';
+    /* Alerta comercial: administración la escribe; el resto solo la ve */
+    var al = c.alerta || null;
+    document.getElementById('cliAlertaAdmin').hidden = !adm;
+    document.getElementById('cliAlertaNivel').value = al && al.texto ? (al.nivel === 'cuidado' ? 'cuidado' : 'atencion') : '';
+    document.getElementById('cliAlertaTexto').value = al ? (al.texto || '') : '';
+    var vista = document.getElementById('cliAlertaVista');
+    if(!adm && al && al.texto){ vista.hidden = false; vista.className = 'alerta-cli ' + (al.nivel === 'cuidado' ? 'cuidado' : 'atencion'); vista.innerHTML = alertaHtml(al); }
+    else { vista.hidden = true; vista.innerHTML = ''; }
     document.getElementById('cliOverlay').classList.add('open');
   }
   function cliPintarContactos(){
@@ -4193,6 +4230,14 @@
       notas: document.getElementById('cliNotas').value.trim()
     }, cliCamposContacto(state.cliContactos || []));
     if(!data.nombre){ toast('Escribe el nombre del cliente'); return; }
+    if(precAdmin()){
+      var nv = document.getElementById('cliAlertaNivel').value, tx = document.getElementById('cliAlertaTexto').value.trim();
+      if(nv && !tx){ toast('Escribe qué debe saber quien atienda a este cliente, o deja «Sin alerta».'); document.getElementById('cliAlertaTexto').focus(); return; }
+      if(nv){
+        var igual = prevCli && prevCli.alerta && prevCli.alerta.texto === tx && prevCli.alerta.nivel === nv;
+        data.alerta = igual ? prevCli.alerta : {nivel: nv, texto: tx, porId: state.userId || null, fecha: todayIso()};
+      } else delete data.alerta;
+    }
     /* Evita el cliente repetido: mismo nombre (sin importar mayúsculas) o mismo NIT */
     var nitN = data.nit.replace(/\D/g, ''), dup = null;
     var cambiaIdentidad = !prevCli || (prevCli.nombre||'').trim().toLowerCase() !== data.nombre.toLowerCase() || String(prevCli.nit||'').replace(/\D/g, '') !== nitN;
@@ -4833,6 +4878,7 @@
     document.getElementById('cotProyecto').value = proyId;
     var presetProy = (!id && proyId) ? state.proyectos.get(proyId) : null;
     document.getElementById('cotCliente').value = c.cliente || (presetProy ? (presetProy.cliente||'') : '');
+    pintarAlertaCliente('cotClienteAlerta', document.getElementById('cotCliente').value);
     document.getElementById('cotClienteNit').value = c.clienteNit || '';
     document.getElementById('cotClienteContacto').value = c.clienteContacto || '';
     document.getElementById('cotClienteDireccion').value = c.clienteDireccion || '';
@@ -4900,7 +4946,7 @@
     document.getElementById('proyEstado').value = p.estado || 'pendiente';
     document.getElementById('proyNotas').value = p.notas || '';
     document.getElementById('proyDelete').style.display = id && !p.interno ? 'inline-flex' : 'none';
-    renderProySoportes(id || null); renderProyCierre(id || null);
+    renderProySoportes(id || null); renderProyCierre(id || null); pintarAlertaCliente('proyClienteAlerta', p.cliente || '');
     document.getElementById('proyOverlay').classList.add('open');
   }
   function closeProyModal(){ document.getElementById('proyOverlay').classList.remove('open'); state.editingProyId = null; }
@@ -6129,15 +6175,11 @@
     box.innerHTML = '<strong>'+escapeHtml(c.numero||'')+'</strong> · '+escapeHtml(c.cliente||'—')+' · '+escapeHtml(c.descripcion||'')+
       '<br><span class="muted">Valor cotizado: '+fmtMoney.format(cotTotal(c))+(proj?' · Proyecto: '+escapeHtml(proj.nombre||''):'')+
       ' · Días de instalación cotizados: '+(c.diasInstalacion!=null?c.diasInstalacion:'sin definir')+' · Estado actual: '+(COT_ESTADOS[c.estado]||c.estado)+'</span>';
+    var alc = alertaDeCliente(c.cliente);
+    if(alc) box.innerHTML += '<div class="alerta-cli '+(alc.nivel === 'cuidado' ? 'cuidado' : 'atencion')+'">'+alertaHtml(alc)+'</div>';
     var totCot = Math.round(cotTotal(c)), valOc = document.getElementById('ocValor').value;
     if(!fillDefaults && valOc !== '' && Math.round(Number(valOc)) !== totCot && totCot > 0){
-      box.innerHTML += '<div style="margin-top:8px;">⚠️ El valor de esta orden ('+fmtMoney.format(Number(valOc))+') no coincide con el de la cotización ('+fmtMoney.format(totCot)+'). '+
-        '<button type="button" class="btn" id="ocUsarValorCot" style="margin-left:4px;">Usar '+fmtMoney.format(totCot)+'</button></div>';
-      document.getElementById('ocUsarValorCot').addEventListener('click', function(){
-        document.getElementById('ocValor').value = totCot;
-        renderOcCalc(); renderOcPagosSummary(); renderOcCotInfo(false);
-        toast('Valor actualizado. Guarda la orden para aplicarlo.');
-      });
+      box.innerHTML += '<div style="margin-top:8px;">⚠️ El valor de esta orden ('+fmtMoney.format(Number(valOc))+') no coincide con el de la cotización ('+fmtMoney.format(totCot)+'). Revisa cuál está bien: la OC y la cotización deben ser idénticas para poder facturar.</div>';
     }
     if(fillDefaults){
       document.getElementById('ocValor').value = Math.round(cotTotal(c)) || '';
