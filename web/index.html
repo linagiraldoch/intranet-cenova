@@ -1262,11 +1262,14 @@
   .fin-det > summary{cursor:pointer; padding:10px 18px; font-size:12.5px; color:var(--text-muted);}
   .fin-det > summary:hover{color:var(--accent);}
   #finProyPanel .panel-head .fin-check{font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px;}
-  :root[data-theme="lavanda"] #view-finanzas .kpi .label{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11.5px; letter-spacing:.06em; font-weight:500; color:var(--text-muted);}
-  :root[data-theme="lavanda"] #view-finanzas .kpi .value{font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:24px; font-weight:600; line-height:1.2; letter-spacing:0; color:var(--text);}
-  :root[data-theme="lavanda"] #view-finanzas .kpi .value.neg{color:var(--critical);}
-  :root[data-theme="lavanda"] #view-finanzas thead th{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11px; letter-spacing:.04em; color:var(--text-muted);}
-  :root[data-theme="lavanda"] #view-finanzas .num, :root[data-theme="lavanda"] #view-finanzas .r-num{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
+  /* Tema Rosa (2026-10-28): la letra sobria de las cifras de Finanzas en todo el panel (todas las vistas y tarjetas) */
+  :root[data-theme="lavanda"] .kpi .label, :root[data-theme="lavanda"][data-dama] .kpi .label, :root[data-theme="lavanda"] .rs-kpi-l, :root[data-theme="lavanda"][data-dama] .rs-kpi-l{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11.5px; letter-spacing:.06em; font-weight:500; color:var(--text-muted);}
+  :root[data-theme="lavanda"] .kpi .value, :root[data-theme="lavanda"][data-dama] .kpi .value{font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:24px; font-weight:600; line-height:1.2; letter-spacing:0; color:var(--text); font-variant-numeric:tabular-nums;}
+  :root[data-theme="lavanda"] .rs-kpi-v, :root[data-theme="lavanda"][data-dama] .rs-kpi-v{font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:22px; font-weight:600; line-height:1.2; letter-spacing:0; color:var(--text); font-variant-numeric:tabular-nums;}
+  :root[data-theme="lavanda"] .kpi .value.neg, :root[data-theme="lavanda"][data-dama] .kpi .value.neg, :root[data-theme="lavanda"] .rs-kpi-v.neg, :root[data-theme="lavanda"][data-dama] .rs-kpi-v.neg{color:var(--critical);}
+  :root[data-theme="lavanda"] thead th, :root[data-theme="lavanda"][data-dama] thead th{font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size:11px; letter-spacing:.04em; color:var(--text-muted);}
+  :root[data-theme="lavanda"] .num, :root[data-theme="lavanda"][data-dama] .num, :root[data-theme="lavanda"] .r-num, :root[data-theme="lavanda"][data-dama] .r-num, :root[data-theme="lavanda"] .mono, :root[data-theme="lavanda"][data-dama] .mono, :root[data-theme="lavanda"] .vk-v, :root[data-theme="lavanda"][data-dama] .vk-v, :root[data-theme="lavanda"] .vk-hb-v, :root[data-theme="lavanda"][data-dama] .vk-hb-v, :root[data-theme="lavanda"] .rs-emb-v, :root[data-theme="lavanda"][data-dama] .rs-emb-v, :root[data-theme="lavanda"] .nav-btn .count, :root[data-theme="lavanda"][data-dama] .nav-btn .count{font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums;}
+  @media (max-width:520px){ :root[data-theme="lavanda"] .kpi .value, :root[data-theme="lavanda"][data-dama] .kpi .value{font-size:19px;} :root[data-theme="lavanda"] .rs-kpi-v, :root[data-theme="lavanda"][data-dama] .rs-kpi-v{font-size:18px;} }
 </style>
 
 <div class="app">
