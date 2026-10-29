@@ -428,6 +428,14 @@
   .vk-tag.ok{background:var(--success-soft); color:var(--success);} .vk-tag.warn{background:var(--warning-soft); color:var(--warning);} .vk-tag.crit{background:var(--critical-soft); color:var(--critical);}
   .vk-inv{display:grid; grid-template-columns:260px minmax(0,1fr); gap:14px; align-items:start;}
   .vk-grid-art{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+  #proyFicha{margin-bottom:16px;} .pf-g{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;}
+  .pf-k{background:var(--surface-2); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; gap:3px;}
+  .pf-k small{font-size:11.5px; color:var(--text-muted); text-transform:uppercase; letter-spacing:.04em;} .pf-k b{font-size:21px; font-weight:700; line-height:1.15;} .pf-k em{font-style:normal; font-size:12px; color:var(--text-muted);}
+  .pf-m.pos b{color:var(--success);} .pf-m.mid b{color:var(--warning);} .pf-m.neg b{color:var(--critical);}
+  .pf-bar{height:6px; border-radius:99px; background:var(--surface-2); margin-top:10px; overflow:hidden;} .pf-bar i{display:block; height:100%; background:var(--success);}
+  .pf-pie{font-size:12px; color:var(--text-muted); margin-top:8px;}
+  .info-corto{padding:8px 14px;} .info-corto>summary{cursor:pointer; font-size:12.5px; font-weight:600; color:var(--text-muted); list-style:none;}
+  .info-corto>summary::-webkit-details-marker{display:none;} .info-corto>summary::before{content:'ⓘ '; } .info-corto[open]>summary{margin-bottom:6px;}
   .vk-grid-fam{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px;}
   .vk-fam{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius,14px); padding:16px; cursor:pointer; display:flex; flex-direction:column; gap:8px; transition:box-shadow .15s, transform .15s;}
   .vk-fam:hover,.vk-fam:focus-visible{box-shadow:0 10px 24px -16px rgba(20,30,60,.4); transform:translateY(-1px); outline:none;}
@@ -2250,6 +2258,7 @@
       <button class="modal-close" id="proyClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="modal-body">
+      <div id="proyFicha" hidden></div>
       <div class="field"><label>Cliente</label><input type="text" id="proyCliente" list="clientesList" placeholder="Nombre del cliente"><div class="alerta-cli" id="proyClienteAlerta" hidden></div></div>
       <div class="field"><label>Nombre del proyecto</label><input type="text" id="proyNombre" placeholder="Ej. Sistema de reconocimiento facial"></div>
       <div class="field-row">
@@ -4948,6 +4957,62 @@
 
   document.getElementById('cotPreviewBtn').addEventListener('click', function(){ if(state.editingCotId) openPreview(state.editingCotId); });
 
+
+
+  /* Explicaciones largas: quedan plegadas ("Cómo funciona") para que las pantallas se vean limpias */
+  (function(){
+    var pend = false;
+    function compactar(){
+      pend = false;
+      document.querySelectorAll('.info-box:not([data-c])').forEach(function(el){
+        if(el.closest('details')) { el.setAttribute('data-c', '1'); return; }
+        var t = (el.textContent || '').trim();
+        el.setAttribute('data-c', '1');
+        if(t.length < 140) return;
+        var d = document.createElement('details'); d.className = 'info-box info-corto'; d.setAttribute('data-c', '1');
+        var sm = document.createElement('summary'); sm.textContent = 'Cómo funciona'; d.appendChild(sm);
+        var w = document.createElement('div'); w.className = 'info-cuerpo';
+        while(el.firstChild) w.appendChild(el.firstChild);
+        d.appendChild(w); el.parentNode.replaceChild(d, el);
+      });
+    }
+    new MutationObserver(function(){ if(!pend){ pend = true; requestAnimationFrame(compactar); } }).observe(document.body, {childList:true, subtree:true});
+    compactar();
+  })();
+  /* Ficha del proyecto (solo administración): lo vendido, lo que cuesta, lo que queda y cómo va el cobro */
+  function proyFichaDatos(pid){
+    var r = {venta:0, costo:0, imprev:0, valorOc:0, cobrado:0, saldo:0, bodega:0, gastado:0, ocs:[], cots:[]};
+    state.cotizaciones.forEach(function(c, cid){ if(c.proyectoId === pid){ r.cots.push(cid); } });
+    state.ordenes.forEach(function(o, oid){
+      if(o.proyectoId !== pid || o.estado === 'anulada') return;
+      var c = state.cotizaciones.get(o.cotizacionId) || {};
+      r.ocs.push(oid); r.venta += cotSubtotalVenta(c);
+      try { r.costo += ocCostoInfo(o).costo; r.imprev += ocDesvio(o).imprevistos; } catch(e){}
+      var v = Number(o.valor)||0, sal = ocSaldo(o); r.valorOc += v; r.saldo += sal; r.cobrado += Math.max(0, v - sal);
+      try { r.bodega += invPorOrden(oid).valor; } catch(e){}
+    });
+    if(!r.ocs.length){ /* aún sin orden: lo que se ha cotizado como aprobado */
+      state.cotizaciones.forEach(function(c){ if(c.proyectoId === pid && c.estado === 'aprobada'){ r.venta += cotSubtotalVenta(c); try { r.costo += cotCostoInfo(c).costo; } catch(e){} } });
+    }
+    try { finMovimientosTodos().forEach(function(m){ if(m.proyectoId === pid && m.tipo === 'egreso' && m.estado !== 'pendiente' && m.fuente === 'manual') r.gastado += Number(m.monto)||0; }); } catch(e){}
+    r.margen = r.venta - r.costo - r.imprev; r.pct = r.venta ? r.margen / r.venta : null;
+    return r;
+  }
+  function renderProyFicha(pid){
+    var box = document.getElementById('proyFicha'); if(!box) return;
+    var p = pid && state.proyectos.get(pid);
+    if(!p || !precAdmin()){ box.hidden = true; box.innerHTML = ''; return; }
+    var d = proyFichaDatos(pid); box.hidden = false;
+    var cls = d.pct == null ? '' : d.pct < 0.1 ? 'neg' : d.pct < 0.2 ? 'mid' : 'pos';
+    var cob = d.valorOc ? d.cobrado / d.valorOc : 0;
+    box.innerHTML = '<div class="pf-g">'+
+      '<div class="pf-k"><small>Vendido (sin IVA)</small><b>'+fmtMoney.format(d.venta)+'</b></div>'+
+      '<div class="pf-k"><small>Costo</small><b>'+fmtMoney.format(d.costo + d.imprev)+'</b>'+(d.imprev ? '<em>incluye '+fmtMoney.format(d.imprev)+' de imprevistos</em>' : '')+'</div>'+
+      '<div class="pf-k pf-m '+cls+'"><small>Margen</small><b>'+fmtMoney.format(d.margen)+'</b><em>'+(d.pct == null ? 'sin venta' : pct(d.pct)+' de la venta')+'</em></div>'+
+      '<div class="pf-k"><small>Cobrado</small><b>'+fmtMoney.format(d.cobrado)+'</b><em>'+(d.saldo ? 'por cobrar '+fmtMoney.format(d.saldo) : (d.valorOc ? 'sin saldo' : 'sin orden de compra'))+'</em></div>'+
+      '</div>'+(d.valorOc ? '<div class="pf-bar" title="'+Math.round(cob*100)+' % cobrado"><i style="width:'+Math.round(cob*100)+'%"></i></div>' : '')+
+      '<div class="pf-pie">'+d.cots.length+' cotización(es) · '+d.ocs.length+' orden(es)'+(d.bodega ? ' · sacado de bodega '+fmtMoney.format(d.bodega) : '')+(d.gastado ? ' · gastos en Finanzas '+fmtMoney.format(d.gastado) : '')+'</div>';
+  }
   function openProyModal(id){
     state.editingProyId = id || null;
     var p = id ? (state.proyectos.get(id) || {}) : {};
@@ -4958,7 +5023,8 @@
     document.getElementById('proyEstado').value = p.estado || 'pendiente';
     document.getElementById('proyNotas').value = p.notas || '';
     document.getElementById('proyDelete').style.display = id && !p.interno ? 'inline-flex' : 'none';
-    renderProySoportes(id || null); renderProyCierre(id || null); pintarAlertaCliente('proyClienteAlerta', p.cliente || '');
+    renderProyFicha(id || null); renderProySoportes(id || null); renderProyCierre(id || null); pintarAlertaCliente('proyClienteAlerta', p.cliente || '');
+    document.getElementById('proyOverlay').querySelector('.modal').style.maxWidth = (id && precAdmin()) ? '760px' : '';
     document.getElementById('proyOverlay').classList.add('open');
   }
   function closeProyModal(){ document.getElementById('proyOverlay').classList.remove('open'); state.editingProyId = null; }
