@@ -8,13 +8,15 @@
  * - Correos (Resend) solo al equipo, lectura de documentos con IA (Anthropic) y resumen diario (cron).
  */
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
 /* Soportes (facturas, comprobantes, recibos): el archivo no viaja en la sincronización, se pide uno por uno.
    Los ligados a movimientos de Finanzas son privados: solo administración los ve o los cambia. */
-const docVisible = (s, col, data) => s.admin || (!soloAdmin(col) && !(col === 'soportes' && data && data.privado));
+/* Documentos de la empresa (RUT, certificación bancaria, cámara de comercio…): los sube solo administración
+   y cada uno dice si lo ve todo el equipo ('todos') o solo administración ('admin'). */
+const docVisible = (s, col, data) => s.admin || (!soloAdmin(col) && !(col === 'soportes' && data && data.privado) && !(col === 'docsEmpresa' && (!data || data.visibilidad !== 'todos')));
 // Precios: todos los ven; costos, márgenes y precios solo los cambia administración.
 // El equipo solo puede actualizar el stock y el contenido de los kits.
 const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'stockMin', 'ubicacion', 'componentes', 'editadoPor', 'editadoEn'];
@@ -268,8 +270,10 @@ async function sync(req, env, s) {
     ahora,
     docs: docs.results.map((d) => ({ col: d.col, id: d.id, act: d.actualizado, data: JSON.parse(d.data) }))
       .filter((d) => docVisible(s, d.col, d.data))
-      .map((d) => { if (d.col === 'soportes') delete d.data.datos; return d; }),
+      .map((d) => { if (d.col === 'soportes' || d.col === 'docsEmpresa') delete d.data.datos; return d; }),
     borrados: borr.results.filter((b) => s.admin || !soloAdmin(b.col)).map((b) => ({ col: b.col, id: b.id }))
+      // Un documento de la empresa que se pasó a "solo administración" se le quita al equipo
+      .concat(s.admin ? [] : docs.results.filter((d) => d.col === 'docsEmpresa' && !docVisible(s, d.col, JSON.parse(d.data))).map((d) => ({ col: d.col, id: d.id })))
   });
 }
 function idValido(id) { return typeof id === 'string' && /^[A-Za-z0-9_\-.:@+~]{1,200}$/.test(id); }
@@ -279,6 +283,7 @@ async function escribir(req, env, s, col, id, metodo) {
   if (id && !idValido(id)) return err(400, 'id', 'Identificador inválido.');
   const actual = id ? await env.DB.prepare('SELECT data FROM docs WHERE col = ? AND id = ?').bind(col, id).first() : null;
   const previo = actual ? JSON.parse(actual.data) : null;
+  if (col === 'docsEmpresa' && !s.admin) return err(403, 'regla', 'Los documentos de la empresa solo los sube o cambia administración.');
   if (col === 'soportes' && !s.admin && previo && previo.privado) return err(403, 'regla', 'Este soporte es de Finanzas: solo administración lo cambia.');
   if (col === 'soportes' && metodo === 'DELETE' && !s.admin && previo && previo.subidoPorId !== s.usuario_id) return err(403, 'regla', 'Solo quien subió el soporte (o administración) lo puede quitar.');
   const ahora = Date.now();
@@ -494,7 +499,7 @@ export default {
         if (m) {
           const col = m[1], id = m[2] ? decodeURIComponent(m[2]) : null;
           if (req.method === 'POST' && !id) return await escribir(req, env, s, col, null, 'PUT');
-          if (req.method === 'GET' && id && col === 'soportes') {
+          if (req.method === 'GET' && id && (col === 'soportes' || col === 'docsEmpresa')) {
             const r = await env.DB.prepare('SELECT data FROM docs WHERE col = ? AND id = ?').bind(col, id).first();
             const d = r ? JSON.parse(r.data) : null;
             if (!d || !docVisible(s, col, d)) return err(404, 'no_existe', 'El soporte no existe.');
