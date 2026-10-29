@@ -1163,6 +1163,11 @@
   /* menú: marco fino y marca centrada */
   :root[data-theme="lavanda"][data-dama] .sidebar{background:linear-gradient(180deg,#faf3fc 0%,#f3eafa 100%); border-right:1px solid var(--border); box-shadow:none;}
   :root[data-theme="lavanda"][data-dama] .sidebar::before{content:""; position:absolute; inset:8px; border:1px solid var(--d-oro-s); border-radius:20px; pointer-events:none;}
+  /* El marco dorado se queda quieto aunque el menú se desplace */
+  @media (min-width:761px){
+    :root[data-theme="lavanda"][data-dama] .sidebar::before{position:fixed; inset:auto; left:8px; top:8px; width:234px; height:calc(100vh - 16px); z-index:0;}
+    html.menu-plegado[data-theme="lavanda"][data-dama] .sidebar::before{width:52px;}
+  }
   :root[data-theme="lavanda"][data-dama] .brand{flex-direction:column; align-items:center; text-align:center; gap:4px; background:transparent; box-shadow:none; border-radius:0; padding:22px 8px 8px;}
   :root[data-theme="lavanda"][data-dama] .brand::before{top:-2px; width:28px; height:28px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cdefs%3E%3CradialGradient id='g' cx='38%25' cy='32%25' r='78%25'%3E%3Cstop offset='0' stop-color='%23d9a3cf'/%3E%3Cstop offset='1' stop-color='%238a4f9e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M14 1.5c2 0 3 1.6 4.8 2.2 1.9.6 3.9.1 5 1.7s.4 3.5 1.3 5.3c.9 1.7 2.7 2.7 2.4 4.6s-2.2 2.6-3 4.2c-.8 1.7-.7 3.8-2.3 4.8s-3.5.2-5.2.8c-1.8.6-3 2.4-4.9 2.3s-2.9-1.9-4.6-2.6c-1.8-.7-3.9-.4-4.9-2s0-3.6-.7-5.3c-.7-1.7-2.6-2.6-2.4-4.5s2.1-2.7 2.8-4.3c.7-1.7.4-3.8 1.9-4.9s3.5-.3 5.2-1C11.6 3 12 1.5 14 1.5Z' fill='url%28%23g%29'/%3E%3Ccircle cx='14' cy='14' r='8.2' fill='none' stroke='%23f6dcef' stroke-opacity='.75' stroke-width='.9'/%3E%3Cpath d='M14 7.6l1.6 4.8 4.8 1.6-4.8 1.6L14 20.4l-1.6-4.8L7.6 14l4.8-1.6Z' fill='%23f8e6f3' fill-opacity='.95'/%3E%3C/svg%3E") center/contain no-repeat; filter:drop-shadow(0 2px 2px rgba(95,47,134,.3));}
   :root[data-theme="lavanda"][data-dama] .brand-mark{width:58px; height:58px; border-radius:50%; box-shadow:0 0 0 3px #fff, 0 0 0 4px var(--d-oro-s), 0 10px 20px -12px rgba(95,47,134,.5);}
