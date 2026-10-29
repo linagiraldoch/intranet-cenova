@@ -1110,6 +1110,67 @@
     :root[data-theme="lavanda"][data-dama] .rs-kpi-v, :root[data-theme="lavanda"][data-dama] .kpi .value{font-size:26px;}
   }
 
+
+  /* ===== Rosa papelería (2026-10-29): menos ruido, más calma.
+     Marfil y rosa empolvado, tinta vino, filete dorado de un solo trazo y un sello de lacre como único adorno.
+     Se quitan la guirnalda, el fondo de hojitas, la corona y los degradados de cinco colores. ===== */
+  :root[data-theme="lavanda"][data-dama]{
+    --bg:#fbf6f3; --surface:#fffdfb; --surface-2:#f8efea; --border:#eadcd3;
+    --text:#3a2b33; --text-muted:#85727a; --accent:#a64d6b; --accent-2:#6d2f49; --accent-soft:#f7e6ea;
+    --pink:#c9758f; --pink-2:#8e3a58; --pink-soft:#f7e6ea;
+    --d-oro:#b98e4a; --d-oro-s:#e9d7b2; --d-tinta:#3a2b33;
+    --shadow:0 1px 2px rgba(90,50,60,.04), 0 10px 24px -20px rgba(90,50,60,.28);
+    --radius:14px;
+  }
+  :root[data-theme="lavanda"][data-dama] body{background-image:none; background-color:var(--bg);}
+  :root[data-theme="lavanda"][data-dama] .topbar::after{display:none !important;}
+  :root[data-theme="lavanda"][data-dama] .sidebar{background:#f6ece7; border-right:1px solid var(--border); box-shadow:none;}
+  :root[data-theme="lavanda"][data-dama] .brand{background:transparent; box-shadow:none; border-bottom:1px solid var(--d-oro-s); border-radius:0; padding:22px 8px 14px;}
+  :root[data-theme="lavanda"][data-dama] .brand::before{top:-2px; width:28px; height:28px; background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cdefs%3E%3CradialGradient id='g' cx='38%25' cy='32%25' r='75%25'%3E%3Cstop offset='0' stop-color='%23e7cc8f'/%3E%3Cstop offset='1' stop-color='%23b78a43'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M14 1.5c2 0 3 1.6 4.8 2.2 1.9.6 3.9.1 5 1.7s.4 3.5 1.3 5.3c.9 1.7 2.7 2.7 2.4 4.6s-2.2 2.6-3 4.2c-.8 1.7-.7 3.8-2.3 4.8s-3.5.2-5.2.8c-1.8.6-3 2.4-4.9 2.3s-2.9-1.9-4.6-2.6c-1.8-.7-3.9-.4-4.9-2s0-3.6-.7-5.3c-.7-1.7-2.6-2.6-2.4-4.5s2.1-2.7 2.8-4.3c.7-1.7.4-3.8 1.9-4.9s3.5-.3 5.2-1C11.6 3 12 1.5 14 1.5Z' fill='url(%23g)'/%3E%3Ccircle cx='14' cy='14' r='8.2' fill='none' stroke='%23f3e2b5' stroke-opacity='.8' stroke-width='.9'/%3E%3Cpath d='M14 7.6l1.6 4.8 4.8 1.6-4.8 1.6L14 20.4l-1.6-4.8L7.6 14l4.8-1.6Z' fill='%23f6e8c3' fill-opacity='.95'/%3E%3C/svg%3E") center/contain no-repeat; filter:drop-shadow(0 2px 2px rgba(120,80,30,.25));}
+  :root[data-theme="lavanda"][data-dama] .brand-mark{box-shadow:none;}
+  :root[data-theme="lavanda"][data-dama] .nav-label::after{background:var(--d-oro-s);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn svg{background:transparent; box-shadow:none; color:var(--text-muted);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn:hover{background:rgba(255,255,255,.7); transform:none;}
+  :root[data-theme="lavanda"][data-dama] .nav-btn.active{background:#fffdfb; box-shadow:inset 0 0 0 1px var(--border); color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn.active::before{background:var(--d-oro); left:-8px; width:3px;}
+  :root[data-theme="lavanda"][data-dama] .nav-btn.active svg{background:transparent; color:var(--accent);}
+  :root[data-theme="lavanda"][data-dama] .nav-btn .count{background:transparent; box-shadow:none; color:var(--text-muted); font-weight:600;}
+  :root[data-theme="lavanda"][data-dama] .session-card{background:transparent; border-color:var(--border);}
+  :root[data-theme="lavanda"][data-dama] .session-card .avatar{background:var(--accent) !important; box-shadow:none;}
+  :root[data-theme="lavanda"][data-dama] .rs-card, :root[data-theme="lavanda"][data-dama] .panel, :root[data-theme="lavanda"][data-dama] .table-wrap, :root[data-theme="lavanda"][data-dama] .rs-kpi, :root[data-theme="lavanda"][data-dama] .kpi{border-color:var(--border); border-radius:14px; background:var(--surface); box-shadow:var(--shadow);}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi, :root[data-theme="lavanda"][data-dama] .kpi{--dk:#f7e6ea; --dt:#8e3a58;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpis > :nth-child(n), :root[data-theme="lavanda"][data-dama] .kpis > :nth-child(n){--dk:#f7e6ea; --dt:#8e3a58;}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi, :root[data-theme="lavanda"][data-dama] .kpi{background:var(--surface);}
+  :root[data-theme="lavanda"][data-dama] .rs-kpi-l, :root[data-theme="lavanda"][data-dama] .kpi .label{color:#a07a3a;}
+  :root[data-theme="lavanda"][data-dama] .rs-fecha, :root[data-theme="lavanda"][data-dama] .nav-label, :root[data-theme="lavanda"][data-dama] .brand-text span{color:#a07a3a;}
+  :root[data-theme="lavanda"][data-dama] .day-panel{background:var(--surface); box-shadow:var(--shadow); border-color:var(--border); border-top:2px solid var(--d-oro);}
+  :root[data-theme="lavanda"][data-dama] thead{background:#f6ece7; border-bottom:1px solid var(--d-oro-s);}
+  :root[data-theme="lavanda"][data-dama] thead th{color:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] tbody tr:nth-child(even){background:transparent;}
+  :root[data-theme="lavanda"][data-dama] tbody tr:hover{background:#faf1ee;}
+  :root[data-theme="lavanda"][data-dama] td{border-bottom-color:#f1e6df;}
+  :root[data-theme="lavanda"][data-dama] .btn.primary{background:var(--accent); box-shadow:none;}
+  :root[data-theme="lavanda"][data-dama] .btn.primary:hover{background:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .btn{border-color:var(--border);}
+  :root[data-theme="lavanda"][data-dama] .btn:hover{background:#f8eeea; border-color:#e1cfc6;}
+  :root[data-theme="lavanda"][data-dama] .subtabs{background:#f6ece7; border-color:var(--border);}
+  :root[data-theme="lavanda"][data-dama] .subtab-btn.active{background:#fffdfb; box-shadow:inset 0 0 0 1px var(--border);}
+  :root[data-theme="lavanda"][data-dama] .info-box:not(.ok):not(.warn){background:#f8efea; border-color:var(--border);}
+  :root[data-theme="lavanda"][data-dama] .overlay{background:rgba(58,43,51,.32); backdrop-filter:none;}
+  :root[data-theme="lavanda"][data-dama] .modal{background:var(--surface); border-radius:18px; border:1px solid var(--border); border-top:2px solid var(--d-oro); box-shadow:0 30px 60px -34px rgba(58,43,51,.5);}
+  :root[data-theme="lavanda"][data-dama] .modal-head{border-bottom-color:var(--border);}
+  :root[data-theme="lavanda"][data-dama] .toast{background:var(--accent-2);}
+  :root[data-theme="lavanda"][data-dama] .cal-head{background:#f6ece7;}
+  :root[data-theme="lavanda"][data-dama] .cal-dow{background:#f8efea; color:#a07a3a;}
+  :root[data-theme="lavanda"][data-dama] #calGrid .cal-cell:nth-child(7n+6), :root[data-theme="lavanda"][data-dama] #calGrid .cal-cell:nth-child(7n){background:#fbf5f2;}
+  :root[data-theme="lavanda"][data-dama] .cal-cell.today{background:#faeff0 !important;}
+  :root[data-theme="lavanda"][data-dama] .cal-cell.today .cal-daynum{background:var(--accent); box-shadow:none;}
+  :root[data-theme="lavanda"][data-dama] ::-webkit-scrollbar-thumb{background:#e1cfc6;}
+  :root[data-theme="lavanda"][data-dama] *{scrollbar-color:#e1cfc6 transparent;}
+  :root[data-theme="lavanda"][data-dama] .rs-hero h2, :root[data-theme="lavanda"][data-dama] .topbar h1{color:var(--accent-2);}
+
+  :root[data-theme="lavanda"][data-dama] .rs-ring circle:nth-child(2){stroke:var(--accent) !important;}
+  :root[data-theme="lavanda"][data-dama] .cal-cell.selected{background:#f8ecee !important; box-shadow:inset 0 0 0 2px var(--d-oro);}
   /* Cotizaciones: flujo encadenado como en la maqueta */
   .cot-flujo{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;}
   .cot-cadena, .cot-lado{display:flex; flex-wrap:wrap; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:4px;}
