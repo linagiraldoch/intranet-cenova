@@ -11905,12 +11905,16 @@
     /* Cuenta de cobro de Cenova (2026-10-29): Cenova le cobra a un socio o a un tercero plata que le debe
        (reintegros, préstamos, devoluciones). No pide obra: se llena a mano o desde un pendiente por cobrar
        de Finanzas (solo administración). Las ventas a clientes van con factura electrónica, no con esto. */
+    /* Datos de pago que salen por defecto en la cuenta de cobro de Cenova. Mientras se activa el producto de
+       Bancolombia (29 oct 2026) se recibe por Nu con Bre-B a la llave de Lina; luego cambiar a EMPRESA.banco. */
     cobro: {
+      pagoDefecto: {medioPago: 'Nu · Bre-B', llave: 'linagiraldoch@gmail.com', titularPago: 'Lina María Giraldo Chaverra (Gerente General de Cenova S.A.S.)'},
       codigo: 'CNV-FR-18', prefijo: 'CBR', tituloDoc: 'Cuenta de cobro', etNumero: 'Cuenta N°', libre: true,
       campos: [
         {k:'ciudad', l:'Ciudad'}, {k:'deudor', l:'A quién se le cobra'}, {k:'tipoDoc', l:'Tipo de documento', t:'select', opciones:['C.C.', 'NIT', 'C.E.']}, {k:'documento', l:'N° de documento'},
         {k:'docCiudad', l:'Expedida en (opcional)'}, {k:'telefono', l:'Teléfono'},
         {k:'conceptos', l:'Por concepto de', t:'tabla', cols:[{k:'concepto', t:'Concepto', w:'2'}, {k:'ref', t:'Referencia'}, {k:'valor', t:'Valor', tipo:'money'}]},
+        {k:'medioPago', l:'Banco o medio de pago'}, {k:'llave', l:'N° de cuenta o llave Bre-B'}, {k:'titularPago', l:'Titular de la cuenta'},
         {k:'limite', l:'Pagar a más tardar', t:'date'}, {k:'proyecto', l:'Proyecto (opcional)'},
         {k:'observaciones', l:'Observaciones (opcional)', t:'area'},
         {k:'firma', l:'Firma por Cenova'}, {k:'firmaCargo', l:'Cargo'}
@@ -11930,7 +11934,7 @@
         var proy = m.proyectoId ? finProyNombre(m.proyectoId) : '';
         if(/^(Administración|Plataformas internas)/i.test(proy)) proy = '';
         return {ciudad: 'Cartagena', deudor: soc ? soc.nombre : ter, tipoDoc: 'C.C.', documento: soc ? soc.cc : '', docCiudad: '', telefono: soc ? soc.tel : '',
-          conceptos: con, limite: habilesAdd(todayIso(), 5), proyecto: proy, observaciones: '', firma: EMISOR_INFO['Lina Giraldo'].nombre, firmaCargo: EMISOR_INFO['Lina Giraldo'].cargo};
+          conceptos: con, medioPago: this.pagoDefecto.medioPago, llave: this.pagoDefecto.llave, titularPago: this.pagoDefecto.titularPago, limite: habilesAdd(todayIso(), 5), proyecto: proy, observaciones: '', firma: EMISOR_INFO['Lina Giraldo'].nombre, firmaCargo: EMISOR_INFO['Lina Giraldo'].cargo};
       },
       render: function(d, spec){
         var tot = (d.conceptos || []).reduce(function(s, r){ return s + (Number(r.valor) || 0); }, 0), b = EMPRESA.banco;
@@ -11940,7 +11944,9 @@
           '<div class="fd-grande" style="font-size:13px;">DEBE A:</div><div class="fd-grande">CENOVA S.A.S.</div><div style="color:#5b6b80; font-size:11.5px; margin-bottom:12px;">NIT ' + fdE(EMPRESA.nit) + '</div>' +
           '<div class="fd-grande" style="font-size:13px;">LA SUMA DE:</div><div style="font-weight:700; font-size:12.5px;">' + fdE(fmtLetras(tot)) + ' (' + fdE(fdM(tot)) + ')</div></div>';
         h += fdH('Por concepto de') + fdTabla([{t:'Concepto'}, {t:'Referencia', w:'140px'}, {t:'Valor', a:'r', w:'110px'}], (d.conceptos || []).map(function(r){ return [r.concepto, r.ref, fdM(r.valor)]; }), ['TOTAL', fdM(tot)]);
-        h += fdBlk(fdH('Datos para el pago') + fdCampos([['Banco', b.banco], ['Tipo de cuenta', b.tipo], ['N° de cuenta', b.numero], ['Titular', b.titular + ' · NIT ' + b.nit], ['Pagar a más tardar', d.limite ? fmtDate(d.limite) : ''], ['Referencia del pago', d.numero]].concat(d.proyecto ? [['Proyecto', d.proyecto]] : [])));
+        /* Documentos guardados antes de tener medio de pago editable salen con Bancolombia */
+        var medio = d.medioPago || (b.banco + ' · ' + b.tipo), llave = d.llave || b.numero, titular = d.titularPago || (b.titular + ' · NIT ' + b.nit);
+        h += fdBlk(fdH('Datos para el pago') + fdCampos([['Banco o medio', medio], [/bre-?b/i.test(medio) ? 'Llave Bre-B' : 'N° de cuenta', llave], ['Titular', titular], ['Pagar a más tardar', d.limite ? fmtDate(d.limite) : ''], ['Referencia del pago', d.numero]].concat(d.proyecto ? [['Proyecto', d.proyecto]] : [])));
         h += fdP('Este cobro es dinero de Cenova S.A.S. que debe volver a la empresa; no corresponde a la venta de un bien o servicio. Al pagar, envíe el comprobante a gerencia@cenovasas.com indicando el número de esta cuenta.');
         if(d.observaciones) h += fdH('Observaciones') + fdP(d.observaciones);
         h += fdFirmas([[d.firma, 'Por Cenova S.A.S.', d.firmaCargo], [d.deudor, 'Acepto el cobro', (d.tipoDoc || 'C.C.') + ' ' + (d.documento || '____________')]]);
