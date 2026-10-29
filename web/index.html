@@ -8352,12 +8352,14 @@
       h += '<tr'+attrs+'><td class="num">'+fmtShort(m.fecha)+'<div class="d-notes">'+escapeHtml(String(m.fecha||'').slice(0,4))+'</div></td>'+
         '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">'+(m.categoria==='retencion'?'Saldo a favor':(FIN_PRESTAMO_SOCIO[m.categoria]?'Por cobrar a socio':'Capital'))+'</span></div>':'')+'</td>'+
         '<td class="desc-cell">'+desc+'</td><td>'+(finProyNombre(m.proyectoId) ? escapeHtml(finProyNombre(m.proyectoId)) : '<span class="fin-badge crit">Sin proyecto</span>')+'</td><td>'+cuenta+'</td>'+
-        '<td>'+(m.estado === 'pendiente' ? '<span class="fin-badge warn">Pendiente</span>' : '<span class="fin-badge ok">Pagado</span>')+'</td>'+
+        '<td>'+(m.estado === 'pendiente' ? '<span class="fin-badge warn">Pendiente</span>' : '<span class="fin-badge ok">Pagado</span>')+
+          (m.estado === 'pendiente' && m.tipo === 'ingreso' && m.fuente !== 'orden' ? '<div><button type="button" class="btn sm fin-cobro" data-cobro="'+escapeHtml(m._id)+'" title="Hacer o ver la cuenta de cobro de este pendiente" style="margin-top:6px; padding:3px 8px; font-size:11.5px;">'+(fmtDocDeMov(m._id) ? 'Ver cuenta de cobro' : 'Cuenta de cobro')+'</button></div>' : '')+'</td>'+
         '<td>'+movSopBadge(m)+'</td>'+
         '<td class="num '+(signo>0?'pos':signo<0?'neg':'')+'"><strong>'+(signo>0?'+':signo<0?'−':'')+finMoney(v)+'</strong></td></tr>';
     });
     h += '</tbody></table></div>';
     document.getElementById('finMovTabla').innerHTML = h;
+    document.querySelectorAll('#finMovTabla .fin-cobro').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); var did = fmtDocDeMov(b.dataset.cobro); if(did) openFormato('cobro', did); else openFormato('cobro', null, {movId: b.dataset.cobro}); }); });
     document.querySelectorAll('#finMovTabla tr[data-mov]').forEach(function(tr){ tr.addEventListener('click', function(){ openFinMovModal(tr.dataset.mov); }); });
     document.querySelectorAll('#finMovTabla tr[data-oc]').forEach(function(tr){ tr.addEventListener('click', function(){ openOcModal(tr.dataset.oc); }); });
   }
@@ -11594,13 +11596,14 @@
      - 5 se pueden llenar aquí con los datos de una orden de compra y bajar
        en PDF con el mismo diseño de la cotización: informe de proyecto,
        acta de entrega, contrato con cliente, liquidación de pago al
-       personal y cuenta de cobro. Lo que se llena se guarda en la colección
+       personal y cuenta de cobro. Más la cuenta de cobro de Cenova (CNV-FR-18,
+       2026-10-29), que no pide obra. Lo que se llena se guarda en la colección
        "documentos" con su consecutivo (INF-0001, ACT-0001…).
      ===================================================================== */
   state.documentos = new Map();
   state.soportes = new Map();
   state.docsEmpresa = new Map();
-  var fmt = {spec: null, docId: null, ordenId: '', persona: -1, datos: null, fotos: []};
+  var fmt = {spec: null, docId: null, ordenId: '', movId: '', persona: -1, datos: null, fotos: []};
   var FMT_GRUPOS = [
     ['Proyectos', 'Para el cliente y la obra'],
     ['Contratos', 'Con clientes, personal y proveedores'],
@@ -11625,7 +11628,8 @@
     {cod:'CNV-FR-14', grupo:4, tit:'Acuerdo de socio gestor — Coordinación Comercial', desc:'Jorge Cantillo, Coordinador Comercial y Administrativo: clientes, cotizaciones, cartera y apoyo administrativo.', file:'CNV-FR-14_Acuerdo-socio-gestor-Coordinacion-Comercial-y-Administrativa.docx'},
     {cod:'CNV-FR-15', grupo:4, tit:'Manual de desempeño y salida de socios gestores', desc:'Metas por cargo medidas con la intranet, evaluación trimestral, plan de mejora, faltas, retiro del cargo y entrega del puesto.', file:'CNV-FR-15_Manual-desempeno-y-salida-de-socios-gestores.docx'},
     {cod:'CNV-FR-16', grupo:4, tit:'Evaluación de desempeño trimestral', desc:'Metas, resultados y calificación de cada socio, logros, causas y compromisos del siguiente trimestre.', file:'CNV-FR-16_Evaluacion-de-desempeno-trimestral.docx'},
-    {cod:'CNV-FR-17', grupo:4, tit:'Acta de entrega del cargo', desc:'Accesos, firmas en bancos y entidades, clientes y obras en curso, dinero, equipos y documentos que entrega quien sale.', file:'CNV-FR-17_Acta-de-entrega-del-cargo.docx'}
+    {cod:'CNV-FR-17', grupo:4, tit:'Acta de entrega del cargo', desc:'Accesos, firmas en bancos y entidades, clientes y obras en curso, dinero, equipos y documentos que entrega quien sale.', file:'CNV-FR-17_Acta-de-entrega-del-cargo.docx'},
+    {cod:'CNV-FR-18', grupo:3, tit:'Cuenta de cobro de Cenova', desc:'Para cobrarle a un socio o a un tercero plata que le debe a Cenova: reintegros, préstamos, devoluciones. Las ventas a clientes van con factura electrónica.', file:'CNV-FR-18_Cuenta-de-cobro-de-Cenova.docx', llenar:'cobro'}
   ];
 
   /* ---------- Número en letras (pesos) ---------- */
@@ -11898,6 +11902,53 @@
       nombre: function(d){ return 'Liquidacion-' + d.numero + '-' + slugFile(d.nombre); }
     },
 
+    /* Cuenta de cobro de Cenova (2026-10-29): Cenova le cobra a un socio o a un tercero plata que le debe
+       (reintegros, préstamos, devoluciones). No pide obra: se llena a mano o desde un pendiente por cobrar
+       de Finanzas (solo administración). Las ventas a clientes van con factura electrónica, no con esto. */
+    cobro: {
+      codigo: 'CNV-FR-18', prefijo: 'CBR', tituloDoc: 'Cuenta de cobro', etNumero: 'Cuenta N°', libre: true,
+      campos: [
+        {k:'ciudad', l:'Ciudad'}, {k:'deudor', l:'A quién se le cobra'}, {k:'tipoDoc', l:'Tipo de documento', t:'select', opciones:['C.C.', 'NIT', 'C.E.']}, {k:'documento', l:'N° de documento'},
+        {k:'docCiudad', l:'Expedida en (opcional)'}, {k:'telefono', l:'Teléfono'},
+        {k:'conceptos', l:'Por concepto de', t:'tabla', cols:[{k:'concepto', t:'Concepto', w:'2'}, {k:'ref', t:'Referencia'}, {k:'valor', t:'Valor', tipo:'money'}]},
+        {k:'limite', l:'Pagar a más tardar', t:'date'}, {k:'proyecto', l:'Proyecto (opcional)'},
+        {k:'observaciones', l:'Observaciones (opcional)', t:'area'},
+        {k:'firma', l:'Firma por Cenova'}, {k:'firmaCargo', l:'Cargo'}
+      ],
+      prellenar: function(x){
+        var m = x.mov || {}, monto = Math.round(Number(m.monto) || 0);
+        var soc = null, ter = String(m.tercero || '').trim();
+        Object.keys(EMISOR_INFO).forEach(function(k){ if(ter && (ter === k || EMISOR_INFO[k].nombre.indexOf(ter) === 0 || ter.split(' ')[0] === k.split(' ')[0])) soc = EMISOR_INFO[k]; });
+        /* «X debe a Cenova: $40.000 del abono de Electrimoy + $159.014 del switch…» → una fila por cada parte, si cuadran con el total */
+        var con = [], desc = String(m.descripcion || ''), cola = desc.indexOf(':') !== -1 ? desc.slice(desc.indexOf(':') + 1) : '';
+        if(cola){
+          var partes = cola.split(/\s\+\s/).map(function(t){ var r = t.trim().match(/^\$\s?([\d.]+)\s+(?:del?|por|de la|de los)\s+(.+)$/i); return r ? {concepto: r[2].charAt(0).toUpperCase() + r[2].slice(1), ref: '', valor: Number(r[1].replace(/\./g, ''))} : null; });
+          if(partes.length > 1 && partes.every(Boolean) && partes.reduce(function(s, r){ return s + r.valor; }, 0) === monto) con = partes;
+        }
+        if(!con.length && (desc || monto)) con = [{concepto: desc || finCatLabel(m), ref: '', valor: monto}];
+        if(!con.length) con = [{concepto: '', ref: '', valor: ''}];
+        var proy = m.proyectoId ? finProyNombre(m.proyectoId) : '';
+        if(/^(Administración|Plataformas internas)/i.test(proy)) proy = '';
+        return {ciudad: 'Cartagena', deudor: soc ? soc.nombre : ter, tipoDoc: 'C.C.', documento: soc ? soc.cc : '', docCiudad: '', telefono: soc ? soc.tel : '',
+          conceptos: con, limite: habilesAdd(todayIso(), 5), proyecto: proy, observaciones: '', firma: EMISOR_INFO['Lina Giraldo'].nombre, firmaCargo: EMISOR_INFO['Lina Giraldo'].cargo};
+      },
+      render: function(d, spec){
+        var tot = (d.conceptos || []).reduce(function(s, r){ return s + (Number(r.valor) || 0); }, 0), b = EMPRESA.banco;
+        var f = d.fecha ? new Date(d.fecha + 'T00:00:00') : new Date();
+        var h = fdHead(spec, d, (d.ciudad || 'Cartagena') + ', ' + f.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'}));
+        h += '<div class="fd-centro"><div style="font-weight:700; font-size:12.5px;">' + fdE((d.deudor || '__________').toUpperCase()) + '</div><div style="color:#5b6b80; font-size:11.5px; margin-bottom:12px;">' + fdE((d.tipoDoc || 'C.C.') + ' ' + (d.documento || '__________') + (d.docCiudad ? ' de ' + d.docCiudad : '')) + '</div>' +
+          '<div class="fd-grande" style="font-size:13px;">DEBE A:</div><div class="fd-grande">CENOVA S.A.S.</div><div style="color:#5b6b80; font-size:11.5px; margin-bottom:12px;">NIT ' + fdE(EMPRESA.nit) + '</div>' +
+          '<div class="fd-grande" style="font-size:13px;">LA SUMA DE:</div><div style="font-weight:700; font-size:12.5px;">' + fdE(fmtLetras(tot)) + ' (' + fdE(fdM(tot)) + ')</div></div>';
+        h += fdH('Por concepto de') + fdTabla([{t:'Concepto'}, {t:'Referencia', w:'140px'}, {t:'Valor', a:'r', w:'110px'}], (d.conceptos || []).map(function(r){ return [r.concepto, r.ref, fdM(r.valor)]; }), ['TOTAL', fdM(tot)]);
+        h += fdBlk(fdH('Datos para el pago') + fdCampos([['Banco', b.banco], ['Tipo de cuenta', b.tipo], ['N° de cuenta', b.numero], ['Titular', b.titular + ' · NIT ' + b.nit], ['Pagar a más tardar', d.limite ? fmtDate(d.limite) : ''], ['Referencia del pago', d.numero]].concat(d.proyecto ? [['Proyecto', d.proyecto]] : [])));
+        h += fdP('Este cobro es dinero de Cenova S.A.S. que debe volver a la empresa; no corresponde a la venta de un bien o servicio. Al pagar, envíe el comprobante a gerencia@cenovasas.com indicando el número de esta cuenta.');
+        if(d.observaciones) h += fdH('Observaciones') + fdP(d.observaciones);
+        h += fdFirmas([[d.firma, 'Por Cenova S.A.S.', d.firmaCargo], [d.deudor, 'Acepto el cobro', (d.tipoDoc || 'C.C.') + ' ' + (d.documento || '____________')]]);
+        return h + fdFoot();
+      },
+      nombre: function(d){ return 'Cuenta-de-cobro-Cenova-' + d.numero + '-' + slugFile(d.deudor); }
+    },
+
     cuenta: {
       codigo: 'CNV-FR-08', prefijo: 'CC', tituloDoc: 'Cuenta de cobro', etNumero: 'Cuenta N°', persona: true,
       campos: [
@@ -11931,6 +11982,8 @@
   };
 
   /* ---------- Vista Formatos ---------- */
+  /* La cuenta de cobro ya hecha para un pendiente de Finanzas (si la hay) */
+  function fmtDocDeMov(movId){ var r = null; state.documentos.forEach(function(d, id){ if(d.tipo === 'cobro' && d.movId === movId) r = id; }); return r; }
   function fmtSiguienteNumero(prefijo){
     var max = 0;
     state.documentos.forEach(function(d){ var m = String(d.numero || '').match(new RegExp('^' + prefijo + '-(\\d+)$')); if(m) max = Math.max(max, Number(m[1])); });
@@ -12035,7 +12088,7 @@
       h += '<div class="fmt-grupo"><div class="fmt-grupo-head"><h3>'+fdE(g[0])+'</h3><span>'+fdE(g[1])+'</span></div><div class="fmt-cards">' + items.map(function(f){
         return '<div class="fmt-card"><div class="fmt-cod">'+fdE(f.cod)+'</div><h4>'+fdE(f.tit)+'</h4><p>'+fdE(f.desc)+'</p><div class="fmt-acc">' +
           '<a class="btn sm" href="/formatos/'+encodeURIComponent(f.file)+'" download="'+fdE(f.file)+'"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg> Word</a>' +
-          (f.llenar ? '<button type="button" class="btn sm primary fmt-llenar" data-spec="'+f.llenar+'">Llenar con una obra</button>' : '') + '</div></div>';
+          (f.llenar ? '<button type="button" class="btn sm primary fmt-llenar" data-spec="'+f.llenar+'">'+((FMT_SPECS[f.llenar] || {}).libre ? 'Llenar' : 'Llenar con una obra')+'</button>' : '') + '</div></div>';
       }).join('') + '</div></div>';
     });
     var docs = []; state.documentos.forEach(function(d, id){ docs.push(Object.assign({}, d, {_id: id})); });
@@ -12044,7 +12097,7 @@
     if(docs.length){
       h += '<div class="table-wrap"><table><thead><tr><th>Documento</th><th>Formato</th><th>Obra / persona</th><th>Fecha</th><th>Quién</th><th></th></tr></thead><tbody>' + docs.map(function(d){
         var sp = FMT_SPECS[d.tipo] || {}, dd = d.datos || {};
-        return '<tr data-doc="'+fdE(d._id)+'" style="cursor:pointer;"><td><strong>'+fdE(d.numero)+'</strong></td><td>'+fdE(sp.tituloDoc || d.tipo)+'</td><td>'+fdE([dd.nombre, dd.cliente || dd.proyecto].filter(Boolean).join(' · '))+'</td><td>'+fdE(fmtShort(dd.fecha))+'</td><td>'+fdE(invUsuario(d.creadoPorId))+'</td>' +
+        return '<tr data-doc="'+fdE(d._id)+'" style="cursor:pointer;"><td><strong>'+fdE(d.numero)+'</strong></td><td>'+fdE(sp.tituloDoc || d.tipo)+'</td><td>'+fdE([dd.nombre || dd.deudor, dd.cliente || dd.proyecto].filter(Boolean).join(' · '))+'</td><td>'+fdE(fmtShort(dd.fecha))+'</td><td>'+fdE(invUsuario(d.creadoPorId))+'</td>' +
           '<td><div class="row-actions"><button class="icon-btn fmt-pdf" title="Ver y descargar PDF" aria-label="Ver y descargar PDF"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></button></div></td></tr>';
       }).join('') + '</tbody></table></div>';
     } else h += '<div class="table-wrap"><div class="empty-state">Lo que llenes aquí (informes, actas, contratos, liquidaciones y cuentas de cobro) queda guardado en esta lista con su número.</div></div>';
@@ -12082,20 +12135,21 @@
       (filas || []).map(function(f){ return '<tr>' + cols.map(function(col){ return '<td data-label="'+fdE(col.t)+'">'+celda(col, f[col.k])+'</td>'; }).join('') + '<td class="col-rm"><button type="button" class="icon-btn fmt-rm" title="Quitar fila"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>'; }).join('') +
       '</tbody></table></div><button type="button" class="btn sm fmt-add">+ Agregar fila</button></div>';
   }
-  function openFormato(tipo, docId){
+  function openFormato(tipo, docId, opts){
     var spec = FMT_SPECS[tipo]; if(!spec) return;
     var saved = docId ? state.documentos.get(docId) : null;
     fmt.spec = tipo; fmt.docId = docId || null; fmt.ordenId = saved ? (saved.ordenId || '') : ''; fmt.persona = saved && saved.persona != null ? saved.persona : -1;
+    fmt.movId = saved ? (saved.movId || '') : ((opts && opts.movId) || '');
     fmt.datos = saved ? JSON.parse(JSON.stringify(saved.datos || {})) : null;
     document.getElementById('fmtTitle').textContent = spec.tituloDoc + (saved ? ' · ' + saved.numero : '');
     document.getElementById('fmtBorrar').style.display = saved && precAdmin() ? 'inline-flex' : 'none';
-    fmtPintar();
+    if(spec.libre && !saved) fmtCargar(); else fmtPintar();
     document.getElementById('fmtOverlay').classList.add('open');
   }
   function fmtPintar(){
     var spec = FMT_SPECS[fmt.spec], body = document.getElementById('fmtBody');
     var ords = invOrdenes();
-    var h = '<div class="field-row">' + precCampo('Obra (orden de compra)', '<select id="fmtOrden"><option value="">'+(ords.length ? 'Elige la orden…' : 'No hay órdenes')+'</option>' + ords.map(function(o){ return '<option value="'+fdE(o._id)+'"'+(o._id === fmt.ordenId ? ' selected' : '')+'>'+fdE((o.numero||'Orden') + ' · ' + (o.cliente||''))+'</option>'; }).join('') + '</select>', fmt.datos ? 'Cambiar la orden vuelve a llenar los campos con sus datos.' : 'Los campos se llenan solos con los datos de la orden; luego los ajustas.');
+    var h = spec.libre ? '<div class="field-row">' + fmtCampoPendiente() : '<div class="field-row">' + precCampo('Obra (orden de compra)', '<select id="fmtOrden"><option value="">'+(ords.length ? 'Elige la orden…' : 'No hay órdenes')+'</option>' + ords.map(function(o){ return '<option value="'+fdE(o._id)+'"'+(o._id === fmt.ordenId ? ' selected' : '')+'>'+fdE((o.numero||'Orden') + ' · ' + (o.cliente||''))+'</option>'; }).join('') + '</select>', fmt.datos ? 'Cambiar la orden vuelve a llenar los campos con sus datos.' : 'Los campos se llenan solos con los datos de la orden; luego los ajustas.');
     if(spec.persona){
       var o = state.ordenes.get(fmt.ordenId) || {};
       h += precCampo('Persona', '<select id="fmtPersona"><option value="-1">'+((o.personal||[]).length ? 'Elige la persona…' : 'La orden no tiene personal registrado')+'</option>' + (o.personal || []).map(function(r, i){ return '<option value="'+i+'"'+(i === fmt.persona ? ' selected' : '')+'>'+fdE((r.nombre || 'Persona ' + (i + 1)) + ' · ' + (r.dias || 0) + ' día(s)')+'</option>'; }).join('') + '</select>');
@@ -12130,16 +12184,29 @@
     if(fin) fin.addEventListener('change', function(){ fmtLeer(); fmtAgregarFotos(Array.prototype.slice.call(fin.files || [])); });
     body.querySelectorAll('.fmt-foto-rm').forEach(function(b){ b.addEventListener('click', function(){ fmtLeer(); fmt.datos.fotos.splice(Number(b.dataset.i), 1); fmtPintar(); }); });
   }
+  /* Pendientes por cobrar de Finanzas (entradas pendientes); solo administración los ve */
+  function fmtPendientesCobro(){
+    var out = []; if(typeof fin === 'undefined' || !fin || !fin.admin || !fin.movs) return out;
+    fin.movs.forEach(function(m, id){ if(m.tipo === 'ingreso' && m.estado === 'pendiente') out.push(Object.assign({_id: id}, m)); });
+    return out.sort(function(a, b){ return String(b.fecha || '').localeCompare(String(a.fecha || '')); });
+  }
+  function fmtCampoPendiente(){
+    var pend = fmtPendientesCobro();
+    if(!pend.length && !fmt.movId) return '<div class="field"></div>';
+    return precCampo('Pendiente por cobrar en Finanzas', '<select id="fmtMov"><option value="">Ninguno (llenar a mano)</option>' + pend.map(function(m){ return '<option value="'+fdE(m._id)+'"'+(m._id === fmt.movId ? ' selected' : '')+'>'+fdE((m.tercero ? m.tercero + ' · ' : '') + fmtMoneyCorto(m.monto) + ' · ' + (m.descripcion || finCatLabel(m)).slice(0, 60))+'</option>'; }).join('') + '</select>', 'Al elegirlo se llenan quién, los conceptos y el valor.');
+  }
+  function fmtMoneyCorto(v){ return fdM(v); }
   function fmtEventosCabecera(){
-    var so = document.getElementById('fmtOrden'), sp = document.getElementById('fmtPersona'), spec = FMT_SPECS[fmt.spec];
-    so.addEventListener('change', function(){ fmt.ordenId = so.value; fmt.persona = -1; fmtCargar(); });
+    var so = document.getElementById('fmtOrden'), sp = document.getElementById('fmtPersona'), sm = document.getElementById('fmtMov'), spec = FMT_SPECS[fmt.spec];
+    if(so) so.addEventListener('change', function(){ fmt.ordenId = so.value; fmt.persona = -1; fmtCargar(); });
+    if(sm) sm.addEventListener('change', function(){ fmt.movId = sm.value; fmtCargar(); });
     if(sp) sp.addEventListener('change', function(){ fmt.persona = Number(sp.value); fmtCargar(); });
     void spec;
   }
   function fmtCargar(){
     var spec = FMT_SPECS[fmt.spec];
-    if(!fmt.ordenId || (spec.persona && fmt.persona < 0)){ fmt.datos = null; fmtPintar(); return; }
-    var x = fmtCtx(fmt.ordenId, fmt.persona);
+    if(!spec.libre && (!fmt.ordenId || (spec.persona && fmt.persona < 0))){ fmt.datos = null; fmtPintar(); return; }
+    var x = spec.libre ? {mov: (fmt.movId && typeof fin !== 'undefined' && fin && fin.movs && fin.movs.get(fmt.movId)) || null} : fmtCtx(fmt.ordenId, fmt.persona);
     var nuevo = spec.prellenar(x);
     nuevo.numero = fmt.datos && fmt.datos.numero ? fmt.datos.numero : fmtSiguienteNumero(spec.prefijo);
     nuevo.fecha = fmt.datos && fmt.datos.fecha ? fmt.datos.fecha : todayIso();
@@ -12193,7 +12260,9 @@
     var dup = false; state.documentos.forEach(function(x, id){ if(x.numero === d.numero && id !== fmt.docId) dup = true; });
     if(dup){ toast('Ya existe un documento con el número ' + d.numero + '.'); return Promise.resolve(null); }
     var o = state.ordenes.get(fmt.ordenId) || {};
-    var rec = {tipo: fmt.spec, codigo: spec.codigo, numero: d.numero, ordenId: fmt.ordenId || null, persona: fmt.persona, proyectoId: o.proyectoId || '', datos: d, actualizadoEn: new Date().toISOString()};
+    var mv = fmt.movId && typeof fin !== 'undefined' && fin && fin.movs ? (fin.movs.get(fmt.movId) || {}) : {};
+    var rec = {tipo: fmt.spec, codigo: spec.codigo, numero: d.numero, ordenId: fmt.ordenId || null, persona: fmt.persona, proyectoId: o.proyectoId || mv.proyectoId || '', datos: d, actualizadoEn: new Date().toISOString()};
+    if(fmt.movId) rec.movId = fmt.movId;
     if(JSON.stringify(rec).length > 1700000){ toast('El documento pesa demasiado (fotos). Quita alguna foto.'); return Promise.resolve(null); }
     var col = db.collection('documentos');
     if(fmt.docId){ var prev = state.documentos.get(fmt.docId) || {}; rec.creadoEn = prev.creadoEn; rec.creadoPorId = prev.creadoPorId; return col.doc(fmt.docId).set(rec).then(function(){ return fmt.docId; }); }

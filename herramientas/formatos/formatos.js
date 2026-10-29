@@ -1,4 +1,4 @@
-/* Genera los 11 formatos de Cenova en Word (.docx) con el diseño de la cotización. */
+/* Genera los formatos de Cenova en Word (.docx) con el diseño de la cotización. */
 const B = require('./base');
 const { AlignmentType: A } = B;
 const W = B.CONTENT; // 10080
@@ -234,6 +234,25 @@ lista.push(['CNV-FR-11_Carta-con-membrete.docx', 'CNV-FR-11', 'Carta con membret
   B.p('[Cargo] · Cenova S.A.S.', { align: A.LEFT, after: 0, color: B.MUTED }),
   B.p(B.EMPRESA.email + ' · ' + B.EMPRESA.tel, { align: A.LEFT, after: 300, color: B.MUTED }),
   B.p('Anexos: [número y descripción, o "Ninguno"]', { align: A.LEFT, size: 18, color: B.MUTED })
+]]);
+
+/* 18 · Cuenta de cobro de Cenova (Cenova cobra a un socio o a un tercero) · 2026-10-29 */
+lista.push(['CNV-FR-18_Cuenta-de-cobro-de-Cenova.docx', 'CNV-FR-18', 'Cuenta de cobro de Cenova', [
+  ...B.titulo('Cuenta de cobro', info('CNV-FR-18', [['Cuenta N°', '[CBR-0000]'], ['Fecha', '[dd/mm/aaaa]']]), '[Ciudad], [dd de mes de aaaa]'),
+  B.p('[NOMBRE COMPLETO O RAZÓN SOCIAL]', { align: A.CENTER, after: 0, bold: true }),
+  B.p('[C.C. / NIT] [número]', { align: A.CENTER, after: 120, color: B.MUTED }),
+  B.p([B.run('DEBE A:', { bold: true, size: 22, color: B.NAVY })], { align: A.CENTER, after: 60 }),
+  B.p([B.run('CENOVA S.A.S.', { bold: true, size: 24, color: B.NAVY })], { align: A.CENTER, after: 0 }),
+  B.p('NIT ' + B.EMPRESA.nit, { align: A.CENTER, after: 120, color: B.MUTED }),
+  B.p([B.run('LA SUMA DE:', { bold: true, size: 22, color: B.NAVY })], { align: A.CENTER, after: 60 }),
+  B.p('[valor en letras] PESOS M/CTE ($[000.000])', { align: A.CENTER, after: 80, bold: true }),
+  B.h('Por concepto de'),
+  B.tabla([C('Concepto', 5880), C('Referencia', 2400), C('Valor', 1800, R)], [['[Reintegro / devolución / préstamo]', '[Proyecto, orden o factura]', ''], ['', '', '']], { total: ['TOTAL', '$'] }),
+  B.h('Datos para el pago'),
+  B.campos([['Banco', 'Bancolombia'], ['Tipo de cuenta', 'Ahorros'], ['N° de cuenta', '78900009256'], ['Titular', 'Cenova S.A.S. · NIT ' + B.EMPRESA.nit], ['Pagar a más tardar', '[dd/mm/aaaa]'], ['Referencia del pago', '[CBR-0000]']], 4),
+  B.p('Este cobro es dinero de Cenova S.A.S. que debe volver a la empresa; no corresponde a la venta de un bien o servicio. Al pagar, envíe el comprobante a ' + B.EMPRESA.email + ' indicando el número de esta cuenta.', { before: 160 }),
+  B.firmas([[B.EMPRESA.rep, 'Por Cenova S.A.S.', B.EMPRESA.repCargo], ['[Nombre]', 'Acepto el cobro', '[C.C. / NIT] [número]']]),
+  B.nota('Para cobrarle a un cliente por una venta, Cenova debe emitir factura electrónica.')
 ]]);
 
 (async () => {
