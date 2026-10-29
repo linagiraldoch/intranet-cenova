@@ -289,6 +289,7 @@
 
   .pill{display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600; padding:4px 9px; border-radius:99px; white-space:nowrap;}
   .pill.st-enviada, .pill.st-propuesta_enviada, .pill.st-cotizado{background:var(--accent-soft); color:var(--accent-2);}
+  .pill.st-rechazado{background:var(--critical-soft, rgba(192,71,63,.12)); color:var(--critical);}
   .pill.st-pendiente_armar, .pill.st-pendiente{background:var(--warning-soft); color:var(--warning);}
   .pill.st-en_pausa{background:var(--neutral-soft); color:var(--neutral);}
   .pill.st-en_proceso{background:var(--accent-soft); color:var(--accent-2); box-shadow:inset 0 0 0 1px var(--accent-2);}
@@ -1458,7 +1459,7 @@
       <div class="nav-label">Operación</div>
       <button class="nav-btn" data-view="ordenes">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/><path d="M4 4l3-2h10l3 2"/></svg>
-        Órdenes de compra
+        Órdenes internas
         <span class="count" id="navCountOc">0</span>
       </button>
       <button class="nav-btn" data-view="agenda">
@@ -1592,17 +1593,17 @@
     <!-- ÓRDENES DE COMPRA -->
     <section class="view" id="view-ordenes">
       <div class="section-head">
-        <h2>Órdenes de compra</h2>
+        <h2>Órdenes internas</h2>
         <div class="filters">
           <input type="search" id="ocSearch" placeholder="Buscar orden, cliente o cotización…">
           <select id="ocEstadoFilter"><option value="">Todos los estados</option></select>
           <button class="btn primary" id="btnAddOc">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Registrar orden de compra
+            Pasar cotización a orden
           </button>
         </div>
       </div>
-      <div class="no-file" style="margin:-6px 0 14px;">Cada orden recibe su número OC automático y queda ligada a su cotización. Al guardarla se programan solos en la agenda: la confirmación del inicio de labores, los días de instalación y el vencimiento del pago.</div>
+      <div class="no-file" style="margin:-6px 0 14px;">Nacen con «Pasar a orden» desde una cotización aprobada. Lo aprobado no se cambia: para cambiarlo, se anula la orden.</div>
       <div id="vkOrdenes"></div>
       <div id="ocContainer"></div>
     </section>
@@ -1616,10 +1617,10 @@
           <select id="proyEstadoFilter">
             <option value="">Todos los estados</option>
             <option value="pendiente">Pendiente</option>
-            <option value="propuesta_enviada">Propuesta enviada</option>
             <option value="cotizado">Cotizado</option>
             <option value="en_ejecucion">En ejecución</option>
             <option value="finalizado">Finalizado</option>
+            <option value="rechazado">Rechazado</option>
           </select>
           <select id="proyRespFilter"><option value="">Todo el equipo</option></select>
           <button class="btn primary" id="btnAddProy">
@@ -2059,7 +2060,7 @@
     <div class="modal-foot">
       <button class="btn" id="cotDelete" style="color:var(--critical); display:none;">Eliminar</button>
       <div style="display:flex; gap:8px; margin-left:auto;">
-        <button class="btn" id="cotRegistrarOcBtn" style="display:none;">Registrar orden de compra</button>
+        <button class="btn primary" id="cotRegistrarOcBtn" style="display:none;">Pasar a orden</button>
         <button class="btn" id="cotProviderViewBtn">Descargar lista proveedor</button>
         <button class="btn" id="cotPreviewBtn" style="display:none;">Vista previa / Imprimir</button>
         <button class="btn" id="cotCancel">Cancelar</button>
@@ -2279,10 +2280,10 @@
         <div class="field"><label>Estado</label>
           <select id="proyEstado">
             <option value="pendiente">Pendiente</option>
-            <option value="propuesta_enviada">Propuesta enviada</option>
             <option value="cotizado">Cotizado</option>
             <option value="en_ejecucion">En ejecución</option>
             <option value="finalizado">Finalizado</option>
+            <option value="rechazado">Rechazado</option>
           </select>
         </div>
       </div>
@@ -2448,41 +2449,46 @@
 <div class="overlay roomy" id="ocOverlay">
   <div class="modal wide xwide">
     <div class="modal-head">
-      <h3 id="ocModalTitle">Registrar orden de compra</h3>
+      <h3 id="ocModalTitle">Orden interna</h3>
       <button class="modal-close" id="ocClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="fieldset-label">Subir la orden</div>
+      <div class="info-box ok" id="ocBloqueoNota" data-c="1" hidden></div>
+      <div class="fieldset-label" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">OC del cliente <span id="ocClienteEstado" style="text-transform:none; letter-spacing:0;"></span></div>
       <div class="field">
-        <div class="file-drop">
-          <div id="ocFileCurrent"><span class="no-file">Sin archivo adjunto.</span></div>
-          <input type="file" id="ocFileInput" accept=".pdf,.jpg,.jpeg,.png,.eml,.doc,.docx,.msg">
+        <div class="file-drop" style="flex-direction:column; align-items:stretch; gap:8px;">
+          <div id="ocFileCurrent"></div>
+          <div id="ocClienteAnexos"></div>
+          <label class="btn sm" for="ocFileInput" style="align-self:flex-start; cursor:pointer;">Anexar OC del cliente</label>
+          <input type="file" id="ocFileInput" accept=".pdf,.jpg,.jpeg,.png,.eml,.doc,.docx,.msg" hidden>
         </div>
-        <div class="no-file" style="margin-top:4px;">Sube la orden en PDF, imagen o correo (.eml): se leen y se llenan solos el número, la fecha, el valor, el plazo de pago y la cotización. Se guarda como soporte si pesa hasta ~170 KB.</div>
+        <div class="no-file" style="margin-top:4px;">Documento, correo o captura del mensaje. Si la autorizó por llamada, elige «Llamada» en «Cómo se aprobó».</div>
       </div>
       <div class="info-box" id="ocExtractStatus" style="display:none;"></div>
       <div class="fieldset-label">Registro</div>
       <div class="field-row three">
-        <div class="field"><label>N.° orden Cenova</label><input type="text" id="ocNumero" class="readonly-num" readonly tabindex="-1"><span class="no-file" id="ocNumeroHint">Se asigna automáticamente al guardar y no se puede modificar.</span></div>
+        <div class="field"><label>N.° orden interna</label><input type="text" id="ocNumero" class="readonly-num" readonly tabindex="-1"><span class="no-file" id="ocNumeroHint">Se asigna automáticamente al guardar y no se puede modificar.</span></div>
         <div class="field"><label>N.° de orden del cliente</label><input type="text" id="ocNumeroCliente" placeholder="El consecutivo que trae su orden"></div>
         <div class="field"><label>Estado</label><select id="ocEstado"></select></div>
       </div>
       <div class="field-row three">
-        <div class="field"><label>Cotización que se aprueba</label><select id="ocCotizacion"></select></div>
+        <div class="field"><label>Cotización aprobada</label><select id="ocCotizacion"></select></div>
         <div class="field"><label>Cómo se aprobó</label>
           <select id="ocMedio">
-            <option value="orden_compra">Orden de compra formal</option>
-            <option value="correo">Correo de confirmación</option>
-            <option value="otro">Otro (llamada, WhatsApp…)</option>
+            <option value="orden_compra">Orden de compra (documento)</option>
+            <option value="correo">Correo</option>
+            <option value="mensaje">Mensaje (WhatsApp u otro)</option>
+            <option value="llamada">Llamada (sin soporte)</option>
+            <option value="otro">Otro</option>
           </select>
         </div>
-        <div class="field"><label>Fecha de recepción</label><input type="date" id="ocFechaRecepcion"></div>
+        <div class="field"><label>Fecha de aprobación</label><input type="date" id="ocFechaRecepcion"></div>
       </div>
       <p class="no-file" id="ocEditadoInfo" hidden></p>
       <div class="info-box" id="ocCotInfo"><span class="muted">Elige la cotización para traer cliente, valor y días de instalación.</span></div>
       <div class="field-row three">
         <div class="field"><label>Responsable</label><input type="text" id="ocResponsable" list="equipoList"></div>
-        <div class="field"><label>Valor de la orden</label><input type="number" id="ocValor" min="0" step="1000"></div>
+        <div class="field"><label>Valor aprobado</label><input type="number" id="ocValor" min="0" step="1000" readonly tabindex="-1" class="readonly-num"></div>
         <div class="field"><label>Plazo de pago (días desde la recepción)</label><input type="number" id="ocPlazoPago" min="0" step="1" value="30"></div>
       </div>
       <div class="info-box warn" id="ocValorAlerta" hidden></div>
@@ -2683,6 +2689,7 @@
     <div class="modal-foot">
       <div></div>
       <div style="display:flex; gap:8px;">
+        <button class="btn" id="previewPasarOrden" style="display:none;">Pasar a orden</button>
         <button class="btn" id="previewCancel">Cerrar</button>
         <button class="btn primary" id="previewPrint">Descargar PDF</button>
       </div>
@@ -2798,8 +2805,8 @@
     pendiente_armar:'<b>Ideas por armar.</b> Cada lunes la gerencia pregunta si sigue siendo idea o ya se inicia. Si se inicia, pasa a En proceso.',
     en_proceso:'<b>El cliente la está esperando.</b> Cada 3 días desde que entró aquí sale un aviso para verificar el avance o enviarla.',
     enviada:'<b>Seguimiento con el cliente.</b> Un solo aviso, 2 días hábiles antes de que venza: pidió actualizarla, la aprobó o la rechazó.',
-    aprobada:'<b>Se está ejecutando o falta el pago.</b> Avisos de orden de compra, cobro y factura. Se cierra sola cuando el cliente pagó todo y no queda nada por pagar de la obra.',
-    cerrada:'<b>Todo saldado.</b> El cliente pagó todo, el personal está pagado y no quedan otros pagos de la obra.',
+    aprobada:'<b>Aprobadas por el cliente, en orden interna (ONT).</b> Quedan bloqueadas: para cambiarlas se anula la orden. Avisos de cobro y factura. Se cierra sola cuando el cliente pagó todo, no queda nada por pagar de la obra y la OC del cliente está anexa.',
+    cerrada:'<b>Todo saldado.</b> El cliente pagó todo, el personal está pagado, no quedan otros pagos de la obra y la OC del cliente está anexa (o se autorizó por llamada).',
     en_pausa:'<b>El cliente la quiere más adelante.</b> Cada lunes la gerencia valida si sigue en pausa.',
     rechazada:'<b>Puntos de mejora.</b> Cada rechazo guarda su motivo para ver dónde perdemos negocios.',
     todas:'<b>Todas las cotizaciones</b>, en cualquier estado.'
@@ -2816,7 +2823,8 @@
     {key:'pendiente_armar', label:'Por armar'}, {key:'en_proceso', label:'En proceso'}, {key:'enviada', label:'Enviadas'},
     {key:'aprobada', label:'Aprobadas en curso'}, {key:'cerrada', label:'Cerradas'}, {key:'en_pausa', label:'En pausa'}, {key:'rechazada', label:'Rechazadas'}, {key:'todas', label:'Todas'}
   ];
-  var PROY_ESTADOS = {pendiente:"Pendiente", propuesta_enviada:"Propuesta enviada", cotizado:"Cotizado", en_ejecucion:"En ejecución", finalizado:"Finalizado"};
+  /* «Propuesta enviada» y «Cotizado» quedaron unidos en «Cotizado» (2026-10-29); el estado lo pone solo la intranet según cotizaciones y órdenes. */
+  var PROY_ESTADOS = {pendiente:"Pendiente", cotizado:"Cotizado", en_ejecucion:"En ejecución", finalizado:"Finalizado", rechazado:"Rechazado", propuesta_enviada:"Cotizado"};
   var MODO_LABELS = {presencial:"Presencial", visita_tecnica:"Visita técnica", videollamada:"Videollamada", llamada:"Llamada"};
   var TIPO_LABELS = {interno:"Interno", inspeccion:"Inspección", visita:"Visita", tarea:"Tarea", solicitud_personal:"Solicitud de personal", mantenimiento:"Mantenimiento", seguimiento:"Seguimiento",
     /* tipos antiguos (solo para mostrar eventos ya creados) */
@@ -2931,7 +2939,7 @@
     costos:['Costos','Precios de proveedores, costos por cargar en Precios y lo que costó de verdad cada obra frente a lo cotizado.'],
     precios:['Precios','Precios estándar de servicios, personal, materiales, kits y equipos para cotizar sin volver a calcular.'],
     finanzas:['Finanzas',''],
-    ordenes:['Órdenes de compra','Órdenes recibidas, su cotización, plazos de pago e instalación.'],
+    ordenes:['Órdenes internas','Cotizaciones aprobadas en ejecución: OC del cliente, plazos de pago e instalación.'],
     proyectos:['Proyectos y trabajos','Estado de cada proyecto en curso o por iniciar.'],
     clientes:['Clientes','Registra tus clientes una vez y autocompleta sus datos al cotizar.'],
     agenda:['Agenda','Eventos manuales y automáticos (vigencias, pagos, instalaciones) en calendario y cronograma.']
@@ -3582,7 +3590,7 @@
         '<dl><div><dt>Valor</dt><dd>'+fmtMoney.format(v)+'</dd></div><div><dt>Saldo</dt><dd class="'+(s ? 'warn' : '')+'">'+fmtMoney.format(s)+'</dd></div>'+
         '<div><dt>Instalación</dt><dd>'+(o.fechaInicio ? fmtShort(o.fechaInicio)+(k.fin && k.fin !== o.fechaInicio ? ' → '+fmtShort(k.fin) : '') : 'por confirmar')+'</dd></div></dl></div>'+
       '<div class="vk-pasos">'+OC_PASOS.map(function(x, j){ return '<i class="'+(paso >= j ? 'on' : '')+'" title="'+OC_ESTADOS[x]+'"></i>'; }).join('')+'</div>'+
-      '<footer>'+pago+(falta.length ? '<span class="vk-tag warn">Falta: '+escapeHtml(falta.join(', '))+'</span>' : '')+(o.retrasoMotivo ? '<span class="vk-tag">Retraso: '+escapeHtml((OC_RETRASO[o.retrasoMotivo]||'').toLowerCase())+'</span>' : '')+'</footer></article>';
+      '<footer>'+pago+(o.estado === 'anulada' || falta.length ? '' : (o.medio === 'llamada' ? '<span class="vk-tag">Aprobada por llamada</span>' : (ocTieneOcCliente(id, o) ? '<span class="vk-tag ok">OC del cliente ✓</span>' : '<span class="vk-tag warn">Falta OC del cliente</span>')))+(falta.length ? '<span class="vk-tag warn">Falta: '+escapeHtml(falta.join(', '))+'</span>' : '')+(o.retrasoMotivo ? '<span class="vk-tag">Retraso: '+escapeHtml((OC_RETRASO[o.retrasoMotivo]||'').toLowerCase())+'</span>' : '')+'</footer></article>';
   }
 
   /* ---------- Inventario ---------- */
@@ -3858,6 +3866,7 @@
   }
   function cotCambiarEstado(id, nuevo){
     var c = state.cotizaciones.get(id); if(!c || c.estado === nuevo) return;
+    if(nuevo === 'aprobada') return cotPasarAOrden(id);   /* aprobar = pasar a orden interna (2026-10-29) */
     var paso;
     if(nuevo === 'rechazada'){
       paso = pickDialog({title:'Rechazada · '+(c.numero||''), msg:'Con el motivo se arman los puntos de mejora.', nota:true,
@@ -3882,9 +3891,11 @@
     var c = state.cotizaciones.get(id); if(!c) return;
     var old = document.getElementById('cotStMenu'); if(old){ var mismo = old.dataset.id === id; old.remove(); if(mismo) return; }
     var m = document.createElement('div'); m.className = 'st-menu'; m.id = 'cotStMenu'; m.dataset.id = id;
-    m.innerHTML = COT_MENU_ESTADOS.filter(function(k){ return k !== c.estado; }).map(function(k){
+    var act = cotOrdenActiva(id);
+    if(act){ toast((c.numero||'La cotización')+' está aprobada en la orden '+(act.numero||'')+': su estado ya no se cambia aquí. Para cambiarla, anula la orden.', 6000); return; }
+    m.innerHTML = COT_MENU_ESTADOS.filter(function(k){ return k !== c.estado && (k !== 'aprobada' || cotPuedeOrden(c)); }).map(function(k){
       return (k === 'rechazada' ? '<hr>' : '')+'<button type="button" data-st="'+k+'"><span class="d" style="background:'+(COT_TAB_COLOR[k]||'var(--text-muted)')+'"></span>'+
-        (k === 'aprobada' && !cotOrdenActiva(id) ? 'Aprobada · registrar orden' : (k === 'reemplazada' ? 'Reemplazada por otra…' : (k === 'rechazada' ? 'Rechazada…' : COT_ESTADOS[k])))+'</button>';
+        (k === 'aprobada' ? 'Aprobada · pasar a orden' : (k === 'reemplazada' ? 'Reemplazada por otra…' : (k === 'rechazada' ? 'Rechazada…' : COT_ESTADOS[k])))+'</button>';
     }).join('');
     document.body.appendChild(m);
     var r = anchor.getBoundingClientRect(), w = m.offsetWidth, h = m.offsetHeight;
@@ -3899,9 +3910,161 @@
   }
   function cotOfrecerOrden(id){
     if(cotOrdenActiva(id)) return Promise.resolve();
-    var c = state.cotizaciones.get(id) || {};
-    return confirmDialog((c.numero||'La cotización')+' quedó aprobada. ¿Registrar ya su orden de compra?', 'Registrar orden')
-      .then(function(ok){ if(ok) openOcModal(null, id); });
+    return cotPasarAOrden(id);
+  }
+
+  /* ===== Orden interna ONT (2026-10-29) =====
+     - «Pasar a orden» (en la vista previa y en el formulario de la cotización) = el cliente aprobó: la cotización queda Aprobada
+       y nace la orden interna ONT-xxxx En ejecución (la solicitud a compras/almacén).
+     - Lo aprobado queda fijo: la cotización no se edita mientras tenga orden activa, y la orden conserva cotización y valor
+       (el servidor también lo hace cumplir). Para cambiar algo se anula la orden: la cotización vuelve a «Enviada», editable,
+       y al aprobarse de nuevo pasa como la versión siguiente.
+     - La OC del cliente se anexa dentro de la orden (soporte clase 'oc'). La obra arranca sin ella, pero no se cierra sin ella,
+       salvo que el cliente la haya autorizado por llamada (medio 'llamada'). */
+  var ONT_MEDIOS = {orden_compra:'Orden de compra (documento)', correo:'Correo', mensaje:'Mensaje (WhatsApp u otro)', llamada:'Llamada (sin soporte)', otro:'Otro'};
+  function cotPuedeOrden(c){ return !!c && (c.estado === 'enviada' || c.estado === 'aprobada'); }
+  function ocTieneOcCliente(oid, o){
+    o = o || state.ordenes.get(oid) || {};
+    if(o.medio === 'llamada' || o.archivoNombre) return true;
+    var si = false; state.soportes.forEach(function(x){ if(!si && x.ref === 'oc:'+oid && x.clase === 'oc') si = true; });
+    return si;
+  }
+  function cotPasarAOrden(id){
+    var db = requireDb(); if(!db) return Promise.resolve();
+    var c = state.cotizaciones.get(id); if(!c) return Promise.resolve();
+    var act = cotOrdenActiva(id);
+    if(act){ toast((c.numero||'La cotización')+' ya está en la orden '+(act.numero||'')+' — te la abro.'); closeCotModal(); closePreviewSiAbierta(); openOcModal(act._id); return Promise.resolve(); }
+    if(!cotPuedeOrden(c)){ toast('Solo pasa a orden una cotización enviada que el cliente aprobó. '+(c.numero||'Esta')+' está «'+(COT_ESTADOS[c.estado]||c.estado)+'».', 6000); return Promise.resolve(); }
+    var total = Math.round(cotTotal(c)), anulada = c.versionAnulada != null && Number(c.versionAnulada) === Number(c.version || 1);
+    var vNueva = anulada ? (Number(c.version) || 1) + 1 : (Number(c.version) || 1);
+    closePreviewSiAbierta();   /* la vista previa queda encima del diálogo */
+    return pickDialog({title:'Pasar a orden · '+(c.numero||''),
+      msg:'Confirmas que el cliente aprobó '+(c.numero||'la cotización')+' v'+vNueva+' por '+fmtMoney.format(total)+'. Se crea la orden interna '+nextOcNumero()+' en ejecución y la cotización queda bloqueada: no se cambian ítems, valores ni condiciones. ¿Cómo la aprobó el cliente?',
+      options:'<option value="">Elige cómo la aprobó…</option>'+Object.keys(ONT_MEDIOS).map(function(k){ return '<option value="'+k+'">'+escapeHtml(ONT_MEDIOS[k])+'</option>'; }).join(''),
+      ok:'Pasar a orden'}).then(function(r){
+      if(!r) return;
+      var hoy = todayIso(), extra = {fechaAceptacion: hoy};
+      if(anulada){ extra.version = vNueva; }
+      /* Primero la cotización (aprobada y, si viene de una orden anulada, versión siguiente); luego la orden. */
+      return cotAplicarEstado(id, 'aprobada', extra).then(function(cAprob){
+        var data = {
+          numero: nextOcNumero(), estado: 'en_ejecucion',
+          cotizacionId: id, cotizacionNumero: cAprob.numero || '', cotizacionVersion: Number(cAprob.version) || 1,
+          cliente: cAprob.cliente || '', proyectoId: cAprob.proyectoId || '',
+          medio: r.value, numeroCliente: '', fechaRecepcion: hoy,
+          responsable: cAprob.responsable || '', valor: total, plazoPagoDias: 30,
+          fechaInicio: '', diasInstalacion: cAprob.diasInstalacion != null ? Number(cAprob.diasInstalacion) || 0 : 0,
+          modalidad: 'consecutivos', diasSemana: [0,2,4], notas: '',
+          personal: [], porPagar: [], novedades: [], pagos: [], anticipoPct: null,
+          fechaConfirmacion: null, fechaPago: null,
+          creadoPorId: state.userId || null, creadoEn: new Date().toISOString(),
+          editadoEn: new Date().toISOString(), editadoPorId: state.userId || null
+        };
+        return db.collection('ordenesCompra').add(data).then(function(ref){
+          var oid = ref && ref.id; if(!oid) throw new Error('no se creó la orden');
+          state.ordenes.set(oid, data);
+          return Promise.all([syncAutoEventsFor('orden', oid), syncAutoEventsFor('cotizacion', id)]).then(function(){
+            closeCotModal(); closePreviewSiAbierta(); renderAll(); syncProyEstadosPronto();
+            toast((cAprob.numero||'Cotización')+' aprobada · orden interna '+data.numero+' en ejecución'+(r.value === 'llamada' ? '' : ' · anexa la OC del cliente cuando llegue'), 6000);
+            openOcModal(oid);
+          });
+        });
+      });
+    }).catch(function(err){ toast('No se pudo pasar a orden: ' + (err && err.message ? err.message : 'error'), 6000); });
+  }
+  function ocClienteCelda(oid, o){
+    if(o.medio === 'llamada') return '<span class="due ok">Por llamada</span>';
+    if(ocTieneOcCliente(oid, o)) return escapeHtml(o.numeroCliente || 'Anexa')+'<span class="due ok">✓</span>';
+    return (o.numeroCliente ? escapeHtml(o.numeroCliente) : '')+(o.estado === 'anulada' ? '—' : '<span class="due warning">Falta anexar</span>');
+  }
+  function closePreviewSiAbierta(){ var ov = document.getElementById('previewOverlay'); if(ov && ov.classList.contains('open')){ var b = document.getElementById('previewCancel'); if(b) b.click(); } }
+  /* Botón del formulario y de la vista previa: «Pasar a orden» o, si ya tiene, «Ver orden ONT-xxxx». */
+  function botonOrdenCot(btn, id){
+    if(!btn) return;
+    var c = id ? state.cotizaciones.get(id) : null, act = id ? cotOrdenActiva(id) : null;
+    if(act){ btn.textContent = 'Ver orden '+(act.numero||''); btn.className = 'btn'; btn.style.display = 'inline-flex'; return; }
+    btn.textContent = 'Pasar a orden'; btn.className = 'btn primary';
+    btn.style.display = cotPuedeOrden(c) ? 'inline-flex' : 'none';
+  }
+  /* Bloquea el formulario de una cotización con orden activa (lo aprobado no se cambia). */
+  var COT_LIBRES = ['cotRegistrarOcBtn','cotPreviewBtn','cotProviderViewBtn','cotPrefacturaBtn','cotCancel','cotClose'];
+  function cotBloqueoForm(id){
+    var ov = document.getElementById('cotOverlay'), act = id ? cotOrdenActiva(id) : null;
+    ov.querySelectorAll('[data-bloq]').forEach(function(el){ el.disabled = false; el.removeAttribute('data-bloq'); });
+    var nota = document.getElementById('cotBloqueoNota');
+    if(!nota){ nota = document.createElement('div'); nota.id = 'cotBloqueoNota'; nota.className = 'info-box ok'; nota.setAttribute('data-c', '1'); nota.style.marginBottom = '12px'; var body = ov.querySelector('.modal-body'); body.insertBefore(nota, body.firstChild); }
+    document.getElementById('cotSave').style.display = act ? 'none' : '';
+    if(!act){ nota.hidden = true; return; }
+    document.getElementById('cotDelete').style.display = 'none';
+    ov.querySelectorAll('.modal-body input, .modal-body select, .modal-body textarea, .modal-body button').forEach(function(el){
+      if(el.disabled || COT_LIBRES.indexOf(el.id) !== -1 || el.closest('#cotBloqueoNota')) return;
+      el.disabled = true; el.setAttribute('data-bloq', '1');
+    });
+    nota.hidden = false;
+    nota.innerHTML = '<strong>Aprobada por el cliente:</strong> está en la orden '+escapeHtml(act.numero||'')+' y no se edita. Para cambiarla, anula la orden.';
+  }
+  function cotElegirParaOrden(){
+    var opts = '<option value="">Elige la cotización aprobada…</option>', n = 0;
+    Array.from(state.cotizaciones.entries()).filter(function(e){ return cotPuedeOrden(e[1]) && !cotOrdenActiva(e[0]); })
+      .sort(function(a,b){ return String(b[1].numero||'').localeCompare(String(a[1].numero||'')); })
+      .forEach(function(e){ var c = e[1]; n++; opts += '<option value="'+e[0]+'">'+escapeHtml((c.numero||'')+' · '+(c.cliente||'')+' · '+(c.descripcion||'').slice(0,50)+' · '+fmtMoney.format(cotTotal(c))+' · '+(COT_ESTADOS[c.estado]||''))+'</option>'; });
+    if(!n){ toast('No hay cotizaciones enviadas o aprobadas sin orden. Una orden nace de una cotización enviada que el cliente aprobó.', 6000); return; }
+    pickDialog({title:'¿Qué cotización aprobó el cliente?', msg:'Solo aparecen las enviadas o aprobadas que aún no tienen orden.', options:opts, ok:'Seguir'})
+      .then(function(r){ if(r) cotPasarAOrden(r.value); });
+  }
+
+  /* Estado del proyecto según sus cotizaciones y órdenes (2026-10-29). Los proyectos internos no se tocan;
+     uno sin cotizaciones conserva el estado que se le puso a mano. Finalizado: todas sus órdenes cerradas y nada pendiente. */
+  function proyEstadoAuto(pid){
+    var p = state.proyectos.get(pid); if(!p || p.interno || p.estado === 'finalizado') return null;
+    var cots = [], ords = [];
+    state.cotizaciones.forEach(function(c, cid){ if(c.proyectoId === pid && c.estado !== 'reemplazada') cots.push([cid, c]); });
+    state.ordenes.forEach(function(o){ if(o.proyectoId === pid && o.estado !== 'anulada') ords.push(o); });
+    if(!cots.length && !ords.length) return null;
+    var keys = cots.map(function(e){ return cotTabKey(e[0], e[1]); });
+    var hay = function(k){ return keys.indexOf(k) !== -1; };
+    if(ords.length){
+      var abiertas = keys.some(function(k){ return k !== 'cerrada' && k !== 'rechazada'; });
+      if(!abiertas && !proyBloqueosCierre(pid).length) return 'finalizado';
+      return 'en_ejecucion';
+    }
+    if(hay('enviada') || hay('aprobada')) return 'cotizado';
+    if(hay('pendiente_armar') || hay('en_proceso') || hay('en_pausa')) return 'pendiente';
+    if(keys.length && keys.every(function(k){ return k === 'rechazada'; })) return 'rechazado';
+    return null;
+  }
+  var _proyEstTm = null;
+  function syncProyEstadosPronto(){ clearTimeout(_proyEstTm); _proyEstTm = setTimeout(syncProyEstados, 1200); }
+  function syncProyEstados(){
+    var db = state.db; if(!db || !(state.loaded.cotizaciones && state.loaded.ordenes && state.loaded.proyectos)) return;
+    state.proyectos.forEach(function(p, pid){
+      var est = p.estado === 'propuesta_enviada' ? 'cotizado' : p.estado;   /* «Propuesta enviada» y «Cotizado» quedaron unidos */
+      var auto = proyEstadoAuto(pid);
+      if(auto === 'finalizado' && !fin.admin) auto = null;   /* finalizar depende de Finanzas: solo con administración */
+      if(auto) est = auto;
+      if(est && est !== p.estado){
+        var n = Object.assign({}, p, {estado: est}); state.proyectos.set(pid, n);
+        db.collection('proyectos').doc(pid).update({estado: est}).catch(function(){});
+      }
+    });
+  }
+
+  /* Una sola vez, con administración: las órdenes viejas OC-xxxx pasan a orden interna ONT-xxxx (mismo consecutivo).
+     IKONICA quedó autorizada por llamada: su orden no lleva OC del cliente. */
+  var _ontMigrado = false;
+  function migrarOrdenesAOnt(){
+    if(_ontMigrado || !fin.admin || !state.db || !state.loaded.ordenes) return;
+    _ontMigrado = true;
+    state.ordenes.forEach(function(o, oid){
+      var m = String(o.numero||'').match(/^OC-(\d+)$/); if(!m) return;
+      var upd = {numero: 'ONT-' + m[1]};
+      if(/ikonica/i.test(o.cliente||'')) upd.medio = 'llamada';
+      state.db.collection('ordenesCompra').doc(oid).update(upd).then(function(){
+        state.ordenes.set(oid, Object.assign({}, o, upd));
+        try { syncAutoEventsFor('orden', oid); } catch(e){}
+        renderAll();
+      }).catch(function(){ _ontMigrado = false; });
+    });
   }
   /* Guarda en la cotización completa a cuáles reemplaza (para enlazarlas en ambos sentidos). */
   function cotAnotarReemplazo(porId, ids){
@@ -4978,7 +5141,7 @@
     document.getElementById('cotInicioEstimado').value = c.inicioEstimado || '';
     document.getElementById('cotRechazoMotivo').value = c.rechazoMotivo || '';
     document.getElementById('cotRechazoNota').value = c.rechazoNota || '';
-    document.getElementById('cotRegistrarOcBtn').style.display = id ? 'inline-flex' : 'none';
+    botonOrdenCot(document.getElementById('cotRegistrarOcBtn'), id);
     document.getElementById('cotVersion').value = c.version || 1;
     document.getElementById('cotVigencia').value = c.vigenciaDias || 15;
     proyectoSelectRefresh(document.getElementById('cotProyecto'), 'Elige un proyecto…');
@@ -5037,6 +5200,7 @@
     document.getElementById('cotDelete').style.display = id ? 'inline-flex' : 'none';
     document.getElementById('cotPreviewBtn').style.display = id ? 'inline-flex' : 'none';
     refreshPrefacturaBtn();
+    cotBloqueoForm(id || null);
     document.getElementById('cotOverlay').classList.add('open');
     /* El overlay estaba oculto (display:none) mientras se armaban las filas, así que el alto
        automático de las descripciones no se pudo calcular bien — se recalcula ya visible. */
@@ -5109,7 +5273,10 @@
     document.getElementById('proyCliente').value = p.cliente || '';
     document.getElementById('proyNombre').value = p.nombre || '';
     document.getElementById('proyResponsable').value = p.responsable || '';
-    document.getElementById('proyEstado').value = p.estado || 'pendiente';
+    var estAuto = id ? proyEstadoAuto(id) : null;
+    document.getElementById('proyEstado').value = (p.estado === 'propuesta_enviada' ? 'cotizado' : p.estado) || 'pendiente';
+    document.getElementById('proyEstado').disabled = !!(estAuto && estAuto !== 'finalizado');
+    document.getElementById('proyEstado').title = document.getElementById('proyEstado').disabled ? 'Se actualiza solo según sus cotizaciones y órdenes.' : '';
     document.getElementById('proyNotas').value = p.notas || '';
     document.getElementById('proyDelete').style.display = id && !p.interno ? 'inline-flex' : 'none';
     renderProyFicha(id || null); renderProySoportes(id || null); renderProyCierre(id || null); pintarAlertaCliente('proyClienteAlerta', p.cliente || '');
@@ -5138,7 +5305,7 @@
       var n = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso' && m.proyectoId === o.proyectoId) n++; });
       if(n) out.push(n+' pago(s) pendiente(s) en Finanzas');
     }
-    try { var oid = null; state.ordenes.forEach(function(x, k){ if(x === o) oid = k; }); if(oid){ var sf = ocSoportesFaltan(oid).length; if(sf) out.push(sf+' soporte(s) por subir'); } } catch(e){}
+    try { var oid = null; state.ordenes.forEach(function(x, k){ if(x === o) oid = k; }); if(oid){ var sf = ocSoportesFaltan(oid).length; if(sf) out.push(sf+' soporte(s) por subir'); if(!ocTieneOcCliente(oid, o)) out.push('anexar la OC del cliente'); } } catch(e){}
     return out;
   }
   function cotOrdenActiva(id){ var r = null; state.ordenes.forEach(function(o, oid){ if(!r && o.cotizacionId === id && o.estado !== 'anulada') r = Object.assign({_id: oid}, o); }); return r; }
@@ -5726,7 +5893,7 @@
         '</div>'+
       '</div>';
     document.getElementById('previewDoc').innerHTML = html;
-    document.getElementById('previewOverlay').classList.add('open');
+    botonOrdenCot(document.getElementById('previewPasarOrden'), state.previewingCotId); document.getElementById('previewOverlay').classList.add('open');
   }
 
   function openPreview(id){
@@ -5786,7 +5953,7 @@
         '</div>'+
       '</div>';
     document.getElementById('previewDoc').innerHTML = html;
-    document.getElementById('previewOverlay').classList.add('open');
+    botonOrdenCot(document.getElementById('previewPasarOrden'), state.previewingCotId); document.getElementById('previewOverlay').classList.add('open');
   }
   document.getElementById('previewClose').addEventListener('click', function(){ document.getElementById('previewOverlay').classList.remove('open'); });
   document.getElementById('previewCancel').addEventListener('click', function(){ document.getElementById('previewOverlay').classList.remove('open'); });
@@ -6180,7 +6347,7 @@
   function nextOcNumero(){
     var max = 0;
     state.ordenes.forEach(function(o){ var m = String(o.numero||'').match(/(\d+)/); if(m){ var n = parseInt(m[1],10); if(n>max) max=n; } });
-    return 'OC-' + String(max+1).padStart(4,'0');
+    return 'ONT-' + String(max+1).padStart(4,'0');
   }
 
   function dueTag(iso, done, label){
@@ -6199,8 +6366,8 @@
     var estF = document.getElementById('ocEstadoFilter').value;
     var container = document.getElementById('ocContainer');
     if(state.ordenes.size === 0){
-      container.innerHTML = emptyState('Aún no hay órdenes de compra', 'Cuando un cliente apruebe una cotización, regístrala aquí.', 'btnAddOcEmpty');
-      var b = document.getElementById('btnAddOcEmpty'); if(b) b.addEventListener('click', function(){ openOcModal(); });
+      container.innerHTML = emptyState('Aún no hay órdenes internas', 'Cuando el cliente apruebe una cotización, pásala a orden desde la cotización.', 'btnAddOcEmpty');
+      var b = document.getElementById('btnAddOcEmpty'); if(b) b.addEventListener('click', function(){ cotElegirParaOrden(); });
       return;
     }
     var rows = Array.from(state.ordenes.entries()).filter(function(e){
@@ -6213,14 +6380,14 @@
     document.getElementById('vkOrdenes').innerHTML = vkOrdenesStrip() + '<div class="vk-barra">'+vkToggle('ordenes', modoOc)+'</div>';
     if(!rows.length){ container.innerHTML = '<div class="table-wrap"><div class="empty-state">Ninguna orden coincide con el filtro.</div></div>'; return; }
     if(modoOc === 'tarjetas'){ container.innerHTML = '<div class="vk-grid">'+rows.map(function(e){ return vkOrdenCard(e[0], e[1]); }).join('')+'</div>'; return; }
-    var html = '<div class="table-wrap"><table><thead><tr><th>N.° OC</th><th>OC cliente</th><th>Cotización</th><th>Cliente</th><th>Recibida</th><th>Instalación</th><th>Vence pago</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
+    var html = '<div class="table-wrap"><table><thead><tr><th>N.° orden</th><th>OC cliente</th><th>Cotización</th><th>Cliente</th><th>Recibida</th><th>Instalación</th><th>Vence pago</th><th>Valor</th><th>Estado</th><th></th></tr></thead><tbody>';
     rows.forEach(function(e){
       var id = e[0], o = e[1], c = state.cotizaciones.get(o.cotizacionId) || {};
       var k = ocCalc(o);
       var inst = o.fechaInicio ? (fmtShort(o.fechaInicio)+' → '+fmtShort(k.fin)+'<span class="due ok">'+k.dias.length+' día(s) · '+(o.modalidad==='intercalados'?'intercalados':'consecutivos')+'</span>') : '<span class="due warning">Inicio por confirmar</span>';
       html += '<tr data-id="'+id+'">'+
         '<td class="num"><strong>'+escapeHtml(o.numero||'—')+'</strong></td>'+
-        '<td class="num">'+escapeHtml(o.numeroCliente||'—')+'</td>'+
+        '<td class="num">'+ocClienteCelda(id, o)+'</td>'+
         '<td class="desc-cell"><div class="d-title num">'+escapeHtml(c.numero||'—')+'</div><div class="d-notes">'+escapeHtml(c.descripcion||'')+'</div></td>'+
         '<td>'+escapeHtml(o.cliente||'—')+'</td>'+
         '<td class="num">'+fmtDate(o.fechaRecepcion)+'</td>'+
@@ -6240,7 +6407,7 @@
   }
   document.getElementById('ocSearch').addEventListener('input', renderOrdenes);
   document.getElementById('ocEstadoFilter').addEventListener('change', renderOrdenes);
-  document.getElementById('btnAddOc').addEventListener('click', function(){ openOcModal(); });
+  document.getElementById('btnAddOc').addEventListener('click', function(){ cotElegirParaOrden(); });
 
   function renderOcDiasSemana(){
     var box = document.getElementById('ocDiasSemana');
@@ -6405,19 +6572,47 @@
         '<button type="button" class="btn sm" id="ocFileRemoveBtn" style="margin-left:8px;">Quitar</button>';
       document.getElementById('ocFileRemoveBtn').addEventListener('click', function(){ state.ocArchivo = null; state.ocArchivoRemoved = true; renderOcFileCurrent(); });
     } else {
-      box.innerHTML = '<span class="no-file">Sin archivo adjunto.</span>';
+      box.innerHTML = '';
     }
   }
   document.getElementById('ocFileInput').addEventListener('change', function(e){
     var file = e.target.files && e.target.files[0];
     if(!file) return;
     extractOcFromFile(file);
+    /* Orden interna (2026-10-29): la OC del cliente se anexa como soporte de la orden (sin el límite de ~170 KB). */
+    var oidAnexo = state.editingOcId;
+    if(oidAnexo){
+      var oA = state.ordenes.get(oidAnexo) || {};
+      e.target.value = '';
+      toast('Anexando la OC del cliente…', 3000);
+      sopSubir(file, 'oc:'+oidAnexo, 'oc', {proyectoId: oA.proyectoId || '', ocId: oidAnexo}).then(function(){
+        toast('OC del cliente anexada a '+(oA.numero||'la orden')+'.');
+        if(document.getElementById('ocMedio').value === 'llamada') document.getElementById('ocMedio').value = 'orden_compra';
+        setTimeout(renderOcClienteAnexos, 600);
+      }).catch(function(err){ toast('No se pudo anexar: ' + (err && err.message ? err.message : 'error'), 6000); });
+      return;
+    }
     if(file.size > MAX_PROV_FILE_BYTES){ toast('La orden pesa '+fmtBytes(file.size)+': se leen sus datos, pero no se guarda como adjunto (máximo ~170 KB).', 5000); e.target.value=''; return; }
     readFileAsDataUrl(file).then(function(dataUrl){
       state.ocArchivo = {nombre:file.name, tipo:file.type||'application/octet-stream', tamano:file.size, datos:dataUrl};
       state.ocArchivoRemoved = false; e.target.value = ''; renderOcFileCurrent();
     }).catch(function(){ toast('No se pudo leer el archivo.'); });
   });
+
+  function renderOcClienteAnexos(){
+    var oid = state.editingOcId, box = document.getElementById('ocClienteAnexos'), est = document.getElementById('ocClienteEstado');
+    if(!box) return;
+    var lista = oid ? sopDe('oc:'+oid).filter(function(x){ return x.clase === 'oc'; }) : [];
+    box.innerHTML = lista.map(function(x){
+      return '<div class="sop-item"><div class="r-main"><strong>OC del cliente</strong><span>'+escapeHtml(x.nombre || '')+' · '+fmtShort(x.fecha)+'</span></div>'+
+        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button></div></div>';
+    }).join('') || (state.ocArchivo ? '' : '<span class="no-file">Aún no se ha anexado.</span>');
+    var o = oid ? Object.assign({}, state.ordenes.get(oid) || {}, {medio: document.getElementById('ocMedio').value}) : {};
+    var ok = oid && ocTieneOcCliente(oid, o);
+    if(est) est.innerHTML = !oid ? '' : (o.medio === 'llamada' ? '<span class="due ok">Autorizada por llamada · no lleva soporte</span>' : (ok ? '<span class="due ok">Anexa ✓</span>' : '<span class="due warning">Falta anexar · sin ella la orden no se cierra</span>'));
+  }
+  document.getElementById('ocClienteAnexos').addEventListener('click', function(e){ var b = e.target.closest('[data-sop-ver]'); if(b) sopVer(b.dataset.sopVer); });
+  document.getElementById('ocMedio').addEventListener('change', renderOcClienteAnexos);
 
   function ocCotizacionOptions(selectedId){
     var sel = document.getElementById('ocCotizacion');
@@ -6436,11 +6631,12 @@
     if(id && !state.ordenes.get(id)){ toast('No se pudo cargar esa orden.'); return; }
     state.editingOcId = id || null;
     var o = id ? state.ordenes.get(id) : {};
-    document.getElementById('ocModalTitle').textContent = id ? 'Orden de compra '+(o.numero||'') : 'Registrar orden de compra';
+    document.getElementById('ocModalTitle').textContent = id ? 'Orden interna '+(o.numero||'') : 'Orden interna';
     document.getElementById('ocNumero').value = o.numero || '';
     document.getElementById('ocNumero').placeholder = 'Se asigna al guardar (' + nextOcNumero() + ')';
     document.getElementById('ocNumeroCliente').value = o.numeroCliente || '';
-    document.getElementById('ocEstado').value = o.estado || 'recibida';
+    document.getElementById('ocEstado').value = o.estado || 'en_ejecucion';
+    document.getElementById('ocEstado').disabled = o.estado === 'anulada';
     ocCotizacionOptions(o.cotizacionId || presetCotId || '');
     document.getElementById('ocCotizacion').disabled = !!id;
     document.getElementById('ocMedio').value = o.medio || 'orden_compra';
@@ -6479,6 +6675,12 @@
     renderOcRetraso();
     document.getElementById('ocPfMonto').dataset.tocado = ''; document.getElementById('ocPfLink').value = '';
     renderOcPrefacturas();
+    renderOcClienteAnexos();
+    var bq = document.getElementById('ocBloqueoNota'), cB = state.cotizaciones.get(o.cotizacionId) || {};
+    bq.hidden = !id;
+    bq.innerHTML = o.estado === 'anulada'
+      ? '<strong>Orden anulada.</strong> La cotización volvió a quedar editable.'
+      : '<strong>Aprobado:</strong> '+escapeHtml(cB.numero || o.cotizacionNumero || '')+' v'+(o.cotizacionVersion || cB.version || 1)+' por '+fmtMoney.format(Number(o.valor)||0)+'. Para cambiarlo, pasa la orden a «Anulada».';
     document.getElementById('ocOverlay').classList.add('open');
   }
   function closeOcModal(){ document.getElementById('ocOverlay').classList.remove('open'); state.editingOcId = null; }
@@ -6496,10 +6698,17 @@
     if(f.modalidad==='intercalados' && !f.diasSemana.length){ toast('Marca al menos un día de la semana.'); return; }
     var c = state.cotizaciones.get(cotId) || {};
     var estadoSel = document.getElementById('ocEstado').value;
+    var anulando = estadoSel === 'anulada' && prev.estado !== 'anulada' && !!state.editingOcId;
+    if(anulando && !state.ocAnularOk){
+      confirmDialog('¿Anular '+(prev.numero||'la orden')+'? '+(c.numero||'La cotización')+' vuelve a «Enviada» y queda editable. Si el cliente la aprueba de nuevo, se pasa a orden otra vez como la versión '+((Number(c.version)||1)+1)+'.', 'Anular orden')
+        .then(function(ok){ if(ok){ state.ocAnularOk = true; document.getElementById('ocSave').click(); } });
+      return;
+    }
+    state.ocAnularOk = false;
     if(estadoSel !== 'anulada'){
       var cuad = ocCuadra({cotizacionId: cotId}, document.getElementById('ocValor').value);
       if(!cuad.ok){ toast(cuad.motivo+' Corrige la cotización (o pide al cliente la OC correcta) antes de guardar: la factura debe salir con el mismo valor.', 9000); document.getElementById('ocValor').focus(); return; }
-      if(estadoSel === 'facturada' && !state.ocArchivo && !(prev.archivoDatos && !state.ocArchivoRemoved) && !document.getElementById('ocNumeroCliente').value.trim()){
+      if(estadoSel === 'facturada' && !state.ocArchivo && !(prev.archivoDatos && !state.ocArchivoRemoved) && !document.getElementById('ocNumeroCliente').value.trim() && !ocTieneOcCliente(state.editingOcId, {medio: document.getElementById('ocMedio').value})){
         toast('Para marcarla «Facturada» adjunta la OC del cliente o escribe su número: la factura en Siigo debe citarla.', 7000); return; }
     }
     if(ocRetrasoAplica() && !document.getElementById('ocRetrasoMotivo').value){
@@ -6525,6 +6734,7 @@
       estado: estado,
       cotizacionId: cotId,
       cotizacionNumero: c.numero || '',
+      cotizacionVersion: prev.cotizacionVersion || null,
       cliente: c.cliente || prev.cliente || '',
       proyectoId: c.proyectoId || '',
       medio: document.getElementById('ocMedio').value,
@@ -6570,18 +6780,27 @@
           tasks.push(db.collection('cotizaciones').doc(cotId).update(upd).then(function(){ return syncAutoEventsFor('cotizacion', cotId); }));
         }
       }
-      return Promise.all(tasks).then(function(){ toast('Orden '+data.numero+' guardada y agenda actualizada'); closeOcModal(); });
+      /* Anulada (2026-10-29): la cotización vuelve a «Enviada» y queda editable; al aprobarse de nuevo pasa como la versión siguiente. */
+      if(anulando && state.cotizaciones.get(cotId)){
+        var updA = {estado:'enviada', versionAnulada: Number(c.version) || 1, fechaAceptacion: null, inicioEstimado: null};
+        state.cotizaciones.set(cotId, Object.assign({}, c, updA));
+        tasks.push(db.collection('cotizaciones').doc(cotId).update(updA).then(function(){ return syncAutoEventsFor('cotizacion', cotId); }));
+      }
+      return Promise.all(tasks).then(function(){ toast(anulando ? 'Orden '+data.numero+' anulada · '+(c.numero||'la cotización')+' quedó editable' : 'Orden '+data.numero+' guardada y agenda actualizada', anulando ? 6000 : undefined); closeOcModal(); renderAll(); syncProyEstadosPronto(); });
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
 
-  document.getElementById('cotRegistrarOcBtn').addEventListener('click', function(){
-    var cid = state.editingCotId; if(!cid) return;
-    var existing = null;
-    state.ordenes.forEach(function(o, oid){ if(!existing && o.cotizacionId===cid && o.estado!=='anulada') existing = oid; });
-    closeCotModal();
-    if(existing){ toast('Esta cotización ya tiene orden de compra — te la abro.'); openOcModal(existing); }
-    else openOcModal(null, cid);
-  });
+  /* «Pasar a orden» / «Ver orden» en el formulario y en la vista previa de la cotización (2026-10-29) */
+  function cotBotonOrdenClic(cid){
+    if(!cid) return;
+    var act = cotOrdenActiva(cid);
+    if(act){ closeCotModal(); closePreviewSiAbierta(); openOcModal(act._id); return; }
+    var c = state.cotizaciones.get(cid) || {};
+    if(state.editingCotId === cid && document.getElementById('cotEstado').value !== c.estado){ toast('Primero guarda los cambios de la cotización.'); return; }
+    cotPasarAOrden(cid);
+  }
+  document.getElementById('cotRegistrarOcBtn').addEventListener('click', function(){ cotBotonOrdenClic(state.editingCotId); });
+  document.getElementById('previewPasarOrden').addEventListener('click', function(){ cotBotonOrdenClic(state.previewingCotId); });
 
   document.getElementById('evtGoOrigen').addEventListener('click', function(){
     var e = state.editingEvtId ? state.eventos.get(state.editingEvtId) : null;
@@ -6853,13 +7072,12 @@
         }
       }
       if(d.numeroOrdenCliente){ document.getElementById('ocNumeroCliente').value = d.numeroOrdenCliente; markAutofilled('ocNumeroCliente'); filled.push('N.° de orden del cliente'); }
-      if(d.fechaOrden && /^\d{4}-\d{2}-\d{2}$/.test(d.fechaOrden)){ document.getElementById('ocFechaRecepcion').value = d.fechaOrden; markAutofilled('ocFechaRecepcion'); filled.push('fecha'); }
-      if(d.valorTotal != null && !isNaN(Number(d.valorTotal)) && Number(d.valorTotal) > 0){ document.getElementById('ocValor').value = Math.round(Number(d.valorTotal)); markAutofilled('ocValor'); filled.push('valor'); }
+      /* La fecha de aprobación y el valor aprobado de la orden interna no los cambia la OC del cliente: si su valor es otro, solo se avisa. */
       if(d.plazoPagoDias != null && !isNaN(Number(d.plazoPagoDias))){ document.getElementById('ocPlazoPago').value = Number(d.plazoPagoDias); markAutofilled('ocPlazoPago'); filled.push('plazo de pago'); }
       if(d.fechaInicio && /^\d{4}-\d{2}-\d{2}$/.test(d.fechaInicio)){ document.getElementById('ocFechaInicio').value = d.fechaInicio; markAutofilled('ocFechaInicio'); filled.push('inicio de labores'); }
       if(d.anticipoPct != null && Number(d.anticipoPct) > 0){ document.getElementById('ocAnticipoPct').value = Number(d.anticipoPct); markAutofilled('ocAnticipoPct'); filled.push('anticipo'); renderOcPagosSummary(); }
       if(d.diasInstalacion != null && Number(d.diasInstalacion) > 0){ document.getElementById('ocDiasInst').value = Number(d.diasInstalacion); markAutofilled('ocDiasInst'); filled.push('días de instalación'); }
-      document.getElementById('ocMedio').value = isEml ? 'correo' : 'orden_compra';
+      if(isEml) document.getElementById('ocMedio').value = 'correo'; else if(isPdf) document.getElementById('ocMedio').value = 'orden_compra';
       if(d.observaciones){
         var notas = document.getElementById('ocNotas');
         if(notas.value.indexOf(d.observaciones) === -1) notas.value = (notas.value ? notas.value + '\n' : '') + 'Según la orden: ' + d.observaciones;
@@ -6870,7 +7088,7 @@
       if(!cotSel.value) warn = '<br><strong style="color:var(--warning);">No se identificó la cotización con seguridad: elígela tú.</strong>';
       var cSel = cotSel.value ? state.cotizaciones.get(cotSel.value) : null;
       if(cSel && d.valorTotal && Math.round(Number(d.valorTotal)) !== Math.round(cotTotal(cSel))){
-        warn += '<br><strong style="color:var(--critical);">El valor de la orden ('+fmtMoney.format(Number(d.valorTotal))+') no coincide con el cotizado ('+fmtMoney.format(cotTotal(cSel))+'). No se podrá guardar así.</strong>';
+        warn += '<br><strong style="color:var(--critical);">El valor de la OC del cliente ('+fmtMoney.format(Number(d.valorTotal))+') no coincide con lo aprobado ('+fmtMoney.format(cotTotal(cSel))+'). Pídele al cliente la OC corregida: la factura sale por lo aprobado.</strong>';
       }
       var dig = function(x){ return String(x||'').replace(/\D/g,'').replace(/\d$/,''); };   /* sin dígito de verificación */
       if(cSel && d.nit && cSel.clienteNit && dig(d.nit) && dig(cSel.clienteNit) && dig(d.nit) !== dig(cSel.clienteNit)){
@@ -8682,7 +8900,7 @@
       var o = state.ordenes.get(m.ocId) || {}, enOc = sopDe('oc:'+m.ocId), enPago = sopDe(m.soporteRef), todos = enOc.concat(enPago);
       var tiene = function(k){ return todos.some(function(x){ return x.clase === k; }); };
       if(!tiene('factura')) r.falta.push('factura electrónica');
-      if(!o.archivoNombre && !tiene('oc')) r.falta.push('orden de compra del cliente');
+      if(!o.archivoNombre && !tiene('oc') && o.medio !== 'llamada') r.falta.push('orden de compra del cliente');
       if(!enPago.some(function(x){ return x.clase === 'comprobante'; })) r.falta.push('comprobante del pago');
       r.n = todos.length + (o.archivoNombre ? 1 : 0);
     } else {
@@ -8786,8 +9004,8 @@
     var req = esCobro ? [['factura','Factura electrónica'],['oc','Orden de compra del cliente'],['comprobante','Comprobante del pago']] : [['any','Factura, comprobante o recibo']];
     var lista = sopDe(m.soporteRef).concat(esCobro ? sopDe('oc:'+m.ocId).map(function(x){ x._deOrden = true; return x; }) : []);
     document.getElementById('sopCheck').innerHTML = !st.aplica ? '<div class="no-file">Queda pendiente: se pide al pagarse.</div>' : req.map(function(r){
-      var ok = r[0] === 'any' ? lista.length > 0 : (lista.some(function(x){ return x.clase === r[0]; }) || (r[0] === 'oc' && o && o.archivoNombre));
-      return '<div class="sop-req '+(ok ? 'ok' : '')+'"><span>'+(ok ? '✓' : '○')+'</span>'+r[1]+(r[0] === 'oc' && o && o.archivoNombre ? ' <small>(adjunta en la orden)</small>' : '')+'</div>';
+      var ok = r[0] === 'any' ? lista.length > 0 : (lista.some(function(x){ return x.clase === r[0]; }) || (r[0] === 'oc' && o && (o.archivoNombre || o.medio === 'llamada')));
+      return '<div class="sop-req '+(ok ? 'ok' : '')+'"><span>'+(ok ? '✓' : '○')+'</span>'+r[1]+(r[0] === 'oc' && o && o.medio === 'llamada' ? ' <small>(autorizada por llamada: no lleva)</small>' : (r[0] === 'oc' && o && o.archivoNombre ? ' <small>(adjunta en la orden)</small>' : ''))+'</div>';
     }).join('');
     document.getElementById('sopLista').innerHTML = lista.length ? lista.map(function(x){
       return '<div class="sop-item"><div class="r-main"><strong>'+escapeHtml(SOP_CLASES[x.clase] || 'Soporte')+'</strong><span>'+escapeHtml(x.nombre || '')+(x._deOrden ? ' · de la orden' : '')+' · '+fmtShort(x.fecha)+'</span></div>'+
@@ -8848,7 +9066,7 @@
       if(o.proyectoId !== pid || o.estado === 'anulada') return;
       var cq = ocCuadra(o); if(!cq.ok) out.push({t:(o.numero||'OC')+': '+cq.motivo, oc:oid});
       var sal = ocSaldo(o); if(sal > 0) out.push({t:(o.numero||'OC')+': falta cobrar '+fmtMoney.format(sal), oc:oid});
-      var pend = ocPendientesObra(o); if(pend.length) out.push({t:(o.numero||'OC')+': '+pend.length+' pago(s) de la obra sin marcar pagados', oc:oid});
+      var pend = ocPendientesObra(o); if(pend.length) out.push({t:(o.numero||'OC')+': falta '+pend.join(', '), oc:oid});
     });
     var sop = proySoportesFaltan(pid); if(sop.length) out.push({t:sop.length+' movimiento(s) sin soporte'});
     pausa.forEach(function(x){ out.push({t:(x.c.numero||'Cotización')+' está en pausa: pásala a un proyecto nuevo', pausa:x.id}); });
@@ -9265,7 +9483,7 @@
     if(!window.claude || !window.claude.use) return;
     window.claude.use('user').then(function(u){ return u && u.isOwner ? u.isOwner() : false; }).then(function(esAdmin){
       if(!esAdmin) return;
-      fin.admin = true; asegurarProyInternos();
+      fin.admin = true; asegurarProyInternos(); migrarOrdenesAOnt();
       document.querySelectorAll('.fin-admin').forEach(function(el){ el.hidden = false; });
       renderPrecios(); precSembrar(); renderClientes();
       db.collection('finMovimientos').onSnapshot(function(snap){ fin.movs = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; })); fin.movsCargados = true; asignarProyInternosAMovs(); renderFinanzas(); renderResumen(); });
@@ -9650,19 +9868,19 @@
       db.collection('ordenesCompra').onSnapshot(function(snap){
         state.ordenes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.ordenes = true;
-        renderAll(); scheduleReconcile();
+        renderAll(); scheduleReconcile(); syncProyEstadosPronto(); migrarOrdenesAOnt();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('cotizaciones').onSnapshot(function(snap){
         state.cotizaciones = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.cotizaciones = true;
-        renderAll(); scheduleReconcile();
+        renderAll(); scheduleReconcile(); syncProyEstadosPronto();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('proyectos').onSnapshot(function(snap){
         state.proyectos = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.proyectos = true; asegurarProyInternos(); try { asignarProyInternosAMovs(); } catch(e){}
-        renderAll();
+        renderAll(); syncProyEstadosPronto();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('eventos').onSnapshot(function(snap){
@@ -9691,6 +9909,8 @@
         state.soportes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         try { renderFinanzas(); } catch(e){}
         if(sopCtx) renderSoportes();
+        if(state.editingOcId) renderOcClienteAnexos();
+        try { renderOrdenes(); } catch(e){}
         if(document.getElementById('proyOverlay').classList.contains('open') && state.editingProyId) renderProySoportes(state.editingProyId);
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
@@ -11922,7 +12142,7 @@
     state.previewingCotId = null; state.previewingPfId = null;
     state.previewingFormato = {tipo: tipo, nombre: spec.nombre(datos) + '.pdf', titulo: spec.tituloDoc + ' ' + (datos.numero || '')};
     document.getElementById('previewDoc').innerHTML = spec.render(datos, spec);
-    document.getElementById('previewOverlay').classList.add('open');
+    botonOrdenCot(document.getElementById('previewPasarOrden'), state.previewingCotId); document.getElementById('previewOverlay').classList.add('open');
   }
   function fmtGuardar(){
     var db = requireDb(); var d = fmtLeer(); if(!db || !d) return Promise.resolve(null);

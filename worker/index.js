@@ -14,6 +14,9 @@ const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProvee
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
+// Lo que el cliente aprobó: no cambia mientras la cotización tenga una orden interna (ONT) activa.
+const COT_FIJOS = ['items', 'personal', 'costosAdicionales', 'costingMode', 'ivaPct', 'aiuAdministracionPct', 'aiuImprevistosPct', 'aiuUtilidadPct', 'ivaBase',
+  'condiciones', 'cliente', 'clienteNit', 'descripcion', 'valor', 'version', 'fecha', 'margenCat', 'margenPct', 'margenSobreVenta', 'proyectoId', 'vigenciaDias'];
 /* Soportes (facturas, comprobantes, recibos): el archivo no viaja en la sincronización, se pide uno por uno.
    Los ligados a movimientos de Finanzas son privados: solo administración los ve o los cambia. */
 /* Documentos de la empresa (RUT, certificación bancaria, cámara de comercio…): los sube solo administración
@@ -337,8 +340,26 @@ async function escribir(req, env, s, col, id, metodo) {
     return err(403, 'regla', 'La alerta comercial de un cliente solo la escribe administración.');
   }
   // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
-  if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero) {
+  // Única excepción (2026-10-29): administración pasa una orden vieja OC-0001 a orden interna ONT-0001 (mismo consecutivo).
+  const ocAOnt = col === 'ordenesCompra' && s.admin && previo && /^OC-\d+$/.test(String(previo.numero || '')) && data.numero === String(previo.numero).replace(/^OC-/, 'ONT-');
+  if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero && !ocAOnt) {
     return err(403, 'regla', 'El número de registro ' + previo.numero + ' no se puede modificar.');
+  }
+  // Orden interna (2026-10-29): lo que el cliente aprobó queda fijo. Una cotización con orden activa no cambia
+  // su contenido ni su estado; una orden no cambia de cotización ni de valor, y una anulada no se reactiva.
+  if (col === 'cotizaciones' && previo) {
+    const ont = await env.DB.prepare("SELECT data FROM docs WHERE col = 'ordenesCompra' AND json_extract(data, '$.cotizacionId') = ? AND IFNULL(json_extract(data, '$.estado'), '') <> 'anulada' LIMIT 1").bind(id).first();
+    if (ont) {
+      const o = JSON.parse(ont.data), n = (v) => JSON.stringify(v === undefined ? null : v);
+      const cambio = COT_FIJOS.some((k) => n(previo[k]) !== n(data[k])) || (data.estado !== 'aprobada' && data.estado !== previo.estado);
+      if (cambio) return err(403, 'regla', (previo.numero || 'La cotización') + ' está aprobada en la orden ' + (o.numero || '') + ': para cambiarla, anula la orden.');
+    }
+  }
+  if (col === 'ordenesCompra' && previo) {
+    if (previo.estado === 'anulada' && data.estado !== 'anulada') return err(403, 'regla', 'Una orden anulada no se reactiva: pasa la cotización a orden otra vez.');
+    if (previo.estado !== 'anulada' && previo.cotizacionId && (data.cotizacionId !== previo.cotizacionId || (previo.valor != null && Number(data.valor) !== Number(previo.valor)))) {
+      return err(403, 'regla', 'La orden ' + (previo.numero || '') + ' conserva la cotización y el valor que aprobó el cliente.');
+    }
   }
   const txt = JSON.stringify(data);
   if (txt.length > 1800000) return err(413, 'tamano', 'El registro es demasiado grande (adjunto muy pesado).');

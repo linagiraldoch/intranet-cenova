@@ -20,7 +20,7 @@ Todo corre en **Cloudflare**, con plan gratuito:
 | Primer ingreso | Las contraseñas iniciales viven en un secreto (`CLAVES_INICIALES`), nunca en el código. Al entrar, cada persona debe crear la suya: mínimo 10 caracteres, con letras y números, sin contener el usuario. |
 | Sesión | Cookie `HttpOnly`, `Secure` y `SameSite=Strict`, más una clave por pestaña. Una ventana o pestaña nueva pide ingresar otra vez. El servidor cierra la sesión tras 15 min sin actividad y a las 12 h como máximo. |
 | Intentos fallidos | Con 5 intentos seguidos la cuenta se bloquea 15 minutos. El mensaje nunca dice si el usuario existe. |
-| Reglas de datos | Los números COT y OC no se pueden cambiar. Las órdenes de compra no se borran (solo administración). Importar respaldos es solo para administración. Cada cambio queda en la tabla `auditoria`. |
+| Reglas de datos | Los números COT y ONT no se pueden cambiar (única excepción: administración pasa una OC-xxxx vieja a ONT-xxxx). Una cotización con orden interna activa no cambia su contenido ni su estado, y la orden conserva su cotización y su valor; una orden anulada no se reactiva. Las órdenes de compra no se borran (solo administración). Importar respaldos es solo para administración. Cada cambio queda en la tabla `auditoria`. |
 | Correo | Solo se puede enviar a correos del equipo, así que nadie puede usar la intranet para mandar spam. |
 | Navegador | Política de contenido (CSP), HSTS, bloqueo de marcos (anti-clickjacking) y protección CSRF. |
 
@@ -163,3 +163,10 @@ npx wrangler dev
 - **Versión**: si la cotización ya estaba enviada y cambia su contenido, sube sola (salvo que se haya cambiado a mano).
 - Lo que se compara es el formulario tal como se abrió (ya autocompletado), así que cambiar solo el responsable, el estado o el proyecto no mueve la fecha.
 - **Última edición**: cotizaciones y órdenes guardan `editadoEn` y `editadoPorId`; se muestra bajo la fecha de la cotización y bajo la fecha de recepción de la orden. La fecha de recepción de la orden no cambia sola (es el día en que llegó).
+
+## Orden interna ONT (2026-10-29)
+
+- «Pasar a orden» (vista previa y formulario de la cotización, o el estado «Aprobada» de la tabla) = el cliente aprobó: la cotización queda Aprobada y se crea la orden interna `ONT-xxxx` En ejecución, con el valor aprobado y cómo se aprobó (`medio`: documento, correo, mensaje, llamada u otro). Se guarda `cotizacionVersion`.
+- Lo aprobado queda fijo (también en el servidor). Para cambiarlo se anula la orden: la cotización vuelve a «Enviada» (`versionAnulada`), se puede editar y, al pasarla a orden otra vez, sale como la versión siguiente.
+- La OC del cliente se anexa dentro de la orden como soporte (`ref: 'oc:<orden>'`, `clase: 'oc'`). La obra arranca sin ella, pero la orden no se cierra (ni el proyecto se finaliza) sin ella, salvo `medio: 'llamada'`.
+- El estado del proyecto lo pone la intranet: Pendiente (por armar, en proceso o en pausa) → Cotizado (enviada) → En ejecución (orden activa) → Finalizado (todo cerrado, solo con administración); Rechazado si todas sus cotizaciones se rechazaron. «Propuesta enviada» se unió a «Cotizado». Los proyectos sin cotizaciones y los internos se manejan a mano.
