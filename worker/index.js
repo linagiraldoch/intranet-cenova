@@ -21,7 +21,7 @@ const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
 const docVisible = (s, col, data) => s.admin || (!soloAdmin(col) && !(col === 'soportes' && data && data.privado) && !(col === 'docsEmpresa' && (!data || data.visibilidad !== 'todos')));
 // Precios: todos los ven; costos, márgenes y precios solo los cambia administración.
 // El equipo solo puede actualizar el stock y el contenido de los kits.
-const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'stockMin', 'ubicacion', 'componentes', 'editadoPor', 'editadoEn'];
+const PRECIOS_CAMPOS_EQUIPO = ['stock', 'stockNota', 'stockMin', 'ubicacion', 'familia', 'seccion', 'componentes', 'editadoPor', 'editadoEn'];
 // Inventario: todos registran movimientos (entradas, salidas, conteos); solo administración los cambia o borra.
 const COOKIE = 'cenova_sesion';
 const MAX_INTENTOS = 5;

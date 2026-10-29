@@ -428,6 +428,16 @@
   .vk-tag.ok{background:var(--success-soft); color:var(--success);} .vk-tag.warn{background:var(--warning-soft); color:var(--warning);} .vk-tag.crit{background:var(--critical-soft); color:var(--critical);}
   .vk-inv{display:grid; grid-template-columns:260px minmax(0,1fr); gap:14px; align-items:start;}
   .vk-grid-art{grid-template-columns:repeat(auto-fill,minmax(220px,1fr));}
+  .vk-grid-fam{display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:12px;}
+  .vk-fam{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius,14px); padding:16px; cursor:pointer; display:flex; flex-direction:column; gap:8px; transition:box-shadow .15s, transform .15s;}
+  .vk-fam:hover,.vk-fam:focus-visible{box-shadow:0 10px 24px -16px rgba(20,30,60,.4); transform:translateY(-1px); outline:none;}
+  .vk-fam-ico{font-size:28px; line-height:1;} .vk-fam h4{margin:0; font-size:15px; font-weight:600;}
+  .vk-fam-n{font-size:12.5px; color:var(--text-muted);} .vk-fam-n b{color:var(--text); font-size:15px;}
+  .vk-fam-est{display:flex; gap:6px; flex-wrap:wrap;} .vk-fam-v{font-size:12.5px; color:var(--text-muted); margin-top:auto;}
+  .vk-fam-top{display:flex; align-items:center; gap:14px; margin-bottom:10px; flex-wrap:wrap;} .vk-fam-top h3{margin:0; font-size:17px;}
+  .vk-sec{margin-bottom:18px;} .vk-sec h5{margin:0 0 8px; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted);}
+  .vk-sec-n{font-weight:500; text-transform:none; letter-spacing:0;} .vk-sec-n em{color:var(--warning); font-style:normal;}
+  @media (max-width:760px){ .vk-inv{grid-template-columns:1fr;} }
   .vk-art header b{font-size:13.5px; font-weight:600;}
   .vk-art-st{display:flex; align-items:baseline; gap:8px; font-size:12px; color:var(--text-muted);}
   .vk-art-n{font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:600; color:var(--text);}
@@ -3492,6 +3502,8 @@
         '</span><span class="vk-hb-v">'+(f.v || '')+'</span></div>'; }).join('')+'</div>';
   }
   document.addEventListener('click', function(e){
+    var fb = e.target.closest('[data-inv-fam]');
+    if(fb){ inv.familia = fb.getAttribute('data-inv-fam') || ''; renderInventario(); return; }
     var m = e.target.closest('[data-vk-inv]');
     if(m){ e.stopPropagation(); var pp = m.getAttribute('data-vk-inv').split(':'); openInvModal(pp[0], pp.slice(1).join(':')); return; }
     var b = e.target.closest('[data-vk-go]'); if(!b) return;
@@ -9772,6 +9784,7 @@
       if(t === 'material' || t === 'equipo'){
         h += '<div class="field-row">' + precCampo('Stock (lo que tenemos)', '<input type="number" id="precStock" min="0" step="1" value="'+(precNum(p.stock)==null?'':p.stock)+'" placeholder="Sin contar">') + precCampo('Nota del stock', '<input type="text" id="precStockNota" value="'+escapeHtml(p.stockNota||'')+'" placeholder="De qué obra sobró, estado…">') + '</div>';
         h += '<div class="field-row">' + precCampo('Stock mínimo', '<input type="number" id="precStockMin" min="0" step="1" value="'+(precNum(p.stockMin)==null?'':p.stockMin)+'" placeholder="Sin mínimo">', 'Avisa en Inventario cuando queda en este número o menos.') + precCampo('Ubicación', '<input type="text" id="precUbicacion" value="'+escapeHtml(p.ubicacion||'')+'" placeholder="Bodega, oficina, camioneta…">') + '</div>';
+        h += '<div class="field-row">' + precCampo('Familia', '<select id="precFamilia"><option value="">Automática (por el nombre)</option>'+INV_FAMILIAS.map(function(f){ return '<option value="'+f.id+'"'+(p.familia===f.id?' selected':'')+'>'+escapeHtml(f.nombre)+'</option>'; }).join('')+'</select>') + precCampo('Sección', '<input type="text" id="precSeccion" value="'+escapeHtml(p.seccion||'')+'" placeholder="'+escapeHtml(invClasif(p).sec)+'">', 'Déjala vacía para que se ubique sola.') + '</div>';
         h += '<div class="no-file">Las entradas y salidas se registran en <strong>Inventario</strong> (quedan con fecha, obra y quién). Si cambias el stock aquí, se guarda como un ajuste de conteo.</div>';
       }
     }
@@ -9841,7 +9854,7 @@
     if(!admin){
       var upd = {editadoEn: hoy, editadoPor: state.userId || null};
       if(t === 'kit') upd.componentes = prec.edit.componentes;
-      else { upd.stock = precNum(v('precStock')); upd.stockNota = (v('precStockNota')||'').trim(); upd.stockMin = precNum(v('precStockMin')); upd.ubicacion = (v('precUbicacion')||'').trim(); }
+      else { upd.stock = precNum(v('precStock')); upd.stockNota = (v('precStockNota')||'').trim(); upd.stockMin = precNum(v('precStockMin')); upd.ubicacion = (v('precUbicacion')||'').trim(); upd.familia = v('precFamilia') || ''; upd.seccion = (v('precSeccion')||'').trim(); }
       var antes0 = state.precios.get(prec.editId) || {}, id0 = prec.editId;
       db.collection('precios').doc(prec.editId).update(upd).then(function(){ if(t !== 'kit') invAjusteDesdePrecios(id0, antes0, upd.stock); toast('Guardado'); closePrecioModal(); })
         .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
@@ -9866,7 +9879,7 @@
       data.componentes = prec.edit.componentes; data.margen = precNum(v('precMargen'));
     } else {
       data.costo = precNum(v('precCosto')); data.margen = precNum(v('precMargen'));
-      if(t === 'material' || t === 'equipo'){ data.stock = precNum(v('precStock')); data.stockNota = (v('precStockNota')||'').trim(); data.stockMin = precNum(v('precStockMin')); data.ubicacion = (v('precUbicacion')||'').trim(); }
+      if(t === 'material' || t === 'equipo'){ data.stock = precNum(v('precStock')); data.stockNota = (v('precStockNota')||'').trim(); data.stockMin = precNum(v('precStockMin')); data.ubicacion = (v('precUbicacion')||'').trim(); data.familia = v('precFamilia') || ''; data.seccion = (v('precSeccion')||'').trim(); }
     }
     if(data.margen != null && (data.margen < 0 || data.margen >= 95)){ toast('El margen debe estar entre 0 y 95 %.'); return; }
     var col = db.collection('precios');
@@ -10121,13 +10134,99 @@
      El equipo registra movimientos; solo administración los borra.
      ===================================================================== */
   state.inventario = new Map();
-  var inv = {tab: 'existencias', filtro: '', tipo: 'entrada', articuloId: '', movId: null};
+  var inv = {tab: 'existencias', filtro: '', tipo: 'entrada', articuloId: '', movId: null, familia: ''};
   var INV_TIPOS = {
     entrada:    {lbl: 'Entrada', badge: 'ok', signo: 1, ayuda: 'Compra o material que llega a la bodega.'},
     salida:     {lbl: 'Salida a obra', badge: 'acc', signo: -1, ayuda: 'Material que se lleva a una obra.'},
     devolucion: {lbl: 'Devolución de obra', badge: 'ok', signo: 1, ayuda: 'Lo que sobró de una obra y vuelve a la bodega.'},
     ajuste:     {lbl: 'Conteo / ajuste', badge: 'warn', signo: 0, ayuda: 'Escribe cuánto hay de verdad; se guarda la diferencia.'}
   };
+
+  /* Familias del inventario: tarjetas generales que al abrirse se dividen en secciones.
+     Se clasifican solas por el nombre; si hace falta, el artículo trae familia/seccion propias. */
+  var INV_FAMILIAS = [
+    {id:'video', nombre:'Cámaras y video', ico:'📹', secs:[
+      ['Cámaras', /c[aá]mara|domo|bullet|\bptz\b|\bcam\b|lente|mini ?domo|ojo de pez/i],
+      ['Grabadores', /\bdvr\b|\bnvr\b|\bxvr\b|grabador/i],
+      ['Almacenamiento', /disco|\bhdd\b|\bssd\b|micro ?sd|memoria/i],
+      ['Monitores y pantallas', /monitor|pantalla|\btv\b|televisor/i]]},
+    {id:'redes', nombre:'Radios y redes', ico:'📡', secs:[
+      ['Radios y antenas', /radio|antena|nano ?station|nanostation|enlace|litebeam|powerbeam|ubiquiti|cambium/i],
+      ['Switches y PoE', /switch|\bpoe\b|inyector|hub/i],
+      ['Routers y access point', /router|mikrotik|access ?point|\bap\b|wifi|wi-fi|repetidor/i]]},
+    {id:'cableado', nombre:'Cableado y conectores', ico:'🔌', secs:[
+      ['Conectores', /conector|rj ?45|\bbnc\b|balun|jack|plug|\bdc\b|terminal|bornera|empalme/i],
+      ['Cables', /cable|\butp\b|coaxial|fibra|siamés|siames|cat ?[56]|alambre|duplex|vehicular/i],
+      ['Patch cords y paneles', /patch|parche|panel|organizador/i]]},
+    {id:'energia', nombre:'Energía', ico:'🔋', secs:[
+      ['Fuentes y cargadores', /fuente|cargador|adaptador|transformador|regulador/i],
+      ['UPS y baterías', /\bups\b|bater[ií]a|inversor|solar|panel solar/i]]},
+    {id:'montaje', nombre:'Soportes y canalización', ico:'🧰', secs:[
+      ['Tubería y canaleta', /tubo|conduit|canaleta|\bemt\b|\bpvc\b|manguera|bandeja|poliducto|ducto/i],
+      ['Cajas y gabinetes', /\bcaja\b|gabinete|\brack\b|armario|tapa|sobreponer/i],
+      ['Soportes y bases', /soporte|base|abrazadera|brazo|poste|riel|ménsula|mensula|bracket|escuadra/i],
+      ['Tornillería y fijación', /tornillo|chazo|tarugo|puntilla|tuerca|arandela|remache|grapa|chaz[oó]n|esp[aá]rrago|ancla|perno/i],
+      ['Amarres y cintas', /amarre|cinta|bridas?|precinto|velcro|aislante|espiral|silicona|sellante|chazo/i]]},
+    {id:'herramientas', nombre:'Herramientas y equipos de trabajo', ico:'🪜', secs:[
+      ['Alturas', /escalera|arn[eé]s|l[ií]nea de vida|andamio|casco|eslinga/i],
+      ['Herramienta eléctrica', /taladro|rotomartillo|pulidora|sierra|atornillador|caladora/i],
+      ['Herramienta de red', /crimpadora|ponchadora|probador|tester|multímetro|multimetro|ponchad|pelacable|fusionadora|medidor/i],
+      ['Herramienta manual', /alicate|destornillador|llave|martillo|cuchilla|nivel|flex[oó]metro|tijera/i]]},
+    {id:'otros', nombre:'Insumos sueltos y otros', ico:'📦', secs:[]}
+  ];
+  function invClasif(p){
+    var nom = String(p.nombre||''), famId = null, sec = null, i, j;
+    if(p.familia){
+      for(i = 0; i < INV_FAMILIAS.length; i++) if(INV_FAMILIAS[i].id === p.familia){ famId = p.familia; break; }
+    }
+    if(!famId){
+      var hit = null;
+      for(i = 0; i < INV_FAMILIAS.length && !hit; i++){
+        for(j = 0; j < INV_FAMILIAS[i].secs.length; j++){
+          if(INV_FAMILIAS[i].secs[j][1].test(nom)){ hit = [INV_FAMILIAS[i].id, INV_FAMILIAS[i].secs[j][0]]; break; }
+        }
+      }
+      if(hit){ famId = hit[0]; sec = hit[1]; }
+      else famId = p.tipo === 'equipo' ? 'herramientas' : 'otros';
+    } else if(!p.seccion){
+      var f0 = INV_FAMILIAS.filter(function(f){ return f.id === famId; })[0];
+      for(j = 0; j < f0.secs.length; j++) if(f0.secs[j][1].test(nom)){ sec = f0.secs[j][0]; break; }
+    }
+    if(p.seccion) sec = String(p.seccion).trim();
+    return {fam: famId, sec: sec || 'Sin sección'};
+  }
+  function invFamilia(id){ return INV_FAMILIAS.filter(function(f){ return f.id === id; })[0]; }
+  function vkFamCard(f, arts){
+    var n = {ok:0, bajo:0, agotado:0, sin:0}, valor = 0, secs = {};
+    arts.forEach(function(p){
+      n[invEstado(p).k]++; secs[invClasif(p).sec] = 1;
+      var st = precNum(p.stock), k = precNum(p.costo); if(st != null && k != null) valor += st * k;
+    });
+    var alerta = n.bajo + n.agotado;
+    return '<article class="vk-fam" data-inv-fam="'+f.id+'" role="button" tabindex="0">'+
+      '<div class="vk-fam-ico" aria-hidden="true">'+f.ico+'</div>'+
+      '<h4>'+escapeHtml(f.nombre)+'</h4>'+
+      '<div class="vk-fam-n"><b>'+arts.length+'</b> artículo'+(arts.length === 1 ? '' : 's')+' · '+Object.keys(secs).length+' sección'+(Object.keys(secs).length === 1 ? '' : 'es')+'</div>'+
+      '<div class="vk-fam-est">'+(alerta ? '<span class="fin-badge warn">'+alerta+' por reponer</span>' : '<span class="fin-badge ok">Todo en orden</span>')+(n.sin ? '<span class="fin-badge">'+n.sin+' sin contar</span>' : '')+'</div>'+
+      (valor ? '<div class="vk-fam-v">'+fmtMoney.format(valor)+'</div>' : '')+'</article>';
+  }
+  function vkFamDetalle(f, arts){
+    var grupos = {}, orden = [];
+    arts.forEach(function(p){ var c = invClasif(p).sec; if(!grupos[c]){ grupos[c] = []; orden.push(c); } grupos[c].push(p); });
+    var ref = f.secs.map(function(x){ return x[0]; });
+    orden.sort(function(a, b){
+      var ia = ref.indexOf(a), ib = ref.indexOf(b); if(ia < 0) ia = 99; if(ib < 0) ib = 99;
+      return ia - ib || a.localeCompare(b, 'es');
+    });
+    var h = '<div class="vk-fam-top"><button type="button" class="btn sm" data-inv-fam="">← Todas las familias</button><h3>'+f.ico+' '+escapeHtml(f.nombre)+'</h3></div>';
+    if(!arts.length) return h + '<p class="rs-vacio">Aún no hay artículos en esta familia.</p>';
+    orden.forEach(function(c){
+      var l = grupos[c].slice().sort(function(a, b){ return String(a.nombre||'').localeCompare(String(b.nombre||''), 'es'); });
+      var alerta = l.filter(function(p){ var e = invEstado(p).k; return e === 'bajo' || e === 'agotado'; }).length;
+      h += '<section class="vk-sec"><h5>'+escapeHtml(c)+' <span class="vk-sec-n">'+l.length+(alerta ? ' · <em>'+alerta+' por reponer</em>' : '')+'</span></h5><div class="vk-grid vk-grid-art">'+l.map(vkInvCard).join('')+'</div></section>';
+    });
+    return h;
+  }
   function invArticulos(){
     return precLista('material').concat(precLista('equipo'));
   }
@@ -10244,7 +10343,13 @@
           if(inv.filtro === 'sin' && e !== 'sin') return false;
           if((inv.filtro === 'material' || inv.filtro === 'equipo') && p.tipo !== inv.filtro) return false;
           return !q || [p.nombre, p.ubicacion, p.proveedor, p.stockNota, p.notas].join(' ').toLowerCase().indexOf(q) !== -1; });
-        h += '<div class="vk-inv">'+vkInvDonut(arts)+'<div class="vk-grid vk-grid-art">'+(artsF.map(vkInvCard).join('') || '<p class="rs-vacio">Nada coincide con el filtro.</p>')+'</div></div>';
+        var buscando = !!q || !!inv.filtro, fAb = inv.familia && invFamilia(inv.familia);
+        var cuerpo;
+        if(buscando) cuerpo = '<div class="vk-grid vk-grid-art">'+(artsF.map(vkInvCard).join('') || '<p class="rs-vacio">Nada coincide con el filtro.</p>')+'</div>';
+        else if(fAb) cuerpo = vkFamDetalle(fAb, arts.filter(function(p){ return invClasif(p).fam === fAb.id; }));
+        else cuerpo = '<div class="vk-grid vk-grid-fam">'+INV_FAMILIAS.map(function(f){
+          var l = arts.filter(function(p){ return invClasif(p).fam === f.id; }); return l.length ? vkFamCard(f, l) : ''; }).join('')+'</div>';
+        h += '<div class="vk-inv">'+vkInvDonut(arts)+'<div>'+cuerpo+'</div></div>';
       } else
       h += '<div class="table-wrap"><table><thead><tr><th>Artículo</th><th>Tipo</th><th class="num">Stock</th><th class="num">Mínimo</th><th class="num">Costo</th><th class="num">Valor</th><th>Estado</th><th></th></tr></thead><tbody>' +
         (rows.join('') || '<tr><td colspan="8" class="empty-state">Nada coincide con el filtro.</td></tr>') + '</tbody></table></div>';
