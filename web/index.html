@@ -545,6 +545,7 @@
   .stats-note{font-size:12px; color:var(--text-muted); margin:-4px 0 10px; line-height:1.5;}
   .readonly-num{background:var(--surface-2) !important; font-family:"IBM Plex Mono",monospace; font-weight:600; color:var(--accent-2) !important; cursor:not-allowed;}
   .info-box{background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; font-size:12.8px; line-height:1.55;}
+  .fin-abono-box{background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:10px 12px; font-size:12.8px; line-height:1.55;}
   .info-box strong{color:var(--text);}
   .info-box .muted{color:var(--text-muted);}
   .auto-banner{background:var(--accent-soft); color:var(--accent-2); border-radius:9px; padding:10px 12px; font-size:12.8px; line-height:1.5;}
@@ -2377,8 +2378,28 @@
       <div class="info-box" id="finMovFijoInfo" hidden></div>
       <div class="field-row three">
         <div class="field"><label>Fecha</label><input type="date" id="finMovFecha"></div>
-        <div class="field"><label>Monto (COP)</label><input type="number" id="finMovMonto" min="0" step="100" placeholder="$"></div>
+        <div class="field"><label id="finMovMontoLbl">Monto (COP)</label><input type="number" id="finMovMonto" min="0" step="100" placeholder="$"></div>
         <div class="field"><label>Estado</label><select id="finMovEstadoSel"><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option></select></div>
+      </div>
+      <div class="fin-abono-box" id="finMovAbonoBox" hidden>
+        <div id="finMovAbonoResumen"></div>
+        <div class="d-notes" id="finMovAbonoLista" style="margin-top:4px;"></div>
+        <button type="button" class="btn sm" id="finMovAbonoAbrir" style="margin-top:8px;">+ Registrar abono</button>
+        <div id="finMovAbonoForm" hidden style="margin-top:10px;">
+          <div class="field-row three">
+            <div class="field"><label>Fecha del abono</label><input type="date" id="finAbFecha"></div>
+            <div class="field"><label>Valor del abono</label><input type="number" id="finAbMonto" class="input-miles" min="0" step="100" placeholder="$"></div>
+            <div class="field"><label>Medio</label><select id="finAbMedio"><option value="transferencia">Transferencia</option><option value="efectivo">Efectivo</option><option value="tarjeta">Tarjeta</option><option value="otro">Otro</option></select></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label id="finAbCuentaLbl">Entra a la cuenta</label><select id="finAbCuenta"></select></div>
+            <div class="field"><label>Comprobante</label><input type="file" id="finAbSop" accept="application/pdf,image/*"></div>
+          </div>
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button type="button" class="btn sm" id="finAbCancelar">Cancelar abono</button>
+            <button type="button" class="btn sm primary" id="finAbGuardar">Guardar abono</button>
+          </div>
+        </div>
       </div>
       <div class="field-row" id="finMovCatRow">
         <div class="field"><label>Categoría</label><select id="finMovCategoria"></select></div>
@@ -8412,20 +8433,23 @@
     var h = '<div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proyecto</th><th>Cuenta</th><th>Estado</th><th>Soporte</th><th class="num">Monto</th></tr></thead><tbody>';
     list.forEach(function(m){
       var v = Number(m.monto)||0, signo = m.tipo === 'ingreso' ? 1 : (m.tipo === 'egreso' ? -1 : 0);
-      var desc = '<div class="d-title">'+escapeHtml(m.descripcion || finCatLabel(m))+'</div><div class="d-notes">'+escapeHtml([m.tercero, m.nota].filter(Boolean).join(' · '))+'</div>';
+      var desc = '<div class="d-title">'+escapeHtml(m.descripcion || finCatLabel(m))+'</div><div class="d-notes">'+escapeHtml([m.tercero, m.nota].filter(Boolean).join(' · '))+'</div>'+
+        ((m.abonos || []).length && m.fuente !== 'orden' ? '<div class="d-notes"><span class="fin-badge acc">'+(m.estado === 'pendiente' ? 'Abonado '+finMoney(finAbonosSuma(m))+' de '+finMoney(finMovTotal(m)) : 'Pagado en '+m.abonos.length+' abonos · total '+finMoney(finMovTotal(m)))+'</span></div>' : '');
       var cuenta = m.tipo === 'transferencia' ? escapeHtml(finCuentaNombre(m.cuentaId))+' → '+escapeHtml(finCuentaNombre(m.cuentaDestinoId)) : escapeHtml(finCuentaNombre(m.cuentaId));
       var attrs = m.fuente === 'orden' ? ' class="from-oc" data-oc="'+escapeHtml(m.ocId)+'" title="Viene de la orden de compra. Se edita allá." style="cursor:pointer;"' : ' data-mov="'+escapeHtml(m._id)+'"';
       h += '<tr'+attrs+'><td class="num">'+fmtShort(m.fecha)+'<div class="d-notes">'+escapeHtml(String(m.fecha||'').slice(0,4))+'</div></td>'+
         '<td>'+escapeHtml(finCatLabel(m))+(m.fuente==='orden'?'<div><span class="fin-badge acc">Desde orden</span></div>':'')+(m.gastoFijoId?'<div><span class="fin-badge">Gasto fijo</span></div>':'')+(FIN_NO_OPERATIVOS[m.categoria]?'<div><span class="fin-badge">'+(m.categoria==='retencion'?'Saldo a favor':(FIN_PRESTAMO_SOCIO[m.categoria]?'Por cobrar a socio':'Capital'))+'</span></div>':'')+'</td>'+
         '<td class="desc-cell">'+desc+'</td><td>'+(finProyNombre(m.proyectoId) ? escapeHtml(finProyNombre(m.proyectoId)) : '<span class="fin-badge crit">Sin proyecto</span>')+'</td><td>'+cuenta+'</td>'+
         '<td>'+(m.estado === 'pendiente' ? '<span class="fin-badge warn">Pendiente</span>' : '<span class="fin-badge ok">Pagado</span>')+
-          (m.estado === 'pendiente' && m.tipo === 'ingreso' && m.fuente !== 'orden' ? '<div><button type="button" class="btn sm fin-cobro" data-cobro="'+escapeHtml(m._id)+'" title="Hacer o ver la cuenta de cobro de este pendiente" style="margin-top:6px; padding:3px 8px; font-size:11.5px;">'+(fmtDocDeMov(m._id) ? 'Ver cuenta de cobro' : 'Cuenta de cobro')+'</button></div>' : '')+'</td>'+
+          (m.estado === 'pendiente' && m.tipo === 'ingreso' && m.fuente !== 'orden' ? '<div><button type="button" class="btn sm fin-cobro" data-cobro="'+escapeHtml(m._id)+'" title="Hacer o ver la cuenta de cobro de este pendiente" style="margin-top:6px; padding:3px 8px; font-size:11.5px;">'+(fmtDocDeMov(m._id) ? 'Ver cuenta de cobro' : 'Cuenta de cobro')+'</button></div>' : '')+
+          (finAbonable(m) ? '<div><button type="button" class="btn sm fin-abono" data-abono="'+escapeHtml(m._id)+'" title="Registrar un pago parcial de este pendiente" style="margin-top:6px; padding:3px 8px; font-size:11.5px;">Registrar abono</button></div>' : '')+'</td>'+
         '<td>'+movSopBadge(m)+'</td>'+
         '<td class="num '+(signo>0?'pos':signo<0?'neg':'')+'"><strong>'+(signo>0?'+':signo<0?'−':'')+finMoney(v)+'</strong></td></tr>';
     });
     h += '</tbody></table></div>';
     document.getElementById('finMovTabla').innerHTML = h;
     document.querySelectorAll('#finMovTabla .fin-cobro').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); var did = fmtDocDeMov(b.dataset.cobro); if(did) openFormato('cobro', did); else openFormato('cobro', null, {movId: b.dataset.cobro}); }); });
+    document.querySelectorAll('#finMovTabla .fin-abono').forEach(function(b){ b.addEventListener('click', function(e){ e.stopPropagation(); openFinMovModal(b.dataset.abono); finAbonoAbrir(); }); });
     document.querySelectorAll('#finMovTabla tr[data-mov]').forEach(function(tr){ tr.addEventListener('click', function(){ openFinMovModal(tr.dataset.mov); }); });
     document.querySelectorAll('#finMovTabla tr[data-oc]').forEach(function(tr){ tr.addEventListener('click', function(){ openOcModal(tr.dataset.oc); }); });
   }
@@ -9442,9 +9466,78 @@
     if(fin.movFijo){ var f = fin.fijos.get(fin.movFijo.id) || {}; info.hidden = false; info.innerHTML = 'Pago del gasto fijo <strong>'+escapeHtml(f.nombre||'')+'</strong> correspondiente a <strong>'+finYmLabel(fin.movFijo.periodo)+'</strong>.'; }
     else info.hidden = true;
     document.getElementById('finMovDelete').style.display = id ? '' : 'none';
+    finAbonoPintar(id, m);
     document.getElementById('finMovOverlay').classList.add('open');
     setTimeout(function(){ document.getElementById('finMovMonto').focus(); }, 50);
   }
+  /* Abonos (2026-11-03): un pendiente por cobrar o por pagar se puede ir pagando por partes, como los pagos de la orden.
+     Cada abono es un movimiento pagado aparte (con su comprobante, ligado al pendiente con abonoDe); el pendiente queda
+     con el saldo en «monto», el total en «montoTotal» y la lista en «abonos». El abono que completa el saldo marca el
+     pendiente como pagado. La cuenta de cobro muestra los abonos y el saldo. */
+  function finAbonosSuma(m){ return (m.abonos || []).filter(function(a){ return !a.final; }).reduce(function(t, a){ return t + (Number(a.monto) || 0); }, 0); }
+  function finMovTotal(m){ return Number(m.montoTotal) || ((Number(m.monto) || 0) + finAbonosSuma(m)); }
+  function finAbonable(m){ return !!m && m.estado === 'pendiente' && m.fuente !== 'orden' && (m.tipo === 'ingreso' || m.tipo === 'egreso'); }
+  function finAbonoPintar(id, m){
+    var box = document.getElementById('finMovAbonoBox'), lista = (m && m.abonos) || [];
+    document.getElementById('finMovAbonoForm').hidden = true;
+    document.getElementById('finMovMontoLbl').textContent = id && m.estado === 'pendiente' && lista.length ? 'Saldo pendiente (COP)' : 'Monto (COP)';
+    if(!id || (!finAbonable(m) && !lista.length)){ box.hidden = true; return; }
+    box.hidden = false;
+    var tot = finMovTotal(m), abon = lista.reduce(function(t, a){ return t + (Number(a.monto) || 0); }, 0);
+    document.getElementById('finMovAbonoResumen').innerHTML = lista.length
+      ? 'Total <strong>'+finMoney(tot)+'</strong> · '+(m.tipo === 'egreso' ? 'Pagado' : 'Abonado')+' <strong>'+finMoney(abon)+'</strong> · Saldo <strong>'+finMoney(m.estado === 'pendiente' ? Number(m.monto) || 0 : 0)+'</strong>'
+      : (m.tipo === 'egreso' ? 'Si se paga por partes, registra cada abono aquí.' : 'Si te pagan por partes, registra cada abono aquí.');
+    document.getElementById('finMovAbonoLista').innerHTML = lista.map(function(a){ return fmtDate(a.fecha)+' · '+finMoney(a.monto)+(a.final ? ' (pago final)' : ''); }).join('<br>');
+    document.getElementById('finMovAbonoAbrir').hidden = !finAbonable(m);
+    document.getElementById('finAbCuentaLbl').textContent = m.tipo === 'egreso' ? 'Sale de la cuenta' : 'Entra a la cuenta';
+  }
+  function finAbonoAbrir(){
+    var m = fin.movs.get(fin.editingMovId); if(!finAbonable(m)) return;
+    document.getElementById('finAbFecha').value = todayIso();
+    document.getElementById('finAbMonto').value = '';
+    document.getElementById('finAbMedio').value = m.medio || 'transferencia';
+    finCuentaOptions(document.getElementById('finAbCuenta'), m.cuentaId);
+    document.getElementById('finAbSop').value = '';
+    document.getElementById('finMovAbonoForm').hidden = false; document.getElementById('finMovAbonoAbrir').hidden = true;
+    setTimeout(function(){ var el = document.getElementById('finAbMonto'); el.scrollIntoView({block:'center'}); el.focus(); }, 50);
+  }
+  document.getElementById('finMovAbonoAbrir').addEventListener('click', finAbonoAbrir);
+  document.getElementById('finAbCancelar').addEventListener('click', function(){ document.getElementById('finMovAbonoForm').hidden = true; document.getElementById('finMovAbonoAbrir').hidden = false; });
+  document.getElementById('finAbGuardar').addEventListener('click', function(){
+    var db = requireDb(), pid = fin.editingMovId, m = pid && fin.movs.get(pid); if(!db || !finAbonable(m)) return;
+    var valor = Math.round(Number(document.getElementById('finAbMonto').value) || 0), saldo = Number(m.monto) || 0;
+    var fecha = document.getElementById('finAbFecha').value;
+    if(valor <= 0){ toast('Escribe el valor del abono.'); document.getElementById('finAbMonto').focus(); return; }
+    if(valor > saldo){ toast('El abono no puede pasar del saldo ('+fmtMoney.format(saldo)+').'); return; }
+    if(!fecha){ toast('Elige la fecha del abono.'); return; }
+    var cuenta = document.getElementById('finAbCuenta').value, medio = document.getElementById('finAbMedio').value, sop = document.getElementById('finAbSop').files[0];
+    var total = finMovTotal(m), abonos = (m.abonos || []).slice(), final = valor === saldo, col = db.collection('finMovimientos');
+    var btn = this; btn.disabled = true;
+    var paso;
+    if(final){
+      /* El último abono cierra el pendiente: él mismo queda pagado por el saldo */
+      abonos.push({id: filaId(), fecha: fecha, monto: valor, movId: pid, final: true});
+      paso = col.doc(pid).update({estado: 'pagado', fechaCausacion: m.fechaCausacion || m.fecha, fecha: fecha, cuentaId: cuenta, medio: medio, montoTotal: total, abonos: abonos,
+        nota: ((m.nota || '') + ' Saldo pagado el ' + fmtDate(fecha) + '.').trim()}).then(function(){ return pid; });
+    } else {
+      var hijo = {tipo: m.tipo, fecha: fecha, monto: valor, estado: 'pagado', categoria: m.categoria, descripcion: 'Abono · ' + (m.descripcion || finCatLabel(m)),
+        tercero: m.tercero || '', cuentaId: cuenta, cuentaDestinoId: null, medio: medio, proyectoId: m.proyectoId || '', nota: 'Abono al pendiente de ' + fmtMoney.format(total) + '.',
+        gastoFijoId: null, periodo: null, abonoDe: pid, creadoPorId: state.userId || null};
+      paso = col.add(hijo).then(function(ref){
+        var hid = ref && ref.id;
+        abonos.push({id: filaId(), fecha: fecha, monto: valor, movId: hid || null});
+        return col.doc(pid).update({monto: saldo - valor, montoTotal: total, abonos: abonos}).then(function(){ return hid; });
+      });
+    }
+    paso.then(function(movId){
+      if(sop && movId) return sopSubir(sop, 'mov:'+movId, 'comprobante', {proyectoId: m.proyectoId, privado: true}).then(function(){ return true; }, function(err){ toast('El abono quedó, pero el comprobante no: ' + (err && err.message ? err.message : 'error'), 6000); return false; });
+      return null;
+    }).then(function(conSop){
+      if(conSop !== false) toast(final ? 'Abono registrado: el pendiente quedó pagado' + (conSop ? ' con su comprobante' : '') + '.' : 'Abono de ' + fmtMoney.format(valor) + ' registrado. Queda un saldo de ' + fmtMoney.format(saldo - valor) + '.', 5000);
+      closeFinMovModal();
+    }).catch(function(err){ toast('No se pudo registrar el abono: ' + (err && err.message ? err.message : 'error')); })
+      .then(function(){ btn.disabled = false; });
+  });
   function closeFinMovModal(){ document.getElementById('finMovOverlay').classList.remove('open'); fin.editingMovId = null; fin.movFijo = null; }
   document.getElementById('finMovProyecto').addEventListener('change', function(){ if(this.value){ this.classList.remove('campo-mal'); document.getElementById('finMovProyErr').hidden = true; } });
   document.getElementById('finAddEgreso').addEventListener('click', function(){ openFinMovModal(null, {tipo:'egreso'}); });
@@ -9477,6 +9570,10 @@
       gastoFijoId: fin.movFijo ? fin.movFijo.id : null, periodo: fin.movFijo ? fin.movFijo.periodo : null,
       creadoPorId: prev.creadoPorId || state.userId || null
     };
+    /* Los abonos no se pierden al editar: el monto es el saldo y el total se recalcula */
+    if(prev.abonos && prev.abonos.length){ data.abonos = prev.abonos; data.montoTotal = data.estado === 'pendiente' ? monto + finAbonosSuma(prev) : (prev.montoTotal || monto + finAbonosSuma(prev)); }
+    if(prev.abonoDe) data.abonoDe = prev.abonoDe;
+    if(prev.fechaCausacion) data.fechaCausacion = prev.fechaCausacion;
     if(t === 'transferencia' && data.cuentaId === data.cuentaDestinoId){ toast('La cuenta de origen y la de destino deben ser distintas.'); return; }
     if(!data.proyectoId){
       /* Aviso dentro de la ventana (no solo un mensaje que se va): sin proyecto no se guarda */
@@ -9501,9 +9598,16 @@
   document.getElementById('finMovDelete').addEventListener('click', function(){
     var db = requireDb(); if(!db || !fin.editingMovId) return;
     var id = fin.editingMovId;
-    confirmDialog('¿Eliminar este movimiento?').then(function(ok){
+    var mm = fin.movs.get(id) || {}, padre = mm.abonoDe && fin.movs.get(mm.abonoDe);
+    confirmDialog(padre ? '¿Eliminar este abono? Su valor vuelve al saldo pendiente.' : ((mm.abonos || []).length ? '¿Eliminar este movimiento? Los abonos ya registrados quedan como movimientos aparte.' : '¿Eliminar este movimiento?')).then(function(ok){
       if(!ok) return;
-      db.doc('finMovimientos/'+id).delete().then(function(){ toast('Movimiento eliminado'); closeFinMovModal(); }).catch(function(err){ toast('No se pudo eliminar: ' + (err && err.message ? err.message : 'error')); });
+      db.doc('finMovimientos/'+id).delete().then(function(){
+        if(!padre) return;
+        var resto = (padre.abonos || []).filter(function(a){ return a.movId !== id; }), v = Number(mm.monto) || 0;
+        var upd = {abonos: resto, monto: padre.estado === 'pendiente' ? (Number(padre.monto) || 0) + v : Number(padre.monto) || 0};
+        upd.montoTotal = finMovTotal(padre) - (padre.estado === 'pendiente' ? 0 : v);
+        return db.collection('finMovimientos').doc(mm.abonoDe).update(upd);
+      }).then(function(){ toast(padre ? 'Abono eliminado; el saldo volvió al pendiente' : 'Movimiento eliminado'); closeFinMovModal(); }).catch(function(err){ toast('No se pudo eliminar: ' + (err && err.message ? err.message : 'error')); });
     });
   });
 
@@ -11980,13 +12084,14 @@
         {k:'ciudad', l:'Ciudad'}, {k:'deudor', l:'A quién se le cobra'}, {k:'tipoDoc', l:'Tipo de documento', t:'select', opciones:['C.C.', 'NIT', 'C.E.']}, {k:'documento', l:'N° de documento'},
         {k:'docCiudad', l:'Expedida en (opcional)'}, {k:'telefono', l:'Teléfono'},
         {k:'conceptos', l:'Por concepto de', t:'tabla', cols:[{k:'concepto', t:'Concepto', w:'2'}, {k:'ref', t:'Referencia'}, {k:'valor', t:'Valor', tipo:'money'}]},
+        {k:'abonos', l:'Abonos recibidos (se restan del total)', t:'tabla', cols:[{k:'fecha', t:'Fecha'}, {k:'detalle', t:'Detalle', w:'2'}, {k:'valor', t:'Valor', tipo:'money'}]},
         {k:'medioPago', l:'Banco o medio de pago'}, {k:'llave', l:'N° de cuenta o llave Bre-B'}, {k:'titularPago', l:'Titular de la cuenta'},
         {k:'limite', l:'Pagar a más tardar', t:'date'}, {k:'proyecto', l:'Proyecto (opcional)'},
         {k:'observaciones', l:'Observaciones (opcional)', t:'area'},
         {k:'firma', l:'Firma por Cenova'}, {k:'firmaCargo', l:'Cargo'}
       ],
       prellenar: function(x){
-        var m = x.mov || {}, monto = Math.round(Number(m.monto) || 0);
+        var m = x.mov || {}, monto = Math.round(x.mov ? finMovTotal(m) : 0);
         var soc = null, ter = String(m.tercero || '').trim();
         Object.keys(EMISOR_INFO).forEach(function(k){ if(ter && (ter === k || EMISOR_INFO[k].nombre.indexOf(ter) === 0 || ter.split(' ')[0] === k.split(' ')[0])) soc = EMISOR_INFO[k]; });
         /* «X debe a Cenova: $40.000 del abono de Electrimoy + $159.014 del switch…» → una fila por cada parte, si cuadran con el total */
@@ -12000,16 +12105,19 @@
         var proy = m.proyectoId ? finProyNombre(m.proyectoId) : '';
         if(/^(Administración|Plataformas internas)/i.test(proy)) proy = '';
         return {ciudad: 'Cartagena', deudor: soc ? soc.nombre : ter, tipoDoc: 'C.C.', documento: soc ? soc.cc : '', docCiudad: '', telefono: soc ? soc.tel : '',
-          conceptos: con, medioPago: this.pagoDefecto.medioPago, llave: this.pagoDefecto.llave, titularPago: this.pagoDefecto.titularPago, limite: habilesAdd(todayIso(), 5), proyecto: proy, observaciones: '', firma: EMISOR_INFO['Lina Giraldo'].nombre, firmaCargo: EMISOR_INFO['Lina Giraldo'].cargo};
+          conceptos: con, abonos: fmtAbonosDeMov(m), medioPago: this.pagoDefecto.medioPago, llave: this.pagoDefecto.llave, titularPago: this.pagoDefecto.titularPago, limite: habilesAdd(todayIso(), 5), proyecto: proy, observaciones: '', firma: EMISOR_INFO['Lina Giraldo'].nombre, firmaCargo: EMISOR_INFO['Lina Giraldo'].cargo};
       },
       render: function(d, spec){
-        var tot = (d.conceptos || []).reduce(function(s, r){ return s + (Number(r.valor) || 0); }, 0), b = EMPRESA.banco;
+        var bruto = (d.conceptos || []).reduce(function(s, r){ return s + (Number(r.valor) || 0); }, 0), b = EMPRESA.banco;
+        var abs = (d.abonos || []).filter(function(r){ return Number(r.valor) > 0; }), abonado = abs.reduce(function(s, r){ return s + (Number(r.valor) || 0); }, 0);
+        var tot = Math.max(0, bruto - abonado);
         var f = d.fecha ? new Date(d.fecha + 'T00:00:00') : new Date();
         var h = fdHead(spec, d, (d.ciudad || 'Cartagena') + ', ' + f.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'}));
         h += '<div class="fd-centro"><div style="font-weight:700; font-size:12.5px;">' + fdE((d.deudor || '__________').toUpperCase()) + '</div><div style="color:#5b6b80; font-size:11.5px; margin-bottom:12px;">' + fdE((d.tipoDoc || 'C.C.') + ' ' + (d.documento || '__________') + (d.docCiudad ? ' de ' + d.docCiudad : '')) + '</div>' +
           '<div class="fd-grande" style="font-size:13px;">DEBE A:</div><div class="fd-grande">CENOVA S.A.S.</div><div style="color:#5b6b80; font-size:11.5px; margin-bottom:12px;">NIT ' + fdE(EMPRESA.nit) + '</div>' +
           '<div class="fd-grande" style="font-size:13px;">LA SUMA DE:</div><div style="font-weight:700; font-size:12.5px;">' + fdE(fmtLetras(tot)) + ' (' + fdE(fdM(tot)) + ')</div></div>';
-        h += fdH('Por concepto de') + fdTabla([{t:'Concepto'}, {t:'Referencia', w:'140px'}, {t:'Valor', a:'r', w:'110px'}], (d.conceptos || []).map(function(r){ return [r.concepto, r.ref, fdM(r.valor)]; }), ['TOTAL', fdM(tot)]);
+        h += fdH('Por concepto de') + fdTabla([{t:'Concepto'}, {t:'Referencia', w:'140px'}, {t:'Valor', a:'r', w:'110px'}], (d.conceptos || []).map(function(r){ return [r.concepto, r.ref, fdM(r.valor)]; }), [abs.length ? 'TOTAL DE LA DEUDA' : 'TOTAL', fdM(bruto)]);
+        if(abs.length) h += fdH('Abonos recibidos') + fdTabla([{t:'Fecha', w:'140px'}, {t:'Detalle'}, {t:'Valor', a:'r', w:'110px'}], abs.map(function(r){ return [r.fecha, r.detalle, fdM(r.valor)]; }), ['SALDO A PAGAR', fdM(tot)]);
         /* Documentos guardados antes de tener medio de pago editable salen con Bancolombia */
         var medio = d.medioPago || (b.banco + ' · ' + b.tipo), llave = d.llave || b.numero, titular = d.titularPago || (b.titular + ' · NIT ' + b.nit);
         h += fdBlk(fdH('Datos para el pago') + fdCampos([['Banco o medio', medio], [/bre-?b/i.test(medio) ? 'Llave Bre-B' : 'N° de cuenta', llave], ['Titular', titular], ['Pagar a más tardar', d.limite ? fmtDate(d.limite) : ''], ['Referencia del pago', d.numero]].concat(d.proyecto ? [['Proyecto', d.proyecto]] : [])));
@@ -12055,6 +12163,8 @@
 
   /* ---------- Vista Formatos ---------- */
   /* La cuenta de cobro ya hecha para un pendiente de Finanzas (si la hay) */
+  /* Abonos del pendiente para la cuenta de cobro de Cenova (no cuenta el pago final, que ya no deja saldo) */
+  function fmtAbonosDeMov(m){ return ((m && m.abonos) || []).filter(function(a){ return !a.final; }).map(function(a, i){ return {fecha: fmtDate(a.fecha), detalle: 'Abono ' + (i + 1), valor: Number(a.monto) || 0}; }); }
   function fmtDocDeMov(movId){ var r = null; state.documentos.forEach(function(d, id){ if(d.tipo === 'cobro' && d.movId === movId) r = id; }); return r; }
   function fmtSiguienteNumero(prefijo){
     var max = 0;
@@ -12213,6 +12323,10 @@
     fmt.spec = tipo; fmt.docId = docId || null; fmt.ordenId = saved ? (saved.ordenId || '') : ''; fmt.persona = saved && saved.persona != null ? saved.persona : -1;
     fmt.movId = saved ? (saved.movId || '') : ((opts && opts.movId) || '');
     fmt.datos = saved ? JSON.parse(JSON.stringify(saved.datos || {})) : null;
+    /* Una cuenta de cobro ya hecha toma los abonos que se registren después en su pendiente */
+    if(tipo === 'cobro' && fmt.datos && fmt.movId && typeof fin !== 'undefined' && fin && fin.movs && fin.movs.get(fmt.movId)){
+      var abM = fmtAbonosDeMov(fin.movs.get(fmt.movId)); if(abM.length) fmt.datos.abonos = abM;
+    }
     document.getElementById('fmtTitle').textContent = spec.tituloDoc + (saved ? ' · ' + saved.numero : '');
     document.getElementById('fmtBorrar').style.display = saved && precAdmin() ? 'inline-flex' : 'none';
     if(spec.libre && !saved) fmtCargar(); else fmtPintar();
