@@ -7495,6 +7495,9 @@
     state.cotizacionesProveedor.forEach(function(p, pid){ if((oid && p.ordenId === oid) || (!p.ordenId && o.cotizacionId && p.cotizacionId === o.cotizacionId)) out.push(Object.assign({_id: pid}, p)); });
     return out;
   }
+  /* La misma cotización de proveedor subida dos veces (mismo proveedor, número y valor) se cuenta una sola vez. */
+  function provClave(p){ return String(p.proveedor||'').trim().toLowerCase()+'|'+String(p.numero||'').replace(/\D/g, '')+'|'+Math.round(Number(p.subtotal) || Number(p.monto) || 0); }
+  function provSinRepetir(lista){ var vistos = {}; return lista.filter(function(p){ var k = provClave(p); if(vistos[k]) return false; vistos[k] = 1; return true; }); }
   function ocTieneProv(oid, o){
     o = o || state.ordenes.get(oid) || {};
     return ocProvDe(oid, o).length > 0 || !!(o.provSinCotizacion && o.provSinCotizacion.motivo);
@@ -7515,11 +7518,19 @@
     var lista = oid ? ocProvDe(oid, o) : [];
     var motivo = document.getElementById('ocProvMotivo').value;
     var box = document.getElementById('ocProvLista');
+    var unicas = provSinRepetir(lista);
     box.innerHTML = lista.length ? lista.map(function(p){
-      return '<div class="oc-prov-fila"><div><strong>'+escapeHtml(p.proveedor||'Proveedor')+'</strong>'+(p.numero ? ' · '+escapeHtml(p.numero) : '')+(p.fecha ? ' · '+fmtDate(p.fecha) : '')+
+      var repetida = unicas.indexOf(p) === -1;
+      return '<div class="oc-prov-fila"><div><strong>'+escapeHtml(p.proveedor||'Proveedor')+'</strong>'+(p.numero ? ' · '+escapeHtml(p.numero) : '')+(p.fecha ? ' · '+fmtDate(p.fecha) : '')+(repetida ? ' <span class="due warning">Repetida: no se suma</span>' : '')+
         '<div class="muted" style="font-size:12px;">'+((p.items||[]).length ? (p.items||[]).length+' ítem(s) · ' : '')+(p.subtotal ? fmtMoney.format(p.subtotal)+' sin IVA' : (p.monto ? fmtMoney.format(p.monto) : 'sin valor'))+'</div></div>'+
-        '<div style="display:flex; gap:6px;">'+(p.archivoNombre ? '<button type="button" class="btn sm oc-prov-ver" data-pid="'+p._id+'">Ver archivo</button>' : '')+'<button type="button" class="btn sm oc-prov-edit" data-pid="'+p._id+'">Abrir</button></div></div>';
+        '<div style="display:flex; gap:6px;">'+(p.archivoNombre ? '<button type="button" class="btn sm oc-prov-ver" data-pid="'+p._id+'">Ver archivo</button>' : '')+'<button type="button" class="btn sm oc-prov-edit" data-pid="'+p._id+'">Abrir</button>'+(repetida ? '<button type="button" class="btn sm oc-prov-quitar" data-pid="'+p._id+'" style="color:var(--critical);">Desligar</button>' : '')+'</div></div>';
     }).join('') : '<span class="no-file">'+(oid ? 'Sin cotización de proveedor ligada.' : 'Guarda la orden para ligar la cotización del proveedor.')+'</span>';
+    box.querySelectorAll('.oc-prov-quitar').forEach(function(b){ b.addEventListener('click', function(){
+      var db = requireDb(), pid = b.dataset.pid, pr = state.cotizacionesProveedor.get(pid) || {}; if(!db) return;
+      var upd = {ordenId: '', cotizacionId: ''};
+      db.collection('cotizacionesProveedor').doc(pid).update(upd).then(function(){ state.cotizacionesProveedor.set(pid, Object.assign({}, pr, upd)); toast('Copia repetida desligada de la orden.'); renderOcProv(); })
+        .catch(function(err){ toast('No se pudo desligar: ' + (err && err.message ? err.message : 'error')); });
+    }); });
     box.querySelectorAll('.oc-prov-edit').forEach(function(b){ b.addEventListener('click', function(){ openProvModal(b.dataset.pid, {desdeOrden: true}); }); });
     box.querySelectorAll('.oc-prov-ver').forEach(function(b){ b.addEventListener('click', function(){ var r = state.cotizacionesProveedor.get(b.dataset.pid); if(r) viewStoredFile({nombre:r.archivoNombre, tipo:r.archivoTipo, datos:r.archivoDatos}); }); });
     /* Ligar una que ya estaba subida (las 3 de la antigua pestaña «De proveedores», por ejemplo). */
@@ -7536,10 +7547,14 @@
     /* Comparación con el costo que usamos al cotizar */
     var comp = document.getElementById('ocProvComp'), c = state.cotizaciones.get(document.getElementById('ocCotizacion').value || o.cotizacionId) || null;
     if(!c || !lista.length){ comp.innerHTML = ''; return ok; }
+    /* Con las compras ya validadas, el costo real sale de ahí (y la revisión cruzada lo compara con Finanzas). */
+    var crv = ocComprasResumen(o);
+    if(crv.validadas){ comp.innerHTML = '<div class="cot-aviso info">Compras validadas en la orden: '+crv.validadas+' de '+crv.total+' · reales '+fmtMoney.format(crv.real)+'. El costo real y el margen salen de ahí.</div>'; return ok; }
     var cc0 = cotCostoCompras(c);
     if(!cc0.costo){ comp.innerHTML = '<div class="cot-aviso warn">La cotización no tiene costos de materiales o equipos cargados, así que no se puede comparar con el proveedor. En las próximas, carga los costos antes de enviarla.</div>'; return ok; }
-    var cc = cc0, prov = lista.reduce(function(sm, p){ return sm + (Number(p.subtotal) || Number(p.monto) || 0); }, 0), dif = prov - cc.costo;
-    comp.innerHTML = '<div class="cot-aviso '+(dif > 0.5 ? 'crit' : 'info')+'">Costo de compras en la cotización: '+fmtMoney.format(cc.costo)+' · proveedor (sin IVA): '+fmtMoney.format(prov)+
+    /* Total del proveedor con IVA (lo que de verdad se paga), sin contar dos veces una copia repetida */
+    var cc = cc0, prov = unicas.reduce(function(sm, p){ return sm + (Number(p.monto) || Number(p.subtotal) || 0); }, 0), dif = prov - cc.costo;
+    comp.innerHTML = '<div class="cot-aviso '+(dif > 0.5 ? 'crit' : 'info')+'">Costo de compras en la cotización: '+fmtMoney.format(cc.costo)+' · proveedor (con IVA): '+fmtMoney.format(prov)+
       (dif > 0.5 ? ' · <b>el proveedor cuesta '+fmtMoney.format(dif)+' más de lo que cotizamos: revisa si estamos perdiendo.</b>' : (dif < -0.5 ? ' · el proveedor cuesta '+fmtMoney.format(-dif)+' menos.' : ' · iguales.'))+
       (cc.faltan ? ' · '+cc.faltan+' ítem(s) de la cotización sin costo.' : '')+'</div>';
     return ok;
@@ -12556,6 +12571,7 @@
       /* 4. Qué se compró */
       var provs = [];
       state.cotizacionesProveedor.forEach(function(pc){ if(pc.cotizacionId === o.cotizacionId || (pc.proyectoId && pc.proyectoId === (o.proyectoId || c.proyectoId))) provs.push(pc); });
+      provs = provSinRepetir(provs);
       var bodega = []; state.inventario.forEach(function(m){ if(m.ordenId === o._id && (m.tipo === 'salida' || m.tipo === 'devolucion')) bodega.push(m); });
       h += '<h3>Qué se compró</h3>';
       if(provs.length){
