@@ -360,7 +360,11 @@ async function escribir(req, env, s, col, id, metodo) {
     const ont = await env.DB.prepare("SELECT data FROM docs WHERE col = 'ordenesCompra' AND json_extract(data, '$.cotizacionId') = ? AND IFNULL(json_extract(data, '$.estado'), '') <> 'anulada' LIMIT 1").bind(id).first();
     if (ont) {
       const o = JSON.parse(ont.data), n = (v) => JSON.stringify(v === undefined ? null : v);
-      const cambio = COT_FIJOS.some((k) => n(previo[k]) !== n(data[k])) || (data.estado !== 'aprobada' && data.estado !== previo.estado);
+      // (2026-11-06) El costo de cada renglón es interno (el cliente no lo ve): administración lo puede cargar después
+      // sin anular la orden, siempre que no cambie nada de lo que el cliente aprobó.
+      const sinCosto = (items) => (Array.isArray(items) ? items : []).map((it) => { const x = Object.assign({}, it); delete x.costoUnit; delete x.costoCargadoDespues; return x; });
+      const fijo = (obj, k) => (k === 'items' && s.admin ? sinCosto(obj[k]) : obj[k]);
+      const cambio = COT_FIJOS.some((k) => n(fijo(previo, k)) !== n(fijo(data, k))) || (data.estado !== 'aprobada' && data.estado !== previo.estado);
       if (cambio) return err(403, 'regla', (previo.numero || 'La cotización') + ' está aprobada en la orden ' + (o.numero || '') + ': para cambiarla, anula la orden.');
     }
   }

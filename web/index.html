@@ -4159,6 +4159,14 @@
       setTimeout(function(){ var el = document.getElementById('cotCliente'); if(el){ el.focus(); if(el.scrollIntoView) el.scrollIntoView({block:'center'}); } }, 120);
       return Promise.resolve();
     }
+    /* (2026-11-06) Sin costos no se puede comparar lo cotizado con lo real: no pasa a orden un renglón sin costo.
+       Un costo en 0 escrito a propósito (servicio propio) sí vale; vacío no. */
+    var sinCosto = (c.items||[]).filter(function(it){ return !it.diaTecnico && !it.inst && (it.costoUnit == null || it.costoUnit === ''); });
+    if(sinCosto.length){
+      toast('No pasa a orden: '+sinCosto.length+' renglón(es) de '+(c.numero||'la cotización')+' no tienen costo ('+sinCosto.map(function(it){ return String(it.descripcion||'').slice(0,30); }).join('; ')+'). Escríbelo en la cotización (0 si no cuesta nada) y guárdala.', 9000);
+      closePreviewSiAbierta(); if(state.editingCotId !== id) openCotModal(id);
+      return Promise.resolve();
+    }
     var total = Math.round(cotTotal(c)), anulada = c.versionAnulada != null && Number(c.versionAnulada) === Number(c.version || 1);
     var vNueva = anulada ? (Number(c.version) || 1) + 1 : (Number(c.version) || 1);
     var previa = ocAnuladaDeCot(id), numNuevo = previa ? previa.o.numero : nextOcNumero(), verNueva = previa ? ocVersionSiguiente(previa.o.numero) : 1;
@@ -7693,7 +7701,7 @@
       return '<tr data-k="'+escapeHtml(l.key)+'"><td class="col-idx">'+(n+1)+'</td>'+
         '<td>'+escapeHtml(l.nombre)+(l.sinCosto ? '<span class="comp-sinc">sin costo</span>' : '')+(l.dentro ? '<span class="comp-dentro">dentro de: '+escapeHtml(l.dentro)+'</span>' : '')+'</td>'+
         '<td class="num">'+invCant(l.cant)+'</td>'+
-        '<td class="num">'+(l.costo == null ? '—' : fmtMoney.format(l.costo))+'</td>'+
+        '<td class="num">'+(l.costo == null ? (precAdmin() && !l.dentro ? '<input type="number" class="input-miles comp-costocot" data-idx="'+l.idx+'" data-cant="'+l.cant+'" min="0" step="1" placeholder="Costo total" value="'+(comp.costosCot && comp.costosCot[l.idx] != null ? comp.costosCot[l.idx] : '')+'" title="Costo con el que se cotizó (sin IVA). Se guarda en la cotización; no cambia el precio al cliente.">' : '—') : fmtMoney.format(l.costo))+'</td>'+
         '<td><select class="comp-como"><option value="">Sin validar</option>'+opts.map(function(k){ return '<option value="'+k+'"'+(v.como === k ? ' selected' : '')+'>'+COMPRA_COMO[k]+'</option>'; }).join('')+'</select></td>'+
         '<td>'+(v.como === 'comprado' ? '<input type="number" class="input-miles comp-costo" min="0" step="1" value="'+(v.costo != null ? v.costo : (l.costo || ''))+'" placeholder="Total pagado">' : '<span class="num">'+(real == null ? '—' : fmtMoney.format(real))+'</span>')+'</td></tr>';
     }).join('');
@@ -7735,11 +7743,27 @@
   document.getElementById('compClose').addEventListener('click', closeCompras);
   document.getElementById('compCancel').addEventListener('click', closeCompras);
   document.getElementById('compOverlay').addEventListener('click', function(e){ if(e.target === this) closeCompras(); });
+  /* (2026-11-06) Costo cotizado que faltaba: se escribe aquí y queda en la cotización (solo el costo; el precio al cliente no cambia) */
+  document.getElementById('compBody').addEventListener('input', function(e){
+    var inp = e.target.closest('.comp-costocot'); if(!inp || !comp) return;
+    comp.costosCot = comp.costosCot || {}; comp.costosCot[inp.dataset.idx] = inp.value === '' ? null : Number(inp.value);
+  });
+  function compGuardarCostosCot(o){
+    var cc = comp && comp.costosCot; if(!cc) return Promise.resolve();
+    var cid = o.cotizacionId, c = state.cotizaciones.get(cid); if(!c) return Promise.resolve();
+    var items = JSON.parse(JSON.stringify(c.items || [])), cambio = false;
+    Object.keys(cc).forEach(function(i){
+      var v = cc[i], it = items[+i]; if(!it || v == null || !(v > 0)) return;
+      var q = Number(it.cantidad) || 1; it.costoUnit = Math.round(v / q * 100) / 100; it.costoCargadoDespues = true; cambio = true;
+    });
+    if(!cambio) return Promise.resolve();
+    return state.db.collection('cotizaciones').doc(cid).update({items: items}).then(function(){ state.cotizaciones.set(cid, Object.assign({}, c, {items: items})); });
+  }
   document.getElementById('compSave').addEventListener('click', function(){
     var db = requireDb(); if(!db || !comp) return;
     var oid = comp.oid, o = state.ordenes.get(oid) || {}, upd = {compras: comp.datos, comprasEditadoEn: new Date().toISOString(), comprasPorId: state.userId || null};
     var btn = this; btn.disabled = true;
-    db.collection('ordenesCompra').doc(oid).update(upd).then(function(){
+    compGuardarCostosCot(o).then(function(){ return db.collection('ordenesCompra').doc(oid).update(upd); }).then(function(){
       state.ordenes.set(oid, Object.assign({}, o, upd)); toast('Compras de '+(o.numero||'la orden')+' guardadas.'); closeCompras(); renderAll();
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); }).then(function(){ btn.disabled = false; });
   });
