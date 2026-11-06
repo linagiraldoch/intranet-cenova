@@ -74,23 +74,26 @@
     if(dot) dot.classList.toggle('off', !ok);
     if(lbl) lbl.textContent = ok ? 'Sincronizado' : 'Sin conexión — reintentando…';
   }
+  function deshacer(c, id, antes){ if(antes) col(c).set(id, antes); else col(c).delete(id); avisar(c); }
   function localSet(c, id, data, act){ col(c).set(id, {data: data, act: act || Date.now()}); avisar(c); }
 
   function docRef(c, id){
     return {
       id: id,
       get: function(){ var v = col(c).get(id); return Promise.resolve({id: id, exists: !!v, data: function(){ return v ? JSON.parse(JSON.stringify(v.data)) : undefined; }}); },
+      /* Si el servidor rechaza un cambio, la pantalla vuelve a lo que había (2026-11-06): antes el cambio rechazado
+         se quedaba en pantalla (p. ej. una orden mostraba los datos de otra) hasta recargar. */
       set: function(data){
-        var limpio = JSON.parse(JSON.stringify(data));
+        var limpio = JSON.parse(JSON.stringify(data)), antes = col(c).get(id);
         localSet(c, id, limpio);
         return api('PUT', '/api/docs/' + c + '/' + encodeURIComponent(id), {data: limpio}).then(function(r){ var v = col(c).get(id); if(v) v.act = r.act; })
-          .catch(function(e){ sincronizar(); throw e; });
+          .catch(function(e){ deshacer(c, id, antes); sincronizar(); throw e; });
       },
       update: function(patch){
         var limpio = JSON.parse(JSON.stringify(patch));
         var cur = col(c).get(id); if(cur) localSet(c, id, Object.assign({}, cur.data, limpio));
         return api('PATCH', '/api/docs/' + c + '/' + encodeURIComponent(id), {data: limpio}).then(function(r){ var v = col(c).get(id); if(v) v.act = r.act; })
-          .catch(function(e){ sincronizar(); throw e; });
+          .catch(function(e){ deshacer(c, id, cur); sincronizar(); throw e; });
       },
       delete: function(){
         var had = col(c).delete(id); if(had) avisar(c);

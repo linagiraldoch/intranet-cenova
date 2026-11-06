@@ -7455,6 +7455,10 @@
     }
     if(!state.ocArchivo && (state.ocArchivoRemoved || !prev.archivoDatos)){ delete data.archivoNombre; delete data.archivoTipo; delete data.archivoTamano; delete data.archivoDatos; }
 
+    /* Protección (2026-11-06): una orden nunca se guarda con el número o la cotización de otra. */
+    if(state.editingOcId && ((prev.numero && data.numero !== prev.numero) || (prev.cotizacionId && data.cotizacionId !== prev.cotizacionId))){
+      toast('No se guardó: el formulario quedó mezclado con otra orden. Cierra la orden, recarga la página y vuelve a abrirla.', 9000); return;
+    }
     var col = db.collection('ordenesCompra');
     var p = state.editingOcId ? col.doc(state.editingOcId).set(data).then(function(){ return state.editingOcId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
     p.then(function(ocId){
