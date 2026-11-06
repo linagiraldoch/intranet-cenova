@@ -10,7 +10,7 @@
 
 import { calcularAlertas } from './alertas.js';
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos', 'ajustes'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
@@ -289,6 +289,8 @@ async function escribir(req, env, s, col, id, metodo) {
   const actual = id ? await env.DB.prepare('SELECT data FROM docs WHERE col = ? AND id = ?').bind(col, id).first() : null;
   const previo = actual ? JSON.parse(actual.data) : null;
   if (col === 'docsEmpresa' && !s.admin) return err(403, 'regla', 'Los documentos de la empresa solo los sube o cambia administración.');
+  // Ajustes de la intranet (2026-11-06): rentabilidad estándar de las cotizaciones. Todo el equipo los lee; solo administración los cambia.
+  if (col === 'ajustes' && !s.admin) return err(403, 'regla', 'Los ajustes solo los cambia administración.');
   if (col === 'soportes' && !s.admin && previo && previo.privado) return err(403, 'regla', 'Este soporte es de Finanzas: solo administración lo cambia.');
   if (col === 'soportes' && metodo === 'DELETE' && !s.admin && previo && previo.subidoPorId !== s.usuario_id) return err(403, 'regla', 'Solo quien subió el soporte (o administración) lo puede quitar.');
   const ahora = Date.now();

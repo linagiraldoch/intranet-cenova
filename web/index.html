@@ -139,7 +139,7 @@
   .nav-btn[data-view="ordenes"]{--ic:#7c4dcc;} .nav-btn[data-view="agenda"]{--ic:#d6407a;}
   .nav-btn[data-view="inventario"]{--ic:#a86a2c;} .nav-btn[data-view="precios"]{--ic:#1f9d55;}
   .nav-btn[data-view="costos"]{--ic:#c2930a;} .nav-btn[data-view="estadisticas"]{--ic:#0b8bb0;}
-  .nav-btn[data-view="finanzas"]{--ic:#0e8f6a;} .nav-btn[data-view="formatos"]{--ic:#5f6f86;}
+  .nav-btn[data-view="finanzas"]{--ic:#0e8f6a;} .nav-btn[data-view="ajustes"]{--ic:#8a5cc2;} .nav-btn[data-view="formatos"]{--ic:#5f6f86;}
   .nav-btn svg{color:var(--ic); opacity:1;}
   :root[data-theme="dark"] .nav-btn svg{color:color-mix(in srgb, var(--ic) 62%, #ffffff);}
   :root[data-theme="lavanda"] .nav-btn svg{box-sizing:content-box; padding:6px; border-radius:10px;
@@ -317,6 +317,7 @@
   .rs-kpi-l{font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted);}
   .rs-kpi-v{font-family:"IBM Plex Mono",monospace; font-size:22px; font-weight:600; font-variant-numeric:tabular-nums;}
   .rs-kpi-s{font-size:12.5px; color:var(--text-muted);}
+  .rs-kpi-v.neg{color:var(--critical);}
   .rs-fin{background:var(--surface); border:1px dashed var(--border); border-radius:14px; padding:12px 16px;}
   .rs-fin-h{display:flex; gap:10px; align-items:baseline; margin-bottom:8px;}
   .rs-fin-h span{font-size:12px; color:var(--text-muted);}
@@ -1429,6 +1430,55 @@
   .vig-btns{display:flex; flex-wrap:wrap; gap:6px;}
   .cot-unir-nota{font-size:12.5px; padding:8px 12px; border-radius:10px; background:var(--accent-soft); color:var(--text); margin-bottom:10px;}
   @media (max-width:760px){ .cot-selbar .btn{flex:1 1 auto; justify-content:center;} table.mc td.cot-chk{display:block !important; position:absolute; top:15px; left:14px; padding:0 !important; width:auto;} table.mc tr:has(td.cot-chk input) td.mc-title{padding-left:28px;} table.mc tr.cot-sel{box-shadow:0 0 0 2px var(--accent), var(--shadow);} table.mc tr.cot-sel td{background:none;} }
+
+  /* ===== 2026-11-06: ayuda discreta, cotización más limpia, avisos internos ===== */
+  .ayuda{display:inline-flex; align-items:center; justify-content:center; width:17px; height:17px; padding:0; margin-left:4px; vertical-align:middle;
+    border-radius:50%; border:1px solid var(--border); background:var(--surface); color:var(--text-muted); font:600 10.5px/1 "IBM Plex Sans", system-ui, sans-serif;
+    cursor:pointer; text-transform:none; letter-spacing:0; flex:none; opacity:.75;}
+  .ayuda:hover, .ayuda:focus-visible{opacity:1; color:var(--accent); border-color:var(--accent);}
+  .ayuda-pop{position:fixed; z-index:9999; max-width:min(320px, calc(100vw - 16px)); background:var(--text); color:var(--surface); font-size:12.5px; line-height:1.5;
+    padding:9px 12px; border-radius:10px; box-shadow:0 10px 30px -12px rgba(0,0,0,.45); text-transform:none; letter-spacing:0; font-weight:400;}
+  .ayuda-fila{display:flex; justify-content:flex-end; margin:-4px 0 6px;}
+  .cot-lado .ayuda{align-self:center; margin-left:6px;}
+  .cot-head-t{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .cot-meta{font-size:12px; color:var(--text-muted); font-weight:400;}
+  .aiu-check{display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-muted); padding:8px 2px 0; cursor:pointer;}
+  .aiu-check input{width:16px; height:16px; margin:0;}
+  .totals-box .trow.aiu-viat{font-size:12px; margin-top:-4px;}
+  .it-bajo, .it-sincosto{font-size:11.5px; margin-top:3px; font-weight:600;}
+  .it-bajo{color:var(--critical);}
+  .it-sincosto{color:var(--warning); font-weight:500;}
+  .cot-avisos{display:flex; flex-direction:column; gap:6px; margin:8px 0 4px;}
+  .cot-aviso{font-size:12.5px; padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:var(--surface-2);}
+  .cot-aviso.crit{color:var(--critical); border-color:color-mix(in srgb, var(--critical) 35%, transparent); background:color-mix(in srgb, var(--critical) 7%, var(--surface)); font-weight:600;}
+  .cot-aviso.warn{color:var(--warning); border-color:color-mix(in srgb, var(--warning) 35%, transparent); background:color-mix(in srgb, var(--warning) 7%, var(--surface));}
+  .cot-aviso.info{color:var(--text-muted);}
+  textarea.txt-crece{min-height:120px; overflow:hidden; resize:vertical; line-height:1.5;}
+  #cotNotas.txt-crece{min-height:150px;}
+  #cotDescripcion{min-height:42px; resize:vertical; overflow:hidden;}
+  .col-unit .it-unidad-sel{width:100%; min-width:96px; padding-left:6px; padding-right:4px;}
+  .col-unit .it-unidad-otro{margin-top:4px; width:100%;}
+  .pv-interno{display:flex; flex-direction:column; gap:8px; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--surface-2);}
+  .pv-ver label{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600; color:var(--text-muted);}
+  .pv-ver select{width:auto; max-width:100%;}
+  .pv-comp{font-size:12.5px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px 12px;}
+  .pv-comp ul{margin:6px 0 0; padding-left:18px;}
+  .pv-comp li{margin:2px 0;}
+  .pv-comp li.mas{color:var(--success);} .pv-comp li.menos{color:var(--critical);}
+  .pv-comp .sube{color:var(--critical); font-weight:600;} .pv-comp .baja{color:var(--success); font-weight:600;}
+  .pv-proy-desc{margin:6px 28px 0; font-size:12px; color:#4a5a70; line-height:1.5; white-space:pre-line;}
+  .ajs-panel{max-width:760px; padding:14px 18px 16px;}
+  .ajs-panel .panel-head{padding:0 0 8px; margin-bottom:6px;}
+  .overlay.encima{z-index:55;}
+  .oc-prov-acc{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
+  .oc-prov-acc select{width:auto; max-width:100%;}
+  .oc-prov-fila{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 0; border-bottom:1px dashed var(--border);}
+  .oc-prov-fila:last-child{border-bottom:none;}
+  @media (max-width:760px){
+    .pv-interno{padding:10px 12px;}
+    textarea.txt-crece{font-size:16px;}
+    .col-unit .it-unidad-sel{min-width:0;}
+  }
 </style>
 
 <div class="app">
@@ -1493,6 +1543,10 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2.5" y="6" width="19" height="13" rx="2"/><path d="M2.5 10h19"/><path d="M16 15h2.5"/><path d="M6 6V4.5h12V6"/></svg>
         Finanzas
       </button>
+      <button class="nav-btn fin-admin" data-view="ajustes" hidden title="Solo administración">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>
+        Ajustes
+      </button>
       <div class="nav-label">Documentos</div>
       <button class="nav-btn" data-view="formatos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-5Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
@@ -1542,7 +1596,7 @@
         </button>
         <div>
           <h1 id="pageTitle">Resumen</h1>
-          <p id="pageSub">Cotizaciones, proyectos y agenda de Cenova en un solo lugar.</p>
+          <p id="pageSub" hidden></p>
         </div>
       </div>
       <div class="synctag"><span class="dot off" id="syncDot"></span><span id="syncLabel">Conectando…</span></div>
@@ -1560,7 +1614,8 @@
         <h2>Cotizaciones</h2>
       </div>
 
-      <div class="subtabs" id="cotSubtabs">
+      <!-- La pestaña «De proveedores» se quitó (2026-11-06): la cotización del proveedor se sube en cada orden interna. -->
+      <div class="subtabs" id="cotSubtabs" hidden>
         <button class="subtab-btn active" data-subtab="internas">A clientes</button>
         <button class="subtab-btn" data-subtab="proveedores">De proveedores<span class="count" id="navCountProv" style="margin-left:6px;">0</span></button>
       </div>
@@ -1730,6 +1785,22 @@
       <div id="fmtPanel">
       <div class="info-box" style="margin-bottom:16px;">Descarga el formato en <strong>Word</strong> para escribir encima, o usa <strong>Llenar con una obra</strong>: los datos de la orden de compra se ponen solos, ajustas lo que haga falta y bajas el PDF con el diseño de la cotización. Lo resaltado en amarillo en los Word es lo que hay que llenar.</div>
       <div id="fmtContainer"></div>
+      </div>
+    </section>
+
+    <!-- AJUSTES (solo administración, 2026-11-06) -->
+    <section class="view" id="view-ajustes">
+      <div class="panel ajs-panel">
+        <div class="panel-head"><h3>Rentabilidad estándar de las cotizaciones <button type="button" class="ayuda" data-ayuda="Se aplica sola (AUT) a los ítems de cada categoría que tengan costo. Si en una cotización alguien escribe un % propio en un ítem, ese % reemplaza al estándar solo en ese ítem. Los ítems por debajo del estándar salen marcados en rojo (solo por dentro). Los ítems de Precios usan el margen fijado allá.">?</button></h3></div>
+        <div class="field-row three" style="padding:4px 2px 0;">
+          <div class="field"><label>Materiales (%)</label><input type="number" id="ajsMargenMat" min="0" max="95" step="0.5"></div>
+          <div class="field"><label>Instalación (%)</label><input type="number" id="ajsMargenInst" min="0" max="95" step="0.5"></div>
+          <div class="field"><label>Equipos (%)</label><input type="number" id="ajsMargenEq" min="0" max="95" step="0.5"></div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; justify-content:flex-end; flex-wrap:wrap;">
+          <span class="no-file" id="ajsEstado"></span>
+          <button type="button" class="btn primary" id="ajsGuardar">Guardar</button>
+        </div>
       </div>
     </section>
 
@@ -1930,40 +2001,44 @@
 <div class="overlay roomy" id="cotOverlay">
   <div class="modal wide xwide">
     <div class="modal-head">
-      <h3 id="cotModalTitle">Nueva cotización</h3>
+      <div class="cot-head-t"><h3 id="cotModalTitle">Nueva cotización</h3><div class="cot-meta" id="cotMeta" hidden></div></div>
       <button class="modal-close" id="cotClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="modal-body">
-      <div class="fieldset-label">Datos generales</div>
-      <div class="field-row three">
-        <div class="field"><label>N.° cotización</label><input type="text" id="cotNumero" class="readonly-num" readonly tabindex="-1"><span class="no-file" id="cotNumeroHint">Se asigna automáticamente al guardar y no se puede modificar.</span></div>
-        <div class="field"><label>Versión</label><input type="number" id="cotVersion" min="1" step="1" value="1"></div>
-        <div class="field"><label>Estado</label>
-          <select id="cotEstado">
-            <option value="pendiente_armar">Por armar</option>
-            <option value="en_proceso">En proceso</option>
-            <option value="enviada">Enviada</option>
-            <option value="aprobada">Aprobada</option>
-            <option value="rechazada">Rechazada</option>
-            <option value="en_pausa">En pausa (a futuro)</option>
-            <option value="reemplazada">Reemplazada por otra</option>
-          </select>
-          <span class="no-file" id="cotEstadoHint"></span>
-        </div>
+      <!-- Datos generales (2026-11-06): el número, la versión, la fecha, el estado, la fecha de aceptación y los días de
+           instalación son automáticos. Siguen en el formulario (ocultos) porque el guardado los lee; se ven en el encabezado. -->
+      <div class="cot-auto-campos" hidden>
+        <input type="text" id="cotNumero" readonly tabindex="-1">
+        <input type="number" id="cotVersion" min="1" step="1" value="1">
+        <select id="cotEstado">
+          <option value="pendiente_armar">Por armar</option>
+          <option value="en_proceso">En proceso</option>
+          <option value="enviada">Enviada</option>
+          <option value="aprobada">Aprobada</option>
+          <option value="rechazada">Rechazada</option>
+          <option value="en_pausa">En pausa (a futuro)</option>
+          <option value="reemplazada">Reemplazada por otra</option>
+        </select>
+        <span id="cotEstadoHint"></span>
+        <input type="date" id="cotFecha"><span id="cotFechaHint"></span>
+        <input type="number" id="cotDiasInst" min="0" step="1">
+        <input type="date" id="cotFechaAceptacion">
       </div>
-      <div class="field-row three">
+      <div class="fieldset-label">Datos generales</div>
+      <div class="field-row">
+        <div class="field"><label>Proyecto</label><select id="cotProyecto"><option value="">Elige un proyecto…</option></select><button type="button" class="btn sm" id="cotNewProyBtn" style="align-self:flex-start; margin-top:2px;">+ Crear proyecto nuevo</button></div>
         <div class="field"><label>Responsable</label><input type="text" id="cotResponsable" list="equipoList"></div>
-        <div class="field"><label>Fecha de la cotización</label><input type="date" id="cotFecha"><span class="no-file" id="cotFechaHint">Se pone sola con la fecha de hoy cada vez que guardas cambios en la cotización (mientras no esté aprobada ni rechazada).</span></div>
-        <div class="field"><label id="cotVigLabel">Vigencia (días hábiles)</label><input type="number" id="cotVigencia" min="1" step="1" value="15"><span class="no-file" id="cotVigManualHint">Cuenta los tiempos de entrega de materiales, instalación y demás.</span>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Descripción del proyecto</label><textarea id="cotDescripcion" rows="2" placeholder="Qué incluye la cotización"></textarea></div>
+        <div class="field"><label><span id="cotVigLabel">Vigencia (días hábiles)</span> <button type="button" class="ayuda" data-ayuda="Cuenta en días hábiles (sin fines de semana ni festivos) desde la fecha de la cotización. Al crearla escribes los días pensando en entrega de materiales e instalación. Ya enviada, solo se amplía (+5, +10…) y la fecha pasa a hoy. Con la cotización enviada, el seguimiento se programa 2 días hábiles antes de que venza.">?</button></label><input type="number" id="cotVigencia" min="1" step="1" value="15"><span class="no-file" id="cotVigManualHint" hidden></span>
           <div class="vig-amp" id="cotVigAmp" hidden>
             <div class="vig-fin" id="cotVigFinTxt"></div>
             <div class="vig-btns"><button type="button" class="btn sm vig-mas" data-d="5">+5 días</button><button type="button" class="btn sm vig-mas" data-d="10">+10 días</button><button type="button" class="btn sm vig-mas" data-d="15">+15 días</button><button type="button" class="btn sm vig-mas" data-d="20">+20 días</button><button type="button" class="btn sm vig-quitar" id="cotVigQuitar" hidden>Quitar ampliación</button></div>
           </div></div>
       </div>
-      <div class="field-row three">
-        <div class="field"><label>Días de instalación estimados</label><input type="number" id="cotDiasInst" min="0" step="1" placeholder="Ej. 5"><span class="no-file">Se usa para programar la instalación cuando llegue la orden de compra.</span></div>
-        <div class="field"><label>Fecha de aceptación</label><input type="date" id="cotFechaAceptacion"><span class="no-file">Día en que el cliente la autorizó. Se llena sola si está vacía.</span></div>
-        <div class="field" id="cotInicioEstWrap" hidden><label>Inicio estimado de la obra</label><input type="date" id="cotInicioEstimado"><span class="no-file">Si la obra arranca después, la orden pedirá el motivo del retraso.</span></div>
+      <div class="field-row" id="cotInicioEstWrap" hidden>
+        <div class="field"><label>Inicio estimado de la obra <button type="button" class="ayuda" data-ayuda="Si la obra arranca después de esta fecha, la orden pedirá el motivo del retraso.">?</button></label><input type="date" id="cotInicioEstimado"></div>
       </div>
       <div class="cot-unir-nota" id="cotUnirNota" hidden></div>
       <div class="field-row" id="cotReemplazoWrap" hidden>
@@ -1973,12 +2048,6 @@
         <div class="field"><label>Motivo del rechazo</label><select id="cotRechazoMotivo"><option value="">Elige el motivo…</option></select></div>
         <div class="field"><label>Qué pasó (opcional)</label><input type="text" id="cotRechazoNota" placeholder="Ej. otra empresa ofreció 20 % menos y entrega en 3 días"></div>
       </div>
-      <div class="no-file" style="margin-top:-6px;">La vigencia se cuenta en días hábiles (sin fines de semana ni festivos). Con la cotización en estado "Enviada" se programa un seguimiento 2 días hábiles antes de que venza. Al aceptarse, ese seguimiento se cierra con la fecha de aceptación.</div>
-      <div class="field-row">
-        <div class="field"><label>Título del proyecto o servicio a cotizar</label><input type="text" id="cotDescripcion" placeholder="Qué incluye la cotización"></div>
-        <div class="field"><label>Proyecto (obligatorio)</label><select id="cotProyecto"><option value="">Elige un proyecto…</option></select><button type="button" class="btn sm" id="cotNewProyBtn" style="align-self:flex-start; margin-top:2px;">+ Crear proyecto nuevo</button></div>
-      </div>
-      <div class="no-file" style="margin-top:-6px;">Vincula esta cotización a un proyecto recurrente (ej. mantenimiento mensual) para agruparla ahí sin tener que crear un proyecto nuevo cada vez.</div>
 
       <div class="fieldset-label">Datos del cliente</div>
       <div class="field-row">
@@ -2001,12 +2070,12 @@
       </div>
 
       <div class="fieldset-label">Ítems y precios</div>
-      <div class="margen-grid">
+      <div class="margen-grid" hidden>
         <div class="field"><label>Rentabilidad Materiales (%)</label><input type="number" id="cotMargenMat" class="cot-margen-cat" data-cat="Materiales" min="0" step="1" placeholder="Ej. 20"></div>
         <div class="field"><label>Rentabilidad Instalación (%)</label><input type="number" id="cotMargenInst" class="cot-margen-cat" data-cat="Instalación" min="0" step="1" placeholder="Ej. 20"></div>
         <div class="field"><label>Rentabilidad Equipos (%)</label><input type="number" id="cotMargenEq" class="cot-margen-cat" data-cat="Equipos" min="0" step="1" placeholder="Ej. 20"></div>
       </div>
-      <div class="no-file" id="itMargenHelp" style="margin-top:-6px;">Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual: ese ítem deja de seguir el de su categoría (queda resaltado). Bórralo para que vuelva al de la categoría. Los ítems sin costo mantienen su precio manual.</div>
+      <div class="no-file" id="itMargenHelp" hidden>Cada porcentaje se aplica a los ítems de su categoría que tengan un valor en "Costo". En la columna "% Rent." puedes poner un porcentaje propio para un ítem puntual: ese ítem deja de seguir el de su categoría (queda resaltado). Bórralo para que vuelva al de la categoría. Los ítems sin costo mantienen su precio manual.</div>
       <div class="items-table-wrap">
       <table class="items-table" id="itemsTable">
         <thead><tr><th class="col-idx">#</th><th class="col-cat">Categoría</th><th class="col-desc">Descripción</th><th class="col-unit">Unidad</th><th class="col-num">Cant.</th><th class="col-num">Costo</th><th class="col-pct" id="itMargenTh">% Rent.</th><th class="col-num">Vlr. unit.</th><th class="col-total">Total</th><th class="col-rm"></th></tr></thead>
@@ -2018,6 +2087,7 @@
         <button class="btn sm" id="btnAddItem" type="button">+ Agregar ítem manual</button>
       </div>
       <div class="info-box" id="cotMargenResumen" style="display:none;"></div>
+      <div class="cot-avisos" id="cotAvisos" hidden></div>
       <div id="cotCostosAdic"></div>
 
       <details class="cot-pers-old" id="cotPersOld">
@@ -2032,34 +2102,36 @@
       <div class="info-box" id="cotPersonalSummary"></div>
       </details>
 
-      <div class="costing-toggle">
-        <label style="font-size:12px; font-weight:600; color:var(--text-muted);">Modo de costeo</label>
-        <select id="cotCostingMode">
-          <option value="simple">Simple (Subtotal + IVA)</option>
-          <option value="aiu">AIU (Administración, Imprevistos, Utilidad)</option>
-        </select>
-      </div>
+      <!-- Costeo (2026-11-06): siempre AIU + IVA. La casilla decide si el PDF muestra el AIU desglosado o en una sola línea.
+           El modo simple solo queda en cotizaciones viejas que ya lo usaban. -->
+      <select id="cotCostingMode" hidden>
+        <option value="simple">Simple (Subtotal + IVA)</option>
+        <option value="aiu">AIU (Administración, Imprevistos, Utilidad)</option>
+      </select>
 
       <div class="totals-box" id="totalsSimple">
         <div class="trow"><span>Subtotal</span><span class="num" id="cotSubtotalOut">$0</span></div>
         <div class="trow"><span>IVA <input type="number" id="cotIva" class="iva-input num" value="19" min="0" max="100">%</span><span class="num" id="cotIvaOut">$0</span></div>
         <div class="trow grand"><span>Total</span><span class="num" id="cotTotalOut">$0</span></div>
+        <div class="trow"><span class="muted">Cotización anterior sin AIU.</span><button type="button" class="btn sm" id="cotPasarAiu">Usar AIU</button></div>
       </div>
 
       <div class="totals-box" id="totalsAiu" style="display:none;">
         <div class="trow"><span>Subtotal</span><span class="num" id="aiuSubtotalOut">$0</span></div>
         <div class="trow"><span>Administración <input type="number" id="cotAdminPct" class="pct-input num" value="5" min="0" max="100">%</span><span class="num" id="aiuAdminOut">$0</span></div>
+        <div class="trow aiu-viat" id="aiuViatRow" hidden><span class="muted">incluye viáticos del personal</span><span class="num muted" id="aiuViatOut">$0</span></div>
         <div class="trow"><span>Imprevistos <input type="number" id="cotImprevPct" class="pct-input num" value="3" min="0" max="100">%</span><span class="num" id="aiuImprevOut">$0</span></div>
         <div class="trow"><span>Utilidad <input type="number" id="cotUtilPct" class="pct-input num" value="10" min="0" max="100">%</span><span class="num" id="aiuUtilOut">$0</span></div>
         <div class="trow"><span>IVA <input type="number" id="cotIvaAiu" class="iva-input num" value="19" min="0" max="100">%<select id="cotIvaBase" style="width:auto; padding:4px 6px; font-size:11px; margin-left:4px;"><option value="utilidad">sobre Utilidad</option><option value="subtotal">sobre Subtotal</option></select></span><span class="num" id="aiuIvaOut">$0</span></div>
         <div class="trow grand"><span>Total</span><span class="num" id="aiuTotalOut">$0</span></div>
+        <label class="aiu-check"><input type="checkbox" id="cotAiuDesglose"> Mostrar AIU desglosado en la cotización</label>
       </div>
 
       <div class="fieldset-label">Condiciones</div>
-      <div class="field"><textarea id="cotCondiciones" placeholder="Forma de pago, vigencia, tiempo de entrega, garantía…"></textarea></div>
+      <div class="field"><textarea id="cotCondiciones" class="txt-crece" rows="4" placeholder="Forma de pago, vigencia, tiempo de entrega, garantía…"></textarea></div>
 
       <div class="fieldset-label">Notas internas</div>
-      <div class="field"><textarea id="cotNotas" placeholder="Notas, borradores de materiales, referencias…"></textarea></div>
+      <div class="field"><textarea id="cotNotas" class="txt-crece" rows="6" placeholder="Notas, borradores de materiales, referencias…"></textarea></div>
     </div>
     <div class="modal-foot">
       <button class="btn" id="cotDelete" style="color:var(--critical); display:none;">Eliminar</button>
@@ -2489,6 +2561,23 @@
         <div class="no-file" style="margin-top:4px;">Documento, correo o captura del mensaje. Si la autorizó por llamada, elige «Llamada» en «Cómo se aprobó».</div>
       </div>
       <div class="info-box" id="ocExtractStatus" style="display:none;"></div>
+      <!-- Cotización del proveedor (2026-11-06): se liga aquí para comprobar que el costo cotizado es el real.
+           La orden arranca sin ella, pero no se factura ni se cierra sin ella (o sin explicar por qué no hay). -->
+      <div class="fieldset-label" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">Cotización del proveedor <span id="ocProvEstado" style="text-transform:none; letter-spacing:0;"></span></div>
+      <div class="field">
+        <div class="file-drop" style="flex-direction:column; align-items:stretch; gap:8px;">
+          <div id="ocProvLista"></div>
+          <div class="oc-prov-acc">
+            <button type="button" class="btn sm" id="ocProvSubir">Subir cotización del proveedor</button>
+            <select id="ocProvLigar" hidden></select>
+          </div>
+          <div class="field-row" id="ocProvSinWrap">
+            <div class="field"><label>Si no hay cotización de proveedor</label><select id="ocProvMotivo"></select></div>
+            <div class="field"><label>Detalle</label><input type="text" id="ocProvNota" placeholder="Ej. cable sobrante de la obra de IKONICA"></div>
+          </div>
+          <div id="ocProvComp"></div>
+        </div>
+      </div>
       <div class="fieldset-label">Registro</div>
       <div class="field-row three">
         <div class="field"><label>N.° orden interna</label><input type="text" id="ocNumero" class="readonly-num" readonly tabindex="-1"><span class="no-file" id="ocNumeroHint">Se asigna automáticamente al guardar y no se puede modificar.</span></div>
@@ -2714,6 +2803,7 @@
       <button class="modal-close" id="previewClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="modal-body" style="padding:0;">
+      <div class="pv-interno" id="previewInterno" hidden></div>
       <div class="preview-doc" id="previewDoc"></div>
     </div>
     <div class="modal-foot">
@@ -2959,26 +3049,20 @@
   document.getElementById('confirmOverlay').addEventListener('click', function(e){ if(e.target===this) _closeConfirm(false); });
 
   /* ---------- Navigation ---------- */
-  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas','inventario','costos','formatos'];
+  var views = ['resumen','cotizaciones','ordenes','proyectos','clientes','agenda','estadisticas','precios','finanzas','inventario','costos','formatos','ajustes'];
   var titles = {
-    resumen:['Resumen','Cotizaciones, proyectos y agenda de Cenova en un solo lugar.'],
-    cotizaciones:['Cotizaciones','Arma, edita y da seguimiento a cada cotización.'],
-    estadisticas:['Estadísticas','Cuánto deja cada proyecto, qué se dejó de cobrar y cómo va la operación.'],
-    formatos:['Formatos','Contratos, informes, actas, liquidaciones y demás documentos de Cenova en Word, y los que se llenan aquí con los datos de la obra.'],
-    inventario:['Inventario','Lo que Cenova tiene guardado: entradas, salidas a cada obra, conteos y alertas de stock bajo.'],
-    costos:['Costos','Precios de proveedores, costos por cargar en Precios y lo que costó de verdad cada obra frente a lo cotizado.'],
-    precios:['Precios','Precios estándar de servicios, personal, materiales, kits y equipos para cotizar sin volver a calcular.'],
-    finanzas:['Finanzas',''],
-    ordenes:['Órdenes internas','Cotizaciones aprobadas en ejecución: OC del cliente, plazos de pago e instalación.'],
-    proyectos:['Proyectos y trabajos','Estado de cada proyecto en curso o por iniciar.'],
-    clientes:['Clientes','Registra tus clientes una vez y autocompleta sus datos al cotizar.'],
-    agenda:['Agenda','Eventos manuales y automáticos (vigencias, pagos, instalaciones) en calendario y cronograma.']
+    /* Sin subtítulos explicativos (2026-11-06): la intranet se ve limpia y profesional. */
+    resumen:['Resumen',''], cotizaciones:['Cotizaciones',''], estadisticas:['Estadísticas',''], formatos:['Formatos',''],
+    inventario:['Inventario',''], costos:['Costos',''], precios:['Precios',''], finanzas:['Finanzas',''],
+    ordenes:['Órdenes internas',''], proyectos:['Proyectos y trabajos',''], clientes:['Clientes',''], agenda:['Agenda',''],
+    ajustes:['Ajustes','']
   };
   function showView(v){
     views.forEach(function(name){ document.getElementById('view-'+name).classList.toggle('active', name===v); });
     document.querySelectorAll('.nav-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.view===v); });
     document.getElementById('pageTitle').textContent = titles[v][0];
     document.getElementById('pageSub').textContent = titles[v][1];
+    document.getElementById('pageSub').hidden = !titles[v][1];
     document.getElementById('sidebar').classList.remove('open');
     if(v==='agenda'){ renderCalendar(); renderDayPanel(); renderCronograma(); }
     if(v==='estadisticas') renderEstadisticas();
@@ -2987,6 +3071,7 @@
     if(v==='inventario') renderInventario();
     if(v==='costos') renderCostos();
     if(v==='formatos') renderFormatos();
+    if(v==='ajustes') renderAjustes();
     vkRenderTodo();
   }
   document.getElementById('primaryNav').addEventListener('click', function(e){
@@ -3393,20 +3478,30 @@
   function cotDiasVence(c){ var f = cotVigFin(c); return f ? daysUntil(f, 0) : null; }
   function passFilter(text, needle){ return !needle || String(text||'').toLowerCase().indexOf(needle) !== -1; }
 
-  function cotTotal(c){
-    if(c.items && c.items.length){
-      var sub = c.items.reduce(function(s,it){ return s + (Number(it.cantidad)||0) * (Number(it.precioUnit)||0); }, 0);
-      if(c.costingMode === 'aiu'){
-        var admin = sub * ((Number(c.aiuAdministracionPct)||0)/100);
-        var imprev = sub * ((Number(c.aiuImprevistosPct)||0)/100);
-        var util = sub * ((Number(c.aiuUtilidadPct)||0)/100);
-        var base = (c.ivaBase==='utilidad') ? util : (sub+admin+imprev+util);
-        var iva = base * ((Number(c.ivaPct)||0)/100);
-        return sub+admin+imprev+util+iva;
-      }
-      var iva2 = sub * ((Number(c.ivaPct)||0)/100);
-      return sub + iva2;
+  /* Totales de una cotización (2026-11-06). En AIU, la Administración = su % sobre el subtotal + los viáticos del personal
+     (almuerzo y transporte), que son costo interno: el cliente no los ve como ítem, pero se cobran dentro de la A. */
+  function cotViaticos(c){
+    return (c.items||[]).reduce(function(s, it){ return s + (it.inst ? (Number(it.cantidad)||0) * (Number(it.instViaticos)||0) : 0); }, 0);
+  }
+  function cotCalc(c){
+    var items = c.items || [];
+    var sub = items.reduce(function(s,it){ return s + (Number(it.cantidad)||0) * (Number(it.precioUnit)||0); }, 0);
+    var ivaPct = Number(c.ivaPct)||0;
+    if(c.costingMode === 'aiu'){
+      var viat = cotViaticos(c);
+      var adminPct = sub * ((Number(c.aiuAdministracionPct)||0)/100);
+      var admin = adminPct + viat;
+      var imprev = sub * ((Number(c.aiuImprevistosPct)||0)/100);
+      var util = sub * ((Number(c.aiuUtilidadPct)||0)/100);
+      var base = (c.ivaBase==='utilidad') ? util : (sub+admin+imprev+util);
+      var iva = base * (ivaPct/100);
+      return {aiu:true, sub:sub, adminPct:adminPct, viat:viat, admin:admin, imprev:imprev, util:util, iva:iva, ivaPct:ivaPct, total:sub+admin+imprev+util+iva};
     }
+    var iva2 = sub * (ivaPct/100);
+    return {aiu:false, sub:sub, admin:0, viat:0, imprev:0, util:0, iva:iva2, ivaPct:ivaPct, total:sub+iva2};
+  }
+  function cotTotal(c){
+    if(c.items && c.items.length) return cotCalc(c).total;
     return Number(c.valor)||0;
   }
 
@@ -3421,6 +3516,8 @@
       '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="var(--surface-2)" stroke-width="6"/>'+
       '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+(c*v).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/></svg>';
   }
+  /* Valores de Finanzas: completos hasta un millón (son plata del día a día), compactos desde ahí. */
+  function rsFinV(n){ n = Math.round(Number(n)||0); return Math.abs(n) >= 1e6 ? rsCompact(n) : fmtMoney.format(n); }
   function rsCompact(n){ n = Math.round(Number(n)||0); if(Math.abs(n) >= 1e6) return '$ '+(n/1e6).toFixed(1).replace('.', ',')+' M'; if(Math.abs(n) >= 1e3) return '$ '+Math.round(n/1e3)+' mil'; return fmtMoney.format(n); }
   function renderResumen(){
     var root = document.getElementById('resumenRoot'); if(!root) return;
@@ -3519,13 +3616,14 @@
     if(typeof fin !== 'undefined' && fin && fin.admin){
       try {
         var saldos = finSaldos(finMovimientosTodos()), disp = saldos.reduce(function(s,x){ return s + x.saldo; }, 0);
-        var porPagar = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso') porPagar += Number(m.monto)||0; });
-        var res = finResultados(anio);
-        h += '<div class="rs-fin"><div class="rs-fin-h"><b>Finanzas</b><span>solo tú lo ves</span><button type="button" class="rs-link" data-rs-go="finanzas">Abrir Finanzas →</button></div><div class="rs-fin-g">'+
-          '<div><small>Dinero disponible</small><b class="'+(disp < 0 ? 'neg' : '')+'">'+(saldos.length ? fmtMoney.format(disp) : 'Sin cuentas')+'</b></div>'+
-          '<div><small>Gastos fijos al mes</small><b>'+fmtMoney.format(finFijosMensualTotal())+'</b></div>'+
-          '<div><small>Por pagar</small><b>'+fmtMoney.format(porPagar)+'</b></div>'+
-          '<div><small>Utilidad operativa '+anio+'</small><b class="'+(res.operativa < 0 ? 'neg' : '')+'">'+fmtMoney.format(res.operativa)+'</b></div></div></div>';
+        var porPagar = 0, nPagar = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso'){ porPagar += Number(m.monto)||0; nPagar++; } });
+        var res = finResultados(anio), nFijos = finFijosActivos().length;
+        /* Finanzas (2026-11-06): mismas tarjetas que las de arriba. Solo administración. */
+        h += '<div class="rs-kpis rs-kpis-fin">'+
+          '<button type="button" class="rs-kpi" data-rs-go="finanzas" style="--k:var(--success)"><span class="rs-kpi-l">Dinero disponible</span><span class="rs-kpi-v'+(disp < 0 ? ' neg' : '')+'">'+(saldos.length ? rsFinV(disp) : '—')+'</span><span class="rs-kpi-s">'+(saldos.length ? saldos.length+(saldos.length === 1 ? ' cuenta' : ' cuentas') : 'sin cuentas')+'</span></button>'+
+          '<button type="button" class="rs-kpi" data-rs-go="finanzas" style="--k:var(--rs-c1)"><span class="rs-kpi-l">Gastos fijos al mes</span><span class="rs-kpi-v">'+rsFinV(finFijosMensualTotal())+'</span><span class="rs-kpi-s">'+nFijos+(nFijos === 1 ? ' gasto activo' : ' gastos activos')+'</span></button>'+
+          '<button type="button" class="rs-kpi" data-rs-go="finanzas" style="--k:var(--warning)"><span class="rs-kpi-l">Por pagar</span><span class="rs-kpi-v">'+rsFinV(porPagar)+'</span><span class="rs-kpi-s">'+(nPagar ? nPagar+(nPagar === 1 ? ' pago pendiente' : ' pagos pendientes') : 'al día')+'</span></button>'+
+          '<button type="button" class="rs-kpi" data-rs-go="finanzas" style="--k:var(--rs-c4)"><span class="rs-kpi-l">Utilidad operativa '+anio+'</span><span class="rs-kpi-v'+(res.operativa < 0 ? ' neg' : '')+'">'+rsFinV(res.operativa)+'</span><span class="rs-kpi-s">en lo que va del año</span></button></div>';
       } catch(err){}
     }
     h += '<div class="rs-grid">'+
@@ -3748,9 +3846,11 @@
     }
     var tabsEl = document.getElementById('cotEstadoTabs');
     var tabBtn = function(t){ return '<button type="button" class="cot-tab subtab-btn'+(t.key===state.cotTab?' active':'')+'" data-tab="'+t.key+'"><span class="d" style="background:'+(COT_TAB_COLOR[t.key]||'var(--text-muted)')+'"></span>'+t.label+'<span class="n">'+counts[t.key]+'</span></button>'; };
-    tabsEl.innerHTML = '<div class="cot-cadena">'+COT_TABS.slice(0,5).map(tabBtn).join('')+'</div><div class="cot-lado">'+COT_TABS.slice(5).map(tabBtn).join('')+'</div>';
-    var regla = document.getElementById('cotRegla');
-    if(regla) regla.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></svg><div>'+(COT_TAB_REGLA[state.cotTab]||'')+'</div>';
+    /* La regla de cada estado ya no ocupa una franja (2026-11-06): queda en el ícono de ayuda junto a las pestañas. */
+    var reglaTxt = String(COT_TAB_REGLA[state.cotTab]||'').replace(/<[^>]+>/g, '');
+    tabsEl.innerHTML = '<div class="cot-cadena">'+COT_TABS.slice(0,5).map(tabBtn).join('')+'</div><div class="cot-lado">'+COT_TABS.slice(5).map(tabBtn).join('')+
+      (reglaTxt ? '<button type="button" class="ayuda" data-ayuda="'+escapeHtml(reglaTxt)+'" aria-label="Cómo funciona este estado">?</button>' : '')+'</div>';
+    var regla = document.getElementById('cotRegla'); if(regla){ regla.innerHTML = ''; regla.hidden = true; }
     tabsEl.querySelectorAll('.subtab-btn').forEach(function(b){ b.addEventListener('click', function(){
       state.cotTab = b.dataset.tab; try { localStorage.setItem('cenova.cotTab', state.cotTab); } catch(err){}
       renderCotizaciones();
@@ -3969,6 +4069,14 @@
     var act = cotOrdenActiva(id);
     if(act){ toast((c.numero||'La cotización')+' ya está en la orden '+(act.numero||'')+' — te la abro.'); closeCotModal(); closePreviewSiAbierta(); openOcModal(act._id); return Promise.resolve(); }
     if(!cotPuedeOrden(c)){ toast('Solo pasa a orden una cotización enviada que el cliente aprobó. '+(c.numero||'Esta')+' está «'+(COT_ESTADOS[c.estado]||c.estado)+'».', 6000); return Promise.resolve(); }
+    /* Cliente obligatorio para la orden (2026-11-06): sin cliente registrado no se puede facturar. Hasta «Enviada» puede ir vacío. */
+    if(!String(c.cliente||'').trim() || !findClienteByNombre(c.cliente)){
+      toast('Para pasar '+(c.numero||'la cotización')+' a orden necesita un cliente registrado: sus datos se usan para facturar. Elígelo en la cotización y guárdala.', 7000);
+      closePreviewSiAbierta();
+      if(state.editingCotId !== id) openCotModal(id);
+      setTimeout(function(){ var el = document.getElementById('cotCliente'); if(el){ el.focus(); if(el.scrollIntoView) el.scrollIntoView({block:'center'}); } }, 120);
+      return Promise.resolve();
+    }
     var total = Math.round(cotTotal(c)), anulada = c.versionAnulada != null && Number(c.versionAnulada) === Number(c.version || 1);
     var vNueva = anulada ? (Number(c.version) || 1) + 1 : (Number(c.version) || 1);
     closePreviewSiAbierta();   /* la vista previa queda encima del diálogo */
@@ -4756,7 +4864,10 @@
     }).catch(function(err){ if(err && err.silent) return; toast('No se pudo guardar la cotización del proveedor: ' + (err && err.message ? err.message : 'error')); });
   });
 
-  function openProvModal(id){
+  function openProvModal(id, preset){
+    preset = preset || {};
+    state.provPreset = preset;
+    document.getElementById('provOverlay').classList.toggle('encima', !!preset.desdeOrden);
     state.editingProvId = id || null;
     state.provArchivo = null; state.provArchivoRemoved = false;
     var p = id ? (state.cotizacionesProveedor.get(id) || {}) : {};
@@ -4768,10 +4879,10 @@
     document.getElementById('provIvaModo').value = p.ivaModo || 'antes';
     document.getElementById('provIvaPct').value = (p.ivaPct != null ? p.ivaPct : 19);
     setProvExtractStatus('');
-    proyectoSelectRefresh(document.getElementById('provProyecto'), 'Ninguno', p.proyectoId || '');
-    document.getElementById('provProyecto').value = p.proyectoId || '';
+    proyectoSelectRefresh(document.getElementById('provProyecto'), 'Ninguno', p.proyectoId || preset.proyectoId || '');
+    document.getElementById('provProyecto').value = p.proyectoId || preset.proyectoId || '';
     cotizacionSelectRefresh(document.getElementById('provCotizacion'));
-    document.getElementById('provCotizacion').value = p.cotizacionId || '';
+    document.getElementById('provCotizacion').value = p.cotizacionId || preset.cotizacionId || '';
     state.provItems = (p.items && p.items.length) ? JSON.parse(JSON.stringify(p.items)) : [];
     renderProvItemsTable(); recalcProvMonto();
     if(!state.provItems.length && p.monto){ document.getElementById('provMontoOut').textContent = fmtMoney.format(p.monto); }
@@ -4781,7 +4892,11 @@
     document.getElementById('provOverlay').classList.add('open');
     document.querySelectorAll('#provItemsBody textarea.pit-desc').forEach(autoGrowTextarea);
   }
-  function closeProvModal(){ document.getElementById('provOverlay').classList.remove('open'); state.editingProvId = null; }
+  function closeProvModal(){
+    var ov = document.getElementById('provOverlay'), desdeOrden = ov.classList.contains('encima');
+    ov.classList.remove('open'); ov.classList.remove('encima'); state.editingProvId = null; state.provPreset = null;
+    if(desdeOrden && document.getElementById('ocOverlay').classList.contains('open')) renderOcProv();
+  }
 
   document.getElementById('btnAddProv').addEventListener('click', function(){ openProvModal(); });
   document.getElementById('provClose').addEventListener('click', closeProvModal);
@@ -4807,6 +4922,7 @@
       cotizacionId: document.getElementById('provCotizacion').value,
       notas: document.getElementById('provNotas').value.trim()
     };
+    if(state.provPreset && state.provPreset.ordenId) data.ordenId = state.provPreset.ordenId;
     if(state.provArchivo){
       data.archivoNombre = state.provArchivo.nombre;
       data.archivoTipo = state.provArchivo.tipo;
@@ -4851,6 +4967,75 @@
     if(document.getElementById('view-agenda').classList.contains('active')){ renderCalendar(); renderDayPanel(); }
   }
 
+  /* ---------- Unidades (2026-11-06) ----------
+     Lista fija con las unidades que usa Cenova. Se guarda el código corto (el que sale en el PDF);
+     los valores viejos escritos a mano (GLOBAL, METRO, UN…) se reconocen. «Otro» deja escribir una unidad distinta. */
+  var UNIDADES = [['UND','Unidad'],['MT','Metro'],['DIA','Día'],['GLB','Global'],['OTRO','Otro']];
+  var UNIDAD_ALIAS = {UND:'UND', UN:'UND', U:'UND', UNIDAD:'UND', UNIDADES:'UND', UNID:'UND', EA:'UND', MT:'MT', M:'MT', ML:'MT', MTS:'MT', METRO:'MT', METROS:'MT', MTR:'MT',
+    DIA:'DIA', 'DÍA':'DIA', DIAS:'DIA', 'DÍAS':'DIA', DAY:'DIA', GLB:'GLB', GLOBAL:'GLB', GL:'GLB', GBL:'GLB'};
+  function unidadCodigo(u){ var k = String(u||'').trim().toUpperCase(); return k ? (UNIDAD_ALIAS[k] || 'OTRO') : 'UND'; }
+  function unidadSelectHtml(u){
+    var cod = unidadCodigo(u), otro = cod === 'OTRO';
+    return '<select class="it-unidad-sel">'+UNIDADES.map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===cod?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select>'+
+      '<input type="text" class="it-unidad-otro" value="'+escapeHtml(otro ? u : '')+'" placeholder="Cuál" maxlength="12"'+(otro?'':' hidden')+'>';
+  }
+
+  /* ---------- Rentabilidad por ítem (2026-11-06) ----------
+     Aviso interno (nunca sale en el PDF): ítem por debajo de la rentabilidad estándar, o ítem sin costo. */
+  function itemEstandar(it){
+    if(it.catalogoId && it.margenFijado != null) return Number(it.margenFijado);
+    return catMargin(it.categoria || 'Materiales');
+  }
+  function itemMargenReal(it, sobreVenta){
+    var k = precNum(it.costoUnit), p = Number(it.precioUnit)||0;
+    if(k == null || p <= 0) return null;
+    var venta = it.catalogoId ? true : (it.margenVenta || sobreVenta);
+    return venta ? (p - k) / p * 100 : (k > 0 ? (p - k) / k * 100 : null);
+  }
+  function itemAviso(it, sobreVenta, estandar){
+    if(!it || it.inst || it.diaTecnico) return null;
+    if(precNum(it.costoUnit) == null) return (Number(it.precioUnit)||0) > 0 ? {tipo:'sin_costo'} : null;
+    var e = estandar != null ? estandar : itemEstandar(it), r = itemMargenReal(it, sobreVenta);
+    if(e == null || r == null) return null;
+    return r < e - 0.5 ? {tipo:'bajo', real:r, estandar:e} : null;
+  }
+  function pctTxt(x){ return (Math.round(x*10)/10).toLocaleString('es-CO') + ' %'; }
+  function itemAvisoHtml(it){
+    var a = itemAviso(it, state.cotMargenVenta);
+    if(!a) return '';
+    if(a.tipo === 'bajo') return '<div class="it-bajo">Ítem cotizado bajo rentabilidad estándar · '+pctTxt(a.real)+' de '+pctTxt(a.estandar)+'</div>';
+    return '<div class="it-sincosto">Sin costo: no se puede verificar la rentabilidad</div>';
+  }
+
+  /* Revisión interna de la cotización (2026-11-06): lo que puede salir mal cobrado. Sale en el formulario y en la vista previa,
+     nunca en el PDF. */
+  var RX_DIA_TEC = /d[ií]as?\s*t[eé]cnicos?/i;
+  function cotRevision(c){
+    var items = c.items || [], av = [], sobreVenta = !!c.margenSobreVenta;
+    var bajos = [], sinCosto = 0;
+    items.forEach(function(it){ var a = itemAviso(it, sobreVenta, itemEstandarDe(it, c)); if(a && a.tipo === 'bajo') bajos.push(it); else if(a && a.tipo === 'sin_costo') sinCosto++; });
+    if(bajos.length) av.push({cls:'crit', bajos:true, t:(bajos.length === 1 ? '1 ítem cotizado' : bajos.length+' ítems cotizados')+' bajo rentabilidad estándar: '+bajos.slice(0,4).map(function(it){ return String(it.descripcion||'').slice(0,40); }).join(' · ')});
+    if(sinCosto) av.push({cls:'warn', t:sinCosto+(sinCosto === 1 ? ' ítem sin costo' : ' ítems sin costo')+': no se puede verificar si deja ganancia.'});
+    var servicio = items.filter(function(it){ return it.inst; }).length;
+    var diasTec = items.filter(function(it){ return !it.inst && (it.diaTecnico || RX_DIA_TEC.test(it.descripcion||'')); }).length;
+    if(servicio > 1) av.push({cls:'crit', t:'Hay '+servicio+' servicios de instalación: el personal puede quedar cobrado dos veces. Deja uno solo.'});
+    if(servicio && diasTec) av.push({cls:'crit', t:'Hay un ítem «Día técnico» además del servicio de instalación: el pago del técnico ya va dentro del servicio.'});
+    else if(diasTec > 1) av.push({cls:'crit', t:'Hay '+diasTec+' ítems «Día técnico»: revisa que el personal no quede cobrado dos veces.'});
+    return av;
+  }
+  /* Estándar de un ítem leyendo la cotización guardada (para la vista previa, sin el formulario abierto). */
+  function itemEstandarDe(it, c){
+    if(it.catalogoId && it.margenFijado != null) return Number(it.margenFijado);
+    var mc = c.margenCat || {}, v = mc[it.categoria || 'Materiales'];
+    return v != null && v !== '' ? Number(v) : ajusteMargenCat()[it.categoria || 'Materiales'];
+  }
+  function cotAvisosRefresh(){
+    var box = document.getElementById('cotAvisos'); if(!box) return;
+    var av = cotRevision({items: state.items, margenSobreVenta: state.cotMargenVenta, margenCat: readMargenCat()});
+    box.hidden = !av.length;
+    box.innerHTML = av.map(function(a){ return '<div class="cot-aviso '+a.cls+'">'+escapeHtml(a.t)+'</div>'; }).join('');
+  }
+
   /* ---------- Item builder ---------- */
   function renderItemsTable(){
     var body = document.getElementById('itemsBody');
@@ -4867,11 +5052,11 @@
       return '<tr data-i="'+i+'">'+
         '<td class="col-idx">'+(i+1)+'</td>'+
         '<td class="col-cat"><select class="it-cat">'+catOptions+'</select></td>'+
-        '<td class="col-desc"><textarea class="it-desc" rows="1" placeholder="Descripción">'+escapeHtml(it.descripcion)+'</textarea>'+origen+'</td>'+
-        '<td class="col-unit"><input type="text" class="it-unidad" value="'+escapeHtml(it.unidad||'')+'" placeholder="UND"></td>'+
+        '<td class="col-desc"><textarea class="it-desc" rows="1" placeholder="Descripción">'+escapeHtml(it.descripcion)+'</textarea>'+origen+'<div class="it-aviso-slot">'+itemAvisoHtml(it)+'</div></td>'+
+        '<td class="col-unit">'+unidadSelectHtml(it.unidad)+'</td>'+
         '<td class="col-num"><input type="number" class="it-cant" value="'+(it.cantidad||1)+'" min="0" step="1"></td>'+
         '<td class="col-num"><input type="number" class="it-costo" value="'+costoVal+'" min="0" step="100" placeholder="—"'+(bloq || ' title="Se llena solo al cargar una cotización de proveedor, o escríbelo aquí manualmente"')+'></td>'+
-        '<td class="col-pct"><input type="number" class="it-margen'+(hasOverride(it)?' override':'')+'" value="'+(hasOverride(it)?it.margenPct:'')+'" min="0" step="1" placeholder="'+escapeHtml(catMarginPlaceholder(catVal))+'" title="'+(it.catalogoId ? 'Margen de este ítem (viene de Precios)' : 'Rentabilidad solo para este ítem. Vacío = usa el % de su categoría.')+'">'+fijadoBadge(it)+'</td>'+
+        '<td class="col-pct"><input type="number" class="it-margen'+(hasOverride(it)?' override':'')+'" value="'+(hasOverride(it)?it.margenPct:'')+'" min="0" step="1" placeholder="'+escapeHtml(catMarginPlaceholder(catVal))+'" title="'+(it.catalogoId ? 'Margen de este ítem (viene de Precios)' : 'AUT = estándar de '+escapeHtml(catVal)+' ('+(catMargin(catVal)==null?'—':catMargin(catVal))+' %). Escribe un % para usar otro solo en este ítem.')+'">'+fijadoBadge(it)+'</td>'+
         '<td class="col-num"><input type="number" class="it-precio" value="'+(it.precioUnit||0)+'" min="0" step="1000"'+bloq+'></td>'+
         '<td class="col-total">'+fmtMoney.format(total)+'</td>'+
         '<td class="col-rm"><button type="button" class="icon-btn it-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td>'+
@@ -4898,7 +5083,12 @@
       autoGrowTextarea(inp);
       inp.addEventListener('input', function(){ state.items[+inp.closest('tr').dataset.i].descripcion = inp.value; autoGrowTextarea(inp); recalcTotals(); });
     });
-    body.querySelectorAll('.it-unidad').forEach(function(inp){ inp.addEventListener('input', function(){ state.items[+inp.closest('tr').dataset.i].unidad = inp.value; }); });
+    body.querySelectorAll('.it-unidad-sel').forEach(function(sel){ sel.addEventListener('change', function(){
+      var i = +sel.closest('tr').dataset.i, otro = sel.parentNode.querySelector('.it-unidad-otro');
+      if(sel.value === 'OTRO'){ otro.hidden = false; state.items[i].unidad = otro.value.trim().toUpperCase(); otro.focus(); }
+      else { otro.hidden = true; state.items[i].unidad = sel.value; }
+    }); });
+    body.querySelectorAll('.it-unidad-otro').forEach(function(inp){ inp.addEventListener('input', function(){ state.items[+inp.closest('tr').dataset.i].unidad = inp.value.trim().toUpperCase(); }); });
     body.querySelectorAll('.it-cant').forEach(function(inp){ inp.addEventListener('input', function(){ var i=+inp.closest('tr').dataset.i; state.items[i].cantidad = Number(inp.value); updateItemRowTotal(i); if(state.items[i].diaTecnico) refreshPersonalRecargo(); else recalcTotals(); }); });
     body.querySelectorAll('.it-costo').forEach(function(inp){
       inp.addEventListener('input', function(){
@@ -4922,37 +5112,38 @@
     var total = (Number(it.cantidad)||0) * (Number(it.precioUnit)||0);
     var cell = row.querySelector('.col-total');
     if(cell) cell.textContent = fmtMoney.format(total);
+    var av = row.querySelector('.it-aviso-slot'); if(av) av.innerHTML = itemAvisoHtml(it);
+  }
+  /* Lee del formulario lo que necesita cotCalc (los mismos totales que la vista previa y el PDF). */
+  function cotCalcForm(){
+    var v = function(id){ return document.getElementById(id).value; }, mode = v('cotCostingMode');
+    return cotCalc({items: state.items, costingMode: mode, ivaPct: Number(v(mode === 'aiu' ? 'cotIvaAiu' : 'cotIva'))||0,
+      aiuAdministracionPct: Number(v('cotAdminPct'))||0, aiuImprevistosPct: Number(v('cotImprevPct'))||0, aiuUtilidadPct: Number(v('cotUtilPct'))||0, ivaBase: v('cotIvaBase')});
   }
   function recalcTotals(){
-    var sub = state.items.reduce(function(s,it){ return s + (Number(it.cantidad)||0) * (Number(it.precioUnit)||0); }, 0);
     var mode = document.getElementById('cotCostingMode').value;
     document.getElementById('totalsSimple').style.display = (mode==='simple') ? 'flex' : 'none';
     document.getElementById('totalsAiu').style.display = (mode==='aiu') ? 'flex' : 'none';
+    var k = cotCalcForm(), f = function(n){ return fmtMoney.format(n); };
     if(mode==='aiu'){
-      var admin = sub*((Number(document.getElementById('cotAdminPct').value)||0)/100);
-      var imprev = sub*((Number(document.getElementById('cotImprevPct').value)||0)/100);
-      var util = sub*((Number(document.getElementById('cotUtilPct').value)||0)/100);
-      var ivaBase = document.getElementById('cotIvaBase').value;
-      var base = (ivaBase==='utilidad') ? util : (sub+admin+imprev+util);
-      var ivaPct = Number(document.getElementById('cotIvaAiu').value)||0;
-      var iva = base*(ivaPct/100);
-      document.getElementById('aiuSubtotalOut').textContent = fmtMoney.format(sub);
-      document.getElementById('aiuAdminOut').textContent = fmtMoney.format(admin);
-      document.getElementById('aiuImprevOut').textContent = fmtMoney.format(imprev);
-      document.getElementById('aiuUtilOut').textContent = fmtMoney.format(util);
-      document.getElementById('aiuIvaOut').textContent = fmtMoney.format(iva);
-      document.getElementById('aiuTotalOut').textContent = fmtMoney.format(sub+admin+imprev+util+iva);
+      document.getElementById('aiuSubtotalOut').textContent = f(k.sub);
+      document.getElementById('aiuAdminOut').textContent = f(k.admin);
+      document.getElementById('aiuViatRow').hidden = !(k.viat > 0);
+      document.getElementById('aiuViatOut').textContent = f(k.viat);
+      document.getElementById('aiuImprevOut').textContent = f(k.imprev);
+      document.getElementById('aiuUtilOut').textContent = f(k.util);
+      document.getElementById('aiuIvaOut').textContent = f(k.iva);
+      document.getElementById('aiuTotalOut').textContent = f(k.total);
     } else {
-      var ivaPct2 = Number(document.getElementById('cotIva').value)||0;
-      var iva2 = sub * (ivaPct2/100);
-      document.getElementById('cotSubtotalOut').textContent = fmtMoney.format(sub);
-      document.getElementById('cotIvaOut').textContent = fmtMoney.format(iva2);
-      document.getElementById('cotTotalOut').textContent = fmtMoney.format(sub+iva2);
+      document.getElementById('cotSubtotalOut').textContent = f(k.sub);
+      document.getElementById('cotIvaOut').textContent = f(k.iva);
+      document.getElementById('cotTotalOut').textContent = f(k.total);
     }
     renderMargenResumen();
+    if(typeof cotAvisosRefresh === 'function') cotAvisosRefresh();
   }
   document.getElementById('btnAddItem').addEventListener('click', function(){
-    state.items.push({categoria:'Materiales', descripcion:'', unidad:'', cantidad:1, precioUnit:0});
+    state.items.push({categoria:'Materiales', descripcion:'', unidad:'UND', cantidad:1, precioUnit:0});
     renderItemsTable(); recalcTotals();
     // Con muchos ítems ya cargados, la fila nueva queda fuera de la vista — la enfocamos para que se note que sí se agregó.
     var body = document.getElementById('itemsBody');
@@ -4962,6 +5153,11 @@
       if(inp.scrollIntoView) inp.scrollIntoView({block:'center', behavior:'smooth'});
       inp.focus();
     }
+  });
+  document.getElementById('cotPasarAiu').addEventListener('click', function(){
+    var sel = document.getElementById('cotCostingMode'); sel.value = 'aiu';
+    document.getElementById('cotIvaAiu').value = document.getElementById('cotIva').value;
+    sel.dispatchEvent(new Event('change'));
   });
   ['cotIva','cotCostingMode','cotAdminPct','cotImprevPct','cotUtilPct','cotIvaAiu','cotIvaBase'].forEach(function(id){
     document.getElementById(id).addEventListener('input', recalcTotals);
@@ -4978,7 +5174,8 @@
     if(!el || el.value.trim()==='') return null;
     return Number(el.value)||0;
   }
-  function catMarginPlaceholder(cat){ var m = catMargin(cat); return m==null ? '—' : String(m); }
+  /* Sin % propio, el ítem usa el estándar de su categoría: se muestra «AUT» (2026-11-06). */
+  function catMarginPlaceholder(cat){ return 'AUT'; }
   /* % efectivo: el propio del ítem si lo tiene; si no, el de su categoría */
   function effectiveMargin(it){
     if(hasOverride(it)) return Number(it.margenPct);
@@ -5039,7 +5236,7 @@
       var itemsCount = (p.items||[]).length;
       return '<div class="proj-inline" style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">'+
         '<div><strong>'+escapeHtml(p.proveedor||'Proveedor')+'</strong>'+(p.numero?' · '+escapeHtml(p.numero):'')+(p.fecha?' · '+fmtDate(p.fecha):'')+
-        '<div style="color:var(--text-muted); font-size:11.5px; margin-top:2px;">'+(itemsCount ? itemsCount+' ítem(s) con costo' : 'sin ítems de costo cargados — edítala en Cotizaciones de proveedores')+(p.monto?' · '+fmtMoney.format(p.monto)+' total':'')+'</div></div>'+
+        '<div style="color:var(--text-muted); font-size:11.5px; margin-top:2px;">'+(itemsCount ? itemsCount+' ítem(s) con costo' : 'sin ítems de costo cargados — ábrela desde la orden interna')+(p.monto?' · '+fmtMoney.format(p.monto)+' total':'')+'</div></div>'+
         '<button type="button" class="btn sm apply-linked-prov" data-provid="'+pid+'"'+(itemsCount?'':' disabled')+' style="'+(itemsCount?'':'opacity:.5; cursor:not-allowed;')+'">Cargar costos aquí</button>'+
         '</div>';
     }).join('');
@@ -5188,9 +5385,7 @@
     if(!un.hidden) un.textContent = 'Une '+state.cotUnir.map(function(x){ return (state.cotizaciones.get(x)||{}).numero||''; }).join(', ')+'. Al guardar, esas quedan como «Reemplazada» por esta y salen de las estadísticas.';
     document.getElementById('cotReemplazoPor').innerHTML = '<option value="">Elige la cotización…</option>'+(c.reemplazadaPor ? '<option value="'+c.reemplazadaPor+'">'+escapeHtml(c.reemplazadaPorNumero||'')+'</option>' : '');
     document.getElementById('cotReemplazoPor').value = c.reemplazadaPor || '';
-    document.getElementById('cotModalTitle').textContent = id ? 'Editar cotización' : (plantilla ? 'Nueva cotización completa' : 'Nueva cotización');
     document.getElementById('cotNumero').value = c.numero || '';
-    document.getElementById('cotNumero').placeholder = id ? 'Sin número' : 'Se asigna al guardar (' + nextCotNumero() + ')';
     document.getElementById('cotDiasInst').value = (c.diasInstalacion != null ? c.diasInstalacion : '');
     document.getElementById('cotFechaAceptacion').value = c.fechaAceptacion || '';
     document.getElementById('cotInicioEstimado').value = c.inicioEstimado || '';
@@ -5221,8 +5416,10 @@
     state.cotAbierta = { fecha: c.fecha || '', version: String(c.version || 1) };
     state.cotVigAmp = { pedido:0, total:0 };
     cotVigRefresh();
-    document.getElementById('cotFechaHint').textContent = 'Se pone sola con la fecha de hoy cada vez que guardas cambios en la cotización (mientras no esté aprobada ni rechazada).' + editadoTxt(c);
-    document.getElementById('cotCostingMode').value = c.costingMode || 'simple';
+    cotMetaRefresh(id, c);
+    /* Siempre AIU (2026-11-06): las nuevas nacen en AIU; las viejas en modo simple se quedan así hasta que se pasen. */
+    document.getElementById('cotCostingMode').value = c.costingMode || ((id || plantilla) ? 'simple' : 'aiu');
+    document.getElementById('cotAiuDesglose').checked = !!c.aiuDesglosado;
     document.getElementById('cotIva').value = (c.ivaPct != null ? c.ivaPct : 19);
     document.getElementById('cotIvaAiu').value = (c.ivaPct != null ? c.ivaPct : 19);
     document.getElementById('cotAdminPct').value = (c.aiuAdministracionPct != null ? c.aiuAdministracionPct : 5);
@@ -5235,6 +5432,7 @@
       var mc = c.margenCat || {};
       Object.keys(MARGEN_INPUT_IDS).forEach(function(cat){
         var v = (mc[cat] != null) ? mc[cat] : (c.margenCat ? null : c.margenPct);
+        if(v == null || v === '') v = ajusteMargenCat()[cat];   /* estándar de Ajustes (2026-11-06) */
         document.getElementById(MARGEN_INPUT_IDS[cat]).value = (v != null ? v : '');
       });
     })();
@@ -5260,8 +5458,37 @@
     /* El overlay estaba oculto (display:none) mientras se armaban las filas, así que el alto
        automático de las descripciones no se pudo calcular bien — se recalcula ya visible. */
     document.querySelectorAll('#itemsBody textarea.it-desc').forEach(autoGrowTextarea);
+    document.querySelectorAll('#cotOverlay textarea.txt-crece, #cotDescripcion').forEach(autoGrowTextarea);
   }
+  /* Notas internas y condiciones (2026-11-06): el cuadro crece con el texto, sin barra de desplazamiento. */
+  document.querySelectorAll('#cotOverlay textarea.txt-crece, #cotDescripcion').forEach(function(t){ t.addEventListener('input', function(){ autoGrowTextarea(t); }); });
   function closeCotModal(){ document.getElementById('cotOverlay').classList.remove('open'); state.editingCotId = null; }
+  /* Encabezado del formulario (2026-11-06): número, versión, fecha y estado son automáticos y se muestran aquí,
+     en una línea discreta, en vez de ocupar campos. */
+  function cotMetaRefresh(id, c){
+    c = c || {};
+    var num = c.numero || nextCotNumero();
+    document.getElementById('cotModalTitle').textContent = (id ? 'Cotización ' : 'Nueva cotización · ') + num;
+    var partes = [];
+    if(id){
+      partes.push('Versión ' + (c.version || 1));
+      if(c.fecha) partes.push(fmtDate(c.fecha));
+      partes.push(COT_ESTADOS[c.estado] || 'Por armar');
+      if(c.fechaAceptacion && c.estado === 'aprobada') partes.push('aceptada el ' + fmtDate(c.fechaAceptacion));
+      var ed = editadoTxt(c).trim(); if(ed) partes.push(ed.replace(/\.$/, '').replace(/^Última edición: /, 'editada el '));
+    } else partes.push('El número se asigna al guardar');
+    var m = document.getElementById('cotMeta'); m.hidden = false; m.textContent = partes.join(' · ');
+  }
+  /* Días de instalación (2026-11-06): ya no se escriben a mano. Salen del servicio de instalación (los días del personal)
+     o, en las cotizaciones del método anterior, de la cantidad del ítem «Día técnico». */
+  function cotDiasInstAuto(items){
+    var d = 0;
+    (items || []).forEach(function(it){
+      if(it.inst && it.inst.personal) d = Math.max(d, instDiasBase(it.inst));
+      else if(it.diaTecnico) d = Math.max(d, Number(it.cantidad) || 0);
+    });
+    return d || null;
+  }
 
   document.getElementById('cotPreviewBtn').addEventListener('click', function(){ if(state.editingCotId) openPreview(state.editingCotId); });
 
@@ -5287,6 +5514,56 @@
     new MutationObserver(function(){ if(!pend){ pend = true; requestAnimationFrame(compactar); } }).observe(document.body, {childList:true, subtree:true});
     compactar();
   })();
+  /* =====================================================================
+     Ayuda discreta (2026-11-06): los textos que explican cómo funciona cada cosa ya no se ven
+     en pantalla; quedan dentro de un ícono «?» pequeño que se abre al tocarlo. Así la intranet
+     se ve profesional si se le muestra a otra empresa.
+     ===================================================================== */
+  (function(){
+    var pop = null, dueno = null;
+    function cerrar(){ if(pop){ pop.remove(); pop = null; dueno = null; } }
+    function abrir(btn){
+      cerrar();
+      pop = document.createElement('div'); pop.className = 'ayuda-pop'; pop.setAttribute('role', 'tooltip');
+      pop.textContent = btn.getAttribute('data-ayuda') || '';
+      document.body.appendChild(pop); dueno = btn;
+      var r = btn.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight, vw = document.documentElement.clientWidth;
+      var left = Math.max(8, Math.min(r.left + r.width/2 - w/2, vw - w - 8));
+      var top = r.bottom + 6; if(top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 6);
+      pop.style.left = left + 'px'; pop.style.top = top + 'px';
+    }
+    document.addEventListener('click', function(e){
+      var b = e.target.closest && e.target.closest('.ayuda');
+      if(b){ e.preventDefault(); e.stopPropagation(); if(dueno === b) cerrar(); else abrir(b); return; }
+      if(pop && !pop.contains(e.target)) cerrar();
+    }, true);
+    document.addEventListener('keydown', function(e){ if(e.key === 'Escape') cerrar(); });
+    window.addEventListener('scroll', cerrar, true); window.addEventListener('resize', cerrar);
+
+    /* Convierte las explicaciones fijas del HTML (las que no cambian con los datos) en ese ícono. */
+    function boton(txt){ var b = document.createElement('button'); b.type = 'button'; b.className = 'ayuda'; b.setAttribute('data-ayuda', txt); b.setAttribute('aria-label', 'Ayuda'); b.textContent = '?'; return b; }
+    function destino(el){
+      var f = el.parentElement;
+      if(f && f.classList.contains('field')){ var lb = f.querySelector(':scope > label'); if(lb) return lb; }
+      var prev = el.previousElementSibling;
+      if(prev){
+        if(prev.matches('.fieldset-label, h2, h3, h4, .oc-pf-h > strong')) return prev;
+        var hx = prev.matches('.section-head, .panel-head, .modal-head') && prev.querySelector('h2, h3'); if(hx) return hx;
+      }
+      if(f && f.classList.contains('oc-pf-h')) return f.querySelector('strong');
+      /* Explicación dentro de un bloque sin título propio: va al título de la sección (p. ej. «OC del cliente»). */
+      if(f && f.classList.contains('field')){ var t = f.previousElementSibling; while(t && !t.matches('.fieldset-label')) t = t.previousElementSibling; if(t && f.previousElementSibling === t) return t; }
+      return null;
+    }
+    document.querySelectorAll('.app .no-file:not([id]), .overlay .no-file:not([id]), .app .info-box:not([id]):not(.fin-setup), #ocNumeroHint, #provFileHint, #ocFootNote').forEach(function(el){
+      if(el.closest('#provFileCurrent') || el.querySelector('input, select, textarea, button, table')) return;
+      var txt = (el.textContent || '').replace(/\s+/g, ' ').trim(); if(txt.length < 20) return;
+      var d = destino(el), b = boton(txt);
+      if(d){ d.appendChild(document.createTextNode(' ')); d.appendChild(b); el.remove(); }
+      else { var w = document.createElement('div'); w.className = 'ayuda-fila'; w.appendChild(b); el.parentNode.replaceChild(w, el); }
+    });
+  })();
+
   /* Ficha del proyecto (solo administración): lo vendido, lo que cuesta, lo que queda y cómo va el cobro */
   function proyFichaDatos(pid){
     var r = {venta:0, costo:0, imprev:0, valorOc:0, cobrado:0, saldo:0, bodega:0, gastado:0, ocs:[], cots:[]};
@@ -5360,7 +5637,7 @@
       var n = 0; fin.movs.forEach(function(m){ if(m.estado === 'pendiente' && m.tipo === 'egreso' && m.proyectoId === o.proyectoId) n++; });
       if(n) out.push(n+' pago(s) pendiente(s) en Finanzas');
     }
-    try { var oid = null; state.ordenes.forEach(function(x, k){ if(x === o) oid = k; }); if(oid){ var sf = ocSoportesFaltan(oid).length; if(sf) out.push(sf+' soporte(s) por subir'); if(!ocTieneOcCliente(oid, o)) out.push('anexar la OC del cliente'); } } catch(e){}
+    try { var oid = null; state.ordenes.forEach(function(x, k){ if(x === o) oid = k; }); if(oid){ var sf = ocSoportesFaltan(oid).length; if(sf) out.push(sf+' soporte(s) por subir'); if(!ocTieneOcCliente(oid, o)) out.push('anexar la OC del cliente'); if(o.estado !== 'anulada' && !ocTieneProv(oid, o)) out.push('ligar la cotización del proveedor (o explicar por qué no hay)'); } } catch(e){}
     return out;
   }
   function cotOrdenActiva(id){ var r = null; state.ordenes.forEach(function(o, oid){ if(!r && o.cotizacionId === id && o.estado !== 'anulada') r = Object.assign({_id: oid}, o); }); return r; }
@@ -5406,6 +5683,7 @@
     .preview-title-row{padding:14px 28px 0; position:relative; z-index:1;}
     .preview-title-row h2{margin:0; font-size:21px; font-weight:800; color:#173a73;}
     .subtitle-bar{background:#eaf1fb; color:#173a73; font-weight:700; font-size:12.5px; padding:9px 14px; border-radius:6px; margin:12px 28px 0;}
+    .pv-proy-desc{margin:6px 28px 0; font-size:11.5px; color:#4a5a70; line-height:1.5; white-space:pre-line;}
     .preview-body{padding:16px 28px 24px; position:relative; z-index:1;}
     .preview-cols{display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:14px;}
     .preview-cols h4{margin:0 0 6px; font-size:10.5px; text-transform:uppercase; letter-spacing:.05em; color:#173a73; font-weight:800;}
@@ -5679,37 +5957,19 @@
       });
     }
 
-    var totalsHtml = '';
-    var totalVal = 0;
+    /* AIU (2026-11-06): con la casilla «Mostrar AIU desglosado» el cliente ve Administración, Imprevistos y Utilidad;
+       sin ella, una sola línea «AIU». Lo que se ve aquí es exactamente lo que sale en el PDF. */
+    var k = cotCalc(c), totalVal = k.total, totalsHtml;
+    var fila = function(t, v, cls){ return '<div class="pt-row'+(cls?' '+cls:'')+'"><span>'+t+'</span><span class="num">'+fmtMoney.format(v)+'</span></div>'; };
     if(mode==='aiu'){
-      var admin = sub*((Number(c.aiuAdministracionPct)||0)/100);
-      var imprev = sub*((Number(c.aiuImprevistosPct)||0)/100);
-      var util = sub*((Number(c.aiuUtilidadPct)||0)/100);
-      var base = (c.ivaBase==='utilidad') ? util : (sub+admin+imprev+util);
-      var ivaPct = Number(c.ivaPct)||0;
-      var iva = base*(ivaPct/100);
-      totalVal = sub+admin+imprev+util+iva;
-      totalsHtml = ''+
-        '<div class="preview-totals-box">'+
-          '<div class="pt-row"><span>Subtotal</span><span class="num">'+fmtMoney.format(sub)+'</span></div>'+
-          '<div class="pt-row aiu-detail"><span>Administración ('+(c.aiuAdministracionPct||0)+'%)</span><span class="num">'+fmtMoney.format(admin)+'</span></div>'+
-          '<div class="pt-row aiu-detail"><span>Imprevistos ('+(c.aiuImprevistosPct||0)+'%)</span><span class="num">'+fmtMoney.format(imprev)+'</span></div>'+
-          '<div class="pt-row aiu-detail"><span>Utilidad ('+(c.aiuUtilidadPct||0)+'%)</span><span class="num">'+fmtMoney.format(util)+'</span></div>'+
-          '<div class="pt-row aiu-lump"><span>AIU</span><span class="num">'+fmtMoney.format(admin+imprev+util)+'</span></div>'+
-          '<div class="pt-row"><span>IVA ('+ivaPct+'%)<small class="aiu-detail">'+(c.ivaBase==='utilidad' ? 'sobre Utilidad (esquema AIU)' : 'sobre subtotal completo')+'</small></span><span class="num">'+fmtMoney.format(iva)+'</span></div>'+
-          '<div class="pt-row total"><span>Total</span><span class="num">'+fmtMoney.format(totalVal)+'</span></div>'+
-        '</div>'+
-        (c.ivaBase==='utilidad' ? '<div class="preview-note aiu-detail">Base del IVA: solo sobre la Utilidad (art. 462-1 ET — aplica únicamente a aseo, vigilancia, servicios temporales y cooperativas de trabajo asociado). Verifica con tu contador si tu servicio califica; de lo contrario usa "Subtotal completo".</div>' : '');
+      var desg = !!c.aiuDesglosado;
+      totalsHtml = '<div class="preview-totals-box">'+ fila('Subtotal', k.sub) +
+        (desg ? fila('Administración ('+(c.aiuAdministracionPct||0)+'%)', k.admin) + fila('Imprevistos ('+(c.aiuImprevistosPct||0)+'%)', k.imprev) + fila('Utilidad ('+(c.aiuUtilidadPct||0)+'%)', k.util)
+              : fila('AIU', k.admin + k.imprev + k.util)) +
+        '<div class="pt-row"><span>IVA ('+k.ivaPct+'%)'+(desg ? '<small>'+(c.ivaBase==='utilidad' ? 'sobre Utilidad (esquema AIU)' : 'sobre subtotal completo')+'</small>' : '')+'</span><span class="num">'+fmtMoney.format(k.iva)+'</span></div>'+
+        fila('Total', totalVal, 'total') + '</div>';
     } else {
-      var ivaPct2 = Number(c.ivaPct)||0;
-      var iva2 = sub*(ivaPct2/100);
-      totalVal = sub+iva2;
-      totalsHtml = ''+
-        '<div class="preview-totals-box">'+
-          '<div class="pt-row"><span>Subtotal</span><span class="num">'+fmtMoney.format(sub)+'</span></div>'+
-          '<div class="pt-row"><span>IVA ('+ivaPct2+'%)</span><span class="num">'+fmtMoney.format(iva2)+'</span></div>'+
-          '<div class="pt-row total"><span>Total</span><span class="num">'+fmtMoney.format(totalVal)+'</span></div>'+
-        '</div>';
+      totalsHtml = '<div class="preview-totals-box">'+ fila('Subtotal', k.sub) + fila('IVA ('+k.ivaPct+'%)', k.iva) + fila('Total', totalVal, 'total') + '</div>';
     }
 
     return {rowsHtml: rowsHtml, totalsHtml: totalsHtml, totalVal: totalVal, sub: sub};
@@ -5792,6 +6052,7 @@
     var oid = state.editingOcId, o = oid ? state.ordenes.get(oid) : null;
     if(!o){ toast('Guarda la orden primero.'); return; }
     var cuadPf = ocCuadra(o); if(!cuadPf.ok){ toast('No se genera prefactura: '+cuadPf.motivo, 8000); return; }
+    if(!ocTieneProv(oid, o)){ toast('Para facturar, liga la cotización del proveedor en la orden (o elige por qué no hay) y guárdala.', 7000); var pe = document.getElementById('ocProvEstado'); if(pe && pe.scrollIntoView) pe.scrollIntoView({block:'center', behavior:'smooth'}); return; }
     if(ocPfSinGuardar(o)){ toast('Hay cambios sin guardar en el valor o en los pagos de la orden. Guárdala primero para que la prefactura salga con los datos reales.', 5000); return; }
     var db = requireDb(); if(!db) return;
     var saldo = ocSaldo(o);
@@ -5948,12 +6209,64 @@
         '</div>'+
       '</div>';
     document.getElementById('previewDoc').innerHTML = html;
-    botonOrdenCot(document.getElementById('previewPasarOrden'), state.previewingCotId); document.getElementById('previewOverlay').classList.add('open');
+    botonOrdenCot(document.getElementById('previewPasarOrden'), state.previewingCotId);
+    if(verSel) document.getElementById('previewPasarOrden').style.display = 'none';
+    document.getElementById('previewOverlay').classList.add('open');
   }
 
-  function openPreview(id){
-    var c = state.cotizaciones.get(id); if(!c) return;
-    state.previewingCotId = id; state.previewingPfId = null; state.previewingFormato = null;
+  /* Título de la cotización = nombre del proyecto ligado (2026-11-06); la descripción va debajo. */
+  function cotTituloProyecto(c){
+    var p = c && c.proyectoId ? state.proyectos.get(c.proyectoId) : null;
+    return (p && p.nombre) || (c && c.descripcion) || 'Cotización de servicio';
+  }
+  /* Versiones (2026-11-06): la vista previa abre la versión vigente; abajo se despliegan las anteriores para compararlas. */
+  function cotVersionesLista(c){
+    return (c.versiones || []).slice().sort(function(a, b){ return (Number(b.version)||0) - (Number(a.version)||0); });
+  }
+  function cotCompararVersiones(vieja, nueva){
+    var clave = function(it){ return String(it.descripcion||'').trim().toLowerCase(); };
+    var mapa = {}; (vieja.items||[]).forEach(function(it){ mapa[clave(it)] = it; });
+    var cambios = [], vistos = {};
+    (nueva.items||[]).forEach(function(it){
+      var k = clave(it), o = mapa[k]; vistos[k] = 1;
+      var d = String(it.descripcion||'').slice(0, 60);
+      if(!o) cambios.push('<li class="mas">Nuevo: '+escapeHtml(d)+' · '+(it.cantidad||0)+' × '+fmtMoney.format(Number(it.precioUnit)||0)+'</li>');
+      else if(Number(o.cantidad) !== Number(it.cantidad) || Number(o.precioUnit) !== Number(it.precioUnit))
+        cambios.push('<li>'+escapeHtml(d)+': '+(o.cantidad||0)+' × '+fmtMoney.format(Number(o.precioUnit)||0)+' → '+(it.cantidad||0)+' × '+fmtMoney.format(Number(it.precioUnit)||0)+'</li>');
+    });
+    (vieja.items||[]).forEach(function(it){ if(!vistos[clave(it)]) cambios.push('<li class="menos">Quitado: '+escapeHtml(String(it.descripcion||'').slice(0, 60))+'</li>'); });
+    var tv = Math.round(cotTotal(vieja)), tn = Math.round(cotTotal(nueva)), dif = tn - tv;
+    return '<div class="pv-comp"><b>De la versión '+(vieja.version||1)+' a la '+(nueva.version||1)+':</b> total '+fmtMoney.format(tv)+' → '+fmtMoney.format(tn)+
+      (dif ? ' <span class="'+(dif > 0 ? 'sube' : 'baja')+'">('+(dif > 0 ? '+' : '−')+fmtMoney.format(Math.abs(dif))+')</span>' : ' (igual)')+
+      (cambios.length ? '<ul>'+cambios.join('')+'</ul>' : '<div class="muted">Mismos ítems y precios.</div>')+'</div>';
+  }
+  function renderPreviewInterno(id, actual, verSel){
+    var box = document.getElementById('previewInterno'), h = '';
+    var vers = cotVersionesLista(actual);
+    if(vers.length){
+      h += '<div class="pv-ver"><label>Versión <select id="pvVersion"><option value="">'+(actual.version||1)+' · vigente'+(actual.fecha ? ' · '+fmtDate(actual.fecha) : '')+'</option>'+
+        vers.map(function(v){ return '<option value="'+v.version+'"'+(String(verSel) === String(v.version) ? ' selected' : '')+'>'+v.version+(v.fecha ? ' · '+fmtDate(v.fecha) : '')+' · '+fmtMoney.format(v.total||cotTotal(v))+'</option>'; }).join('')+'</select></label></div>';
+      var vieja = verSel ? vers.filter(function(v){ return String(v.version) === String(verSel); })[0] : vers[0];
+      if(vieja) h += cotCompararVersiones(vieja, actual);
+    }
+    if(!verSel){
+      cotRevision(actual).filter(function(a){ return !a.bajos; }).forEach(function(a){ h += '<div class="cot-aviso '+a.cls+'">'+escapeHtml(a.t)+'</div>'; });
+      (actual.items||[]).forEach(function(it){
+        var a = itemAviso(it, !!actual.margenSobreVenta, itemEstandarDe(it, actual));
+        if(a && a.tipo === 'bajo') h += '<div class="cot-aviso crit">Ítem cotizado bajo rentabilidad estándar: '+escapeHtml(String(it.descripcion||'').slice(0,60))+' · '+pctTxt(a.real)+' de '+pctTxt(a.estandar)+'</div>';
+      });
+      if(actual.costingMode === 'aiu' && actual.ivaBase === 'utilidad') h += '<div class="cot-aviso info">IVA solo sobre la Utilidad: confírmalo con el contador para este tipo de servicio.</div>';
+    } else h += '<div class="cot-aviso info">Estás viendo la versión '+escapeHtml(String(verSel))+' (anterior). El PDF sale de esta versión.</div>';
+    box.innerHTML = h; box.hidden = !h;
+    var sel = document.getElementById('pvVersion');
+    if(sel) sel.addEventListener('change', function(){ openPreview(id, sel.value || null); });
+  }
+  function openPreview(id, verSel){
+    var actual = state.cotizaciones.get(id); if(!actual) return;
+    var c = actual;
+    if(verSel){ var vv = cotVersionesLista(actual).filter(function(v){ return String(v.version) === String(verSel); })[0]; if(vv) c = Object.assign({}, actual, vv); else verSel = null; }
+    state.previewingCotId = id; state.previewingPfId = null; state.previewingFormato = null; state.previewingVer = verSel || null;
+    renderPreviewInterno(id, actual, verSel);
     var items = c.items||[];
     var sub = items.reduce(function(s,it){ return s + (Number(it.cantidad)||0)*(Number(it.precioUnit)||0); }, 0);
     var emisor = emisorDe(c.responsable);
@@ -5977,7 +6290,8 @@
         '</div>'+
       '</div>'+
       '<div class="preview-title-row"><h2>Cotización de Servicio</h2></div>'+
-      '<div class="subtitle-bar">'+escapeHtml(c.descripcion||'Título del proyecto o servicio cotizado')+'</div>'+
+      '<div class="subtitle-bar">'+escapeHtml(cotTituloProyecto(c))+'</div>'+
+      (c.descripcion && c.descripcion !== cotTituloProyecto(c) ? '<div class="pv-proy-desc">'+escapeHtml(c.descripcion)+'</div>' : '')+
       '<div class="preview-body">'+
         '<div class="preview-cols">'+
           '<div><h4>Datos del cliente</h4>'+
@@ -6028,7 +6342,7 @@
       return;
     }
     var c = state.previewingCotId ? state.cotizaciones.get(state.previewingCotId) : null;
-    var filename = 'Cotizacion-' + slugFile((c && c.numero) || 'Cenova') + '-' + slugFile((c && c.cliente) || '') + '.pdf';
+    var filename = 'Cotizacion-' + slugFile((c && c.numero) || 'Cenova') + (state.previewingVer ? '-v' + state.previewingVer : '') + '-' + slugFile((c && c.cliente) || '') + '.pdf';
     offerPdfDownload(filename, buildPrintDocument(docEl.innerHTML), 'Cotización descargada en PDF.', this);
   });
 
@@ -6771,6 +7085,8 @@
     renderOcNovedades();
     state.ocPersonal = (o.personal||[]).map(function(r){ return Object.assign({}, r); });
     document.getElementById('ocAnticipoPct').value = (o.anticipoPct != null ? o.anticipoPct : '');
+    document.getElementById('ocProvMotivo').value = (o.provSinCotizacion && o.provSinCotizacion.motivo) || '';
+    document.getElementById('ocProvNota').value = (o.provSinCotizacion && o.provSinCotizacion.nota) || '';
     state.ocPagos = (o.pagos||[]).map(function(x){ return Object.assign({}, x); });
     renderPersonalTable('ocPersonalBody', state.ocPersonal, renderOcPersonalSummary);
     state.ocPorPagar = (o.porPagar||[]).map(function(x){ return Object.assign({}, x); });
@@ -6787,7 +7103,7 @@
     renderOcRetraso();
     document.getElementById('ocPfMonto').dataset.tocado = ''; document.getElementById('ocPfLink').value = '';
     renderOcPrefacturas();
-    renderOcClienteAnexos();
+    renderOcClienteAnexos(); renderOcProv();
     var bq = document.getElementById('ocBloqueoNota'), cB = state.cotizaciones.get(o.cotizacionId) || {};
     bq.hidden = !id;
     bq.innerHTML = o.estado === 'anulada'
@@ -6822,6 +7138,9 @@
       if(!cuad.ok){ toast(cuad.motivo+' Corrige la cotización (o pide al cliente la OC correcta) antes de guardar: la factura debe salir con el mismo valor.', 9000); document.getElementById('ocValor').focus(); return; }
       if(estadoSel === 'facturada' && !state.ocArchivo && !(prev.archivoDatos && !state.ocArchivoRemoved) && !document.getElementById('ocNumeroCliente').value.trim() && !ocTieneOcCliente(state.editingOcId, {medio: document.getElementById('ocMedio').value})){
         toast('Para marcarla «Facturada» adjunta la OC del cliente o escribe su número: la factura en Siigo debe citarla.', 7000); return; }
+    }
+    if(estadoSel === 'facturada' && prev.estado !== 'facturada' && !(ocProvDe(state.editingOcId, prev).length || document.getElementById('ocProvMotivo').value)){
+      toast('Para marcarla «Facturada» liga la cotización del proveedor (o elige por qué no hay).', 7000); return;
     }
     if(ocRetrasoAplica() && !document.getElementById('ocRetrasoMotivo').value){
       toast('La obra arranca después del inicio estimado ('+fmtDate(c.inicioEstimado)+'): elige el motivo del retraso.', 5000);
@@ -6867,6 +7186,7 @@
       fechaConfirmacion: prev.fechaConfirmacion || (f.fechaInicio ? todayIso() : null),
       fechaPago: estado==='pagada' ? (pagoCompleto ? pagosClean[pagosClean.length-1].fecha : (prev.fechaPago || todayIso())) : null,
       anticipoPct: document.getElementById('ocAnticipoPct').value==='' ? null : Number(document.getElementById('ocAnticipoPct').value),
+      provSinCotizacion: document.getElementById('ocProvMotivo').value ? {motivo: document.getElementById('ocProvMotivo').value, nota: document.getElementById('ocProvNota').value.trim()} : null,
       pagos: pagosClean,
       creadoPorId: prev.creadoPorId || state.userId || null,
       creadoEn: prev.creadoEn || new Date().toISOString(),
@@ -6900,6 +7220,81 @@
       }
       return Promise.all(tasks).then(function(){ toast(anulando ? 'Orden '+data.numero+' anulada · '+(c.numero||'la cotización')+' quedó editable' : 'Orden '+data.numero+' guardada y agenda actualizada', anulando ? 6000 : undefined); closeOcModal(); renderAll(); syncProyEstadosPronto(); });
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+
+  /* ===== Cotización del proveedor en la orden (2026-11-06) =====
+     Reemplaza la pestaña «De proveedores»: cada orden liga la(s) cotización(es) del proveedor con la que se compró,
+     para comparar su valor con el costo que usamos al cotizar. Si no hay, se explica el motivo. */
+  var OC_PROV_MOTIVOS = {bodega:'Material que ya teníamos en bodega', tienda:'Compra directa en tienda (se sube la factura)', mano_obra:'Solo mano de obra, sin compras', otro:'Otro motivo'};
+  (function(){ var sel = document.getElementById('ocProvMotivo'); sel.innerHTML = '<option value="">Tiene cotización de proveedor</option>'+Object.keys(OC_PROV_MOTIVOS).map(function(k){ return '<option value="'+k+'">'+escapeHtml(OC_PROV_MOTIVOS[k])+'</option>'; }).join(''); })();
+  function ocProvDe(oid, o){
+    o = o || state.ordenes.get(oid) || {};
+    var out = [];
+    state.cotizacionesProveedor.forEach(function(p, pid){ if((oid && p.ordenId === oid) || (!p.ordenId && o.cotizacionId && p.cotizacionId === o.cotizacionId)) out.push(Object.assign({_id: pid}, p)); });
+    return out;
+  }
+  function ocTieneProv(oid, o){
+    o = o || state.ordenes.get(oid) || {};
+    return ocProvDe(oid, o).length > 0 || !!(o.provSinCotizacion && o.provSinCotizacion.motivo);
+  }
+  /* Costo de materiales y equipos que usamos al cotizar (lo que se le compra al proveedor). */
+  function cotCostoCompras(c){
+    var t = 0, faltan = 0;
+    (c.items||[]).forEach(function(it){
+      if(it.inst || ['Materiales','Equipos'].indexOf(it.categoria || 'Materiales') === -1) return;
+      var k = precNum(it.costoUnit); if(k == null){ if((Number(it.precioUnit)||0) > 0) faltan++; return; }
+      t += (Number(it.cantidad)||0) * k;
+    });
+    (c.items||[]).forEach(function(it){ if(it.inst && it.inst.materiales) it.inst.materiales.forEach(function(r){ t += (Number(r.cant)||0) * (Number(r.valor)||0); }); });
+    return {costo: t, faltan: faltan};
+  }
+  function renderOcProv(){
+    var oid = state.editingOcId, o = oid ? (state.ordenes.get(oid) || {}) : {};
+    var lista = oid ? ocProvDe(oid, o) : [];
+    var motivo = document.getElementById('ocProvMotivo').value;
+    var box = document.getElementById('ocProvLista');
+    box.innerHTML = lista.length ? lista.map(function(p){
+      return '<div class="oc-prov-fila"><div><strong>'+escapeHtml(p.proveedor||'Proveedor')+'</strong>'+(p.numero ? ' · '+escapeHtml(p.numero) : '')+(p.fecha ? ' · '+fmtDate(p.fecha) : '')+
+        '<div class="muted" style="font-size:12px;">'+((p.items||[]).length ? (p.items||[]).length+' ítem(s) · ' : '')+(p.subtotal ? fmtMoney.format(p.subtotal)+' sin IVA' : (p.monto ? fmtMoney.format(p.monto) : 'sin valor'))+'</div></div>'+
+        '<div style="display:flex; gap:6px;">'+(p.archivoNombre ? '<button type="button" class="btn sm oc-prov-ver" data-pid="'+p._id+'">Ver archivo</button>' : '')+'<button type="button" class="btn sm oc-prov-edit" data-pid="'+p._id+'">Abrir</button></div></div>';
+    }).join('') : '<span class="no-file">'+(oid ? 'Sin cotización de proveedor ligada.' : 'Guarda la orden para ligar la cotización del proveedor.')+'</span>';
+    box.querySelectorAll('.oc-prov-edit').forEach(function(b){ b.addEventListener('click', function(){ openProvModal(b.dataset.pid, {desdeOrden: true}); }); });
+    box.querySelectorAll('.oc-prov-ver').forEach(function(b){ b.addEventListener('click', function(){ var r = state.cotizacionesProveedor.get(b.dataset.pid); if(r) viewStoredFile({nombre:r.archivoNombre, tipo:r.archivoTipo, datos:r.archivoDatos}); }); });
+    /* Ligar una que ya estaba subida (las 3 de la antigua pestaña «De proveedores», por ejemplo). */
+    var lig = document.getElementById('ocProvLigar'), libres = [];
+    state.cotizacionesProveedor.forEach(function(p, pid){ if(!p.ordenId && !lista.some(function(x){ return x._id === pid; })) libres.push([pid, p]); });
+    libres.sort(function(a, b){ return (a[1].proyectoId === o.proyectoId ? 0 : 1) - (b[1].proyectoId === o.proyectoId ? 0 : 1) || String(b[1].fecha||'').localeCompare(String(a[1].fecha||'')); });
+    lig.hidden = !oid || !libres.length;
+    lig.innerHTML = '<option value="">Ligar una ya subida…</option>'+libres.map(function(e){ var p = e[1]; return '<option value="'+e[0]+'">'+escapeHtml((p.proveedor||'Proveedor')+(p.numero ? ' · '+p.numero : '')+(p.fecha ? ' · '+fmtShort(p.fecha) : '')+(p.monto ? ' · '+fmtMoney.format(p.monto) : ''))+'</option>'; }).join('');
+    document.getElementById('ocProvSubir').disabled = !oid;
+    document.getElementById('ocProvSinWrap').hidden = lista.length > 0;
+    document.getElementById('ocProvNota').disabled = !motivo;
+    var ok = lista.length > 0 || !!motivo;
+    document.getElementById('ocProvEstado').innerHTML = !oid ? '' : (lista.length ? '<span class="due ok">Ligada ✓</span>' : (motivo ? '<span class="due ok">Justificada</span>' : '<span class="due warning">Falta para facturar y cerrar</span>'));
+    /* Comparación con el costo que usamos al cotizar */
+    var comp = document.getElementById('ocProvComp'), c = state.cotizaciones.get(document.getElementById('ocCotizacion').value || o.cotizacionId) || null;
+    if(!c || !lista.length){ comp.innerHTML = ''; return ok; }
+    var cc0 = cotCostoCompras(c);
+    if(!cc0.costo){ comp.innerHTML = '<div class="cot-aviso warn">La cotización no tiene costos de materiales o equipos cargados, así que no se puede comparar con el proveedor. En las próximas, carga los costos antes de enviarla.</div>'; return ok; }
+    var cc = cc0, prov = lista.reduce(function(sm, p){ return sm + (Number(p.subtotal) || Number(p.monto) || 0); }, 0), dif = prov - cc.costo;
+    comp.innerHTML = '<div class="cot-aviso '+(dif > 0.5 ? 'crit' : 'info')+'">Costo de compras en la cotización: '+fmtMoney.format(cc.costo)+' · proveedor (sin IVA): '+fmtMoney.format(prov)+
+      (dif > 0.5 ? ' · <b>el proveedor cuesta '+fmtMoney.format(dif)+' más de lo que cotizamos: revisa si estamos perdiendo.</b>' : (dif < -0.5 ? ' · el proveedor cuesta '+fmtMoney.format(-dif)+' menos.' : ' · iguales.'))+
+      (cc.faltan ? ' · '+cc.faltan+' ítem(s) de la cotización sin costo.' : '')+'</div>';
+    return ok;
+  }
+  document.getElementById('ocProvMotivo').addEventListener('change', renderOcProv);
+  document.getElementById('ocProvSubir').addEventListener('click', function(){
+    var oid = state.editingOcId; if(!oid){ toast('Guarda la orden primero.'); return; }
+    var o = state.ordenes.get(oid) || {};
+    openProvModal(null, {ordenId: oid, cotizacionId: o.cotizacionId || '', proyectoId: o.proyectoId || '', desdeOrden: true});
+  });
+  document.getElementById('ocProvLigar').addEventListener('change', function(){
+    var pid = this.value, oid = state.editingOcId, db = requireDb(); if(!pid || !oid || !db) return;
+    var o = state.ordenes.get(oid) || {}, p = state.cotizacionesProveedor.get(pid) || {};
+    var upd = {ordenId: oid, cotizacionId: o.cotizacionId || p.cotizacionId || '', proyectoId: o.proyectoId || p.proyectoId || ''};
+    db.collection('cotizacionesProveedor').doc(pid).update(upd).then(function(){
+      state.cotizacionesProveedor.set(pid, Object.assign({}, p, upd)); toast('Cotización de '+(p.proveedor||'proveedor')+' ligada a '+(o.numero||'la orden')); renderOcProv();
+    }).catch(function(err){ toast('No se pudo ligar: ' + (err && err.message ? err.message : 'error')); });
   });
 
   /* «Pasar a orden» / «Ver orden» en el formulario y en la vista previa de la cotización (2026-10-29) */
@@ -7234,7 +7629,9 @@
     (c.items||[]).forEach(function(it){
       var q = Number(it.cantidad)||0;
       personalPlan += q*(Number(it.costoPersonal)||0);
-      if(it.inst){ var ip = q*(Number(it.instPersonal)||0); personalPlan += ip; costo += q*(Number(it.costoUnit)||0) - ip; return; }
+      /* instPersonal = todo el personal (tarifas + viáticos); en AIU los viáticos van fuera de la línea (en la A), por eso
+         lo que se descuenta de la línea es solo la parte que sí está dentro de su costo. */
+      if(it.inst){ var ip = q*(Number(it.instPersonal)||0), enLinea = ip - q*(Number(it.instViaticos)||0); personalPlan += ip; costo += q*(Number(it.costoUnit)||0) - enLinea; return; }
       if(it.costoUnit!=null && it.costoUnit!=='' ) costo += q*(Number(it.costoUnit)||0);
       else if((Number(it.precioUnit)||0) > 0 && !it.diaTecnico) faltan++;
     });
@@ -7370,6 +7767,11 @@
     document.getElementById('statsDesvios').innerHTML = dev.length ? h2 : '<div class="table-wrap"><div class="empty-state">Cuando cierres una orden con los días reales de ejecución, aquí verás las diferencias contra lo cotizado.</div></div>';
   }
 
+  /* Al elegir el proyecto, si la cotización aún no tiene cliente, toma el del proyecto (2026-11-06). */
+  document.getElementById('cotProyecto').addEventListener('change', function(){
+    var p = state.proyectos.get(this.value), inp = document.getElementById('cotCliente');
+    if(p && p.cliente && !inp.value.trim()){ inp.value = p.cliente; autofillClienteEnCot(p.cliente, true); pintarAlertaCliente('cotClienteAlerta', p.cliente); }
+  });
   document.getElementById('cotNewProyBtn').addEventListener('click', function(){
     state.proyForCot = true;
     openProyModal(null);
@@ -7964,7 +8366,7 @@
   function finVentaSinIva(c){
     if(c.items && c.items.length){
       var sub = c.items.reduce(function(s,it){ return s + (Number(it.cantidad)||0)*(Number(it.precioUnit)||0); }, 0);
-      if(c.costingMode === 'aiu') sub = sub * (1 + ((Number(c.aiuAdministracionPct)||0) + (Number(c.aiuImprevistosPct)||0) + (Number(c.aiuUtilidadPct)||0))/100);
+      if(c.costingMode === 'aiu'){ var k = cotCalc(c); return k.sub + k.admin + k.imprev + k.util; }
       return sub;
     }
     var iva = Number(c.ivaPct)||0; return (Number(c.valor)||0) / (1 + iva/100);
@@ -9815,11 +10217,20 @@
 
   /* Lo que ve el cliente en la cotización: si algo de esto cambia, la fecha (y la versión, si ya se envió) se actualizan solas. */
   function eraEdicionCot(prev){ return !!(prev && prev.numero); }
+  /* Qué cuenta como "cambio" para mover la fecha y la versión (2026-11-06): solo los ítems y los precios
+     (cantidades, valores, AIU, IVA y el total). Cambiar notas, condiciones, el cliente o el responsable no mueve la fecha. */
+  function cotVersionFoto(c){
+    var f = {guardadaEn: new Date().toISOString(), total: Math.round(cotTotal(c))};
+    ['version','fecha','estado','items','costingMode','ivaPct','aiuAdministracionPct','aiuImprevistosPct','aiuUtilidadPct','ivaBase','aiuDesglosado','aiuViaticos',
+     'condiciones','descripcion','vigenciaDias','vigenciaExtraDias','cliente','clienteNit','clienteContacto','clienteDireccion','clienteCiudad','clienteTelefono','responsable','margenCat','margenSobreVenta']
+      .forEach(function(k){ if(c[k] !== undefined) f[k] = JSON.parse(JSON.stringify(c[k])); });
+    f.version = Number(c.version) || 1;
+    return f;
+  }
   function cotContenidoClave(c){
-    return JSON.stringify([c.cliente||'', c.clienteNit||'', c.clienteContacto||'', c.clienteDireccion||'', c.clienteCiudad||'', c.clienteTelefono||'', c.clienteEmail||'',
-      c.descripcion||'', c.costingMode||'simple', Number(c.ivaPct)||0, Number(c.aiuAdministracionPct)||0, Number(c.aiuImprevistosPct)||0, Number(c.aiuUtilidadPct)||0, c.ivaBase||'',
-      c.condiciones||'', c.notas||'', Number(c.vigenciaDias)||0, c.diasInstalacion == null ? null : Number(c.diasInstalacion),
-      (c.items||[]).map(function(it){ return [it.descripcion||'', Number(it.cantidad)||0, Number(it.precioUnit)||0, it.unidad||'', it.categoria||'']; })]);
+    return JSON.stringify([c.costingMode||'simple', Number(c.ivaPct)||0, Number(c.aiuAdministracionPct)||0, Number(c.aiuImprevistosPct)||0, Number(c.aiuUtilidadPct)||0, c.ivaBase||'',
+      (c.items||[]).map(function(it){ return [it.descripcion||'', Number(it.cantidad)||0, Number(it.precioUnit)||0, it.unidad||'', it.categoria||'']; }),
+      Math.round(cotTotal(c))]);
   }
   /* La misma clave, leída del formulario (se toma al abrir, ya con los datos autocompletados, para comparar al guardar). */
   function cotClaveForm(){
@@ -9867,7 +10278,7 @@
       /* El número es un registro: se asigna una sola vez y nunca se reescribe desde el formulario */
       numero: prev.numero || nextCotNumero(),
       version: Number(document.getElementById('cotVersion').value)||1,
-      diasInstalacion: document.getElementById('cotDiasInst').value === '' ? null : Number(document.getElementById('cotDiasInst').value),
+      diasInstalacion: cotDiasInstAuto(state.items) || (prev.diasInstalacion != null ? prev.diasInstalacion : null),
       fechaAceptacion: fechaAcept || null,
       inicioEstimado: estadoNuevo === 'aprobada' ? (document.getElementById('cotInicioEstimado').value || null) : (prev.inicioEstimado || null),
       rechazoMotivo: estadoNuevo === 'rechazada' ? document.getElementById('cotRechazoMotivo').value : null,
@@ -9893,6 +10304,7 @@
       fecha: document.getElementById('cotFecha').value,
       items: state.items.filter(function(it){ return it.descripcion || it.cantidad || it.precioUnit; }),
       costingMode: mode,
+      aiuDesglosado: mode === 'aiu' && document.getElementById('cotAiuDesglose').checked,
       ivaPct: Number(document.getElementById(mode==='aiu' ? 'cotIvaAiu' : 'cotIva').value)||0,
       aiuAdministracionPct: Number(document.getElementById('cotAdminPct').value)||0,
       aiuImprevistosPct: Number(document.getElementById('cotImprevPct').value)||0,
@@ -9920,11 +10332,27 @@
     if(eraEdicionCot(prev) && cambioContenido && prev.estado === 'enviada' && String(document.getElementById('cotVersion').value) === abierta.version){
       data.version = (Number(prev.version) || 1) + 1; autoAvisos.push('versión ' + data.version);
     }
+    /* Historial de versiones (2026-11-06): al subir de versión se guarda una copia de la anterior para compararlas en la vista previa. */
+    data.versiones = (prev.versiones || []).slice();
+    if(eraEdicionCot(prev) && Number(data.version) > (Number(prev.version) || 1) && !data.versiones.some(function(v){ return Number(v.version) === (Number(prev.version) || 1); })){
+      data.versiones.push(cotVersionFoto(prev));
+    }
+    if(!data.versiones.length) delete data.versiones;
+    data.aiuViaticos = Math.round(cotCalc(data).viat) || 0;
     /* Ampliaciones de la vigencia: se conservan mientras la fecha no cambie; si la fecha cambia (nueva versión o
        reenvío), la vigencia vuelve a contar desde la nueva fecha con solo lo que se amplió ahora. */
     var vamp = state.cotVigAmp || {pedido:0, total:0};
     if(data.fecha === (prev.fecha || '')) data.vigenciaExtraDias = cotVigExtra(prev) + vamp.total;
     else data.vigenciaExtraDias = vamp.pedido;
+    /* Ampliar la vigencia (2026-11-06) también pone la fecha de hoy. El vencimiento queda donde se pidió:
+       la vigencia se vuelve a contar desde hoy hasta ese día. */
+    if(vamp.pedido && data.estado === 'enviada'){
+      var finPedido = cotVigFin({fecha: data.fecha, vigenciaDias: data.vigenciaDias, vigenciaExtraDias: data.vigenciaExtraDias}), hoyV = todayIso();
+      if(finPedido && data.fecha !== hoyV){
+        data.fecha = hoyV; data.vigenciaDias = Math.max(1, habilesEntre(hoyV, finPedido)); data.vigenciaExtraDias = 0;
+        if(autoAvisos.indexOf('fecha actualizada a hoy') === -1) autoAvisos.push('fecha actualizada a hoy');
+      }
+    }
     if(vamp.pedido){
       data.vigenciaAmpliaciones = (prev.vigenciaAmpliaciones || []).concat([{fecha: todayIso(), dias: vamp.pedido, porId: state.userId || null}]);
       autoAvisos.push('vigencia ampliada '+vamp.pedido+' días · vence el '+fmtDate(cotVigFin(data)));
@@ -10117,6 +10545,11 @@
         state.precios = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.precios = true;
         renderPrecios(); precSembrar(); invCostRefresh();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
+      db.collection('ajustes').onSnapshot(function(snap){
+        state.ajustes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        renderAjustes();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('soportes').onSnapshot(function(snap){
@@ -10533,7 +10966,14 @@
     box.querySelectorAll('.pick-add').forEach(function(b){ b.addEventListener('click', function(){
       var row = b.closest('.pick-row'), id = row.dataset.pick, p = state.precios.get(id);
       if(!p) return;
-      if(p.tipo === 'instalacion'){ closePicker(); openInstCalc(null, id); return; }
+      if(p.tipo === 'instalacion'){
+        closePicker();
+        /* Un solo servicio de instalación por cotización (2026-11-06): así el personal no se cobra dos veces. */
+        var ya = -1; state.items.forEach(function(x, j){ if(ya < 0 && x.inst) ya = j; });
+        if(ya >= 0){ toast('Esta cotización ya tiene su servicio de instalación: te lo abro para que agregues ahí al personal.', 4500); openInstCalc(ya); }
+        else openInstCalc(null, id);
+        return;
+      }
       var cant = Number((row.querySelector('.pick-cant')||{}).value) || 1;
       agregarItemDesdePrecios(id, cant);
       b.textContent = 'Agregado ✓'; setTimeout(function(){ b.textContent = 'Agregar'; }, 1200);
@@ -10556,20 +10996,51 @@
   document.getElementById('pickSearch').addEventListener('input', renderPicker);
   document.getElementById('btnAddFromPrecios').addEventListener('click', openPicker);
 
+  /* ---------- Ajustes (solo administración, 2026-11-06) ----------
+     Rentabilidad estándar por categoría: se aplica sola (AUT) a los ítems manuales con costo de cada cotización nueva. */
+  state.ajustes = state.ajustes || new Map();
+  var AJS_CAMPOS = {'Materiales':'ajsMargenMat','Instalación':'ajsMargenInst','Equipos':'ajsMargenEq'};
+  function ajusteMargenCat(){
+    var a = (state.ajustes.get('cotizacion') || {}).margenCat || {}, o = {};
+    Object.keys(AJS_CAMPOS).forEach(function(cat){ o[cat] = a[cat] != null && a[cat] !== '' ? Number(a[cat]) : 20; });
+    return o;
+  }
+  function renderAjustes(){
+    var m = ajusteMargenCat(), act = document.activeElement;
+    Object.keys(AJS_CAMPOS).forEach(function(cat){ var el = document.getElementById(AJS_CAMPOS[cat]); if(el && el !== act) el.value = m[cat]; });
+    var a = state.ajustes.get('cotizacion');
+    document.getElementById('ajsEstado').textContent = a && a.editadoEn ? 'Guardado el ' + fmtDate(String(a.editadoEn).slice(0,10)) : '';
+  }
+  document.getElementById('ajsGuardar').addEventListener('click', function(){
+    var db = requireDb(); if(!db) return;
+    var mc = {}, malo = false;
+    Object.keys(AJS_CAMPOS).forEach(function(cat){ var v = document.getElementById(AJS_CAMPOS[cat]).value; var n = Number(v); if(v === '' || isNaN(n) || n < 0 || n >= 95) malo = true; mc[cat] = n; });
+    if(malo){ toast('Cada porcentaje debe estar entre 0 y 95 %.'); return; }
+    var data = Object.assign({}, state.ajustes.get('cotizacion') || {}, {margenCat: mc, editadoEn: new Date().toISOString(), editadoPorId: state.userId || null});
+    db.collection('ajustes').doc('cotizacion').set(data).then(function(){ state.ajustes.set('cotizacion', data); renderAjustes(); toast('Rentabilidad estándar guardada'); })
+      .catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+
   /* ---------- Calculadora del servicio de instalación ---------- */
   var inst = {idx: null, d: null};
   function cotModoAiu(){ return document.getElementById('cotCostingMode').value === 'aiu'; }
   function instDiasBase(d){ return Math.max(0, Math.max.apply(null, [0].concat(d.personal.map(function(r){ return Number(r.dias)||0; })))); }
   function instPersonaDias(d){ return d.personal.reduce(function(s, r){ return s + (Number(r.cant)||0)*(Number(r.dias)||0); }, 0); }
+  /* 2026-11-06: el pago del técnico (tarifa por día) va en la línea del servicio, que es lo que el cliente ve.
+     Los viáticos (almuerzo y transporte) son costo interno: en AIU salen de la línea y se suman a la Administración. */
   function instCalc(d, aiu){
-    var pers = d.personal.reduce(function(s, r){
-      return s + (Number(r.cant)||0) * (Number(r.dias)||0) * ((r.usaDia ? Number(r.vDia)||0 : 0) + (r.usaComida ? Number(r.vComida)||0 : 0) + (r.usaTransporte ? Number(r.vTransporte)||0 : 0));
-    }, 0);
+    var tarifa = 0, viat = 0;
+    d.personal.forEach(function(r){
+      var pd = (Number(r.cant)||0) * (Number(r.dias)||0);
+      tarifa += pd * (r.usaDia ? Number(r.vDia)||0 : 0);
+      viat += pd * ((r.usaComida ? Number(r.vComida)||0 : 0) + (r.usaTransporte ? Number(r.vTransporte)||0 : 0));
+    });
+    var pers = tarifa + viat;
     var log = d.logistica.reduce(function(s, r){ return s + (Number(r.cant)||0) * (Number(r.valor)||0); }, 0);
     var mat = d.materiales.reduce(function(s, r){ return s + (Number(r.cant)||0) * (Number(r.valor)||0); }, 0);
-    var dir = pers + log + mat;
+    var dir = (aiu ? tarifa : pers) + log + mat;
     var a = aiu ? 0 : dir * (Number(d.adminPct)||0)/100, i = aiu ? 0 : dir * (Number(d.imprevistosPct)||0)/100;
-    return {pers: pers, log: log, mat: mat, dir: dir, admin: a, imprev: i, costo: Math.round(dir + a + i)};
+    return {pers: pers, tarifa: tarifa, viat: viat, viatFuera: aiu ? viat : 0, log: log, mat: mat, dir: dir, admin: a, imprev: i, costo: Math.round(dir + a + i)};
   }
   function instNuevo(tplId){
     var t = state.precios.get(tplId) || {};
@@ -10620,7 +11091,9 @@
     var m = it && it.margenPct != null ? Number(it.margenPct) : (aiu ? 0 : d.margenFijado);
     var precio = precioMargenVenta(c.costo, m);
     h += '<div class="totals-box inst-tot" style="margin-top:10px;">' +
-      '<div class="trow"><span>Personal</span><span class="num">'+fmtMoney.format(c.pers)+'</span></div>' +
+      (aiu ? '<div class="trow"><span>Pago del personal (lo ve el cliente)</span><span class="num">'+fmtMoney.format(c.tarifa)+'</span></div>' +
+        '<div class="trow"><span class="muted">Viáticos '+fmtMoney.format(c.viat)+': van a la Administración del AIU (el cliente no los ve aparte)</span><span></span></div>'
+        : '<div class="trow"><span>Personal</span><span class="num">'+fmtMoney.format(c.pers)+'</span></div>') +
       '<div class="trow"><span>Logística y herramientas</span><span class="num">'+fmtMoney.format(c.log)+'</span></div>' +
       '<div class="trow"><span>Kits y materiales</span><span class="num">'+fmtMoney.format(c.mat)+'</span></div>' +
       (aiu ? '<div class="trow"><span class="muted">Administración e imprevistos: van en la línea del AIU de la cotización</span><span></span></div>' :
@@ -10652,7 +11125,7 @@
   /* Recalcula costo y precio de un ítem de instalación (según el modo simple o AIU de la cotización) */
   function instAplicar(it, aiu){
     var c = instCalc(it.inst, aiu);
-    it.costoUnit = c.costo; it.instPersonal = Math.round(c.pers);
+    it.costoUnit = c.costo; it.instPersonal = Math.round(c.pers); it.instViaticos = Math.round(c.viatFuera);
     if(aiu && !it.inst.enAiu){ it.inst.margenAntesAiu = it.margenPct; it.margenPct = 0; it.inst.enAiu = true; }
     else if(!aiu && it.inst.enAiu){ it.margenPct = it.inst.margenAntesAiu != null ? it.inst.margenAntesAiu : it.margenFijado; it.inst.enAiu = false; }
     it.margenFijado = aiu ? 0 : it.inst.margenFijado;
@@ -10670,7 +11143,7 @@
       state.items.push(it);
     }
     instAplicar(it, aiu);
-    if(!document.getElementById('cotDiasInst').value){ var dias = instDiasBase(d); if(dias) document.getElementById('cotDiasInst').value = dias; }
+    var dias = cotDiasInstAuto(state.items); if(dias) document.getElementById('cotDiasInst').value = dias;
     closeInstCalc(); renderItemsTable(); recalcTotals();
     toast('Servicio de instalación: ' + fmtMoney.format(it.precioUnit) + ' sin IVA', 2600);
   });
@@ -11359,7 +11832,7 @@
 
   function cosRenderProveedores(cont, info, q, admin){
     var items = cosItemsProveedor();
-    if(!items.length){ info.className = 'info-box'; info.textContent = 'Aún no hay cotizaciones de proveedor. Se registran en Cotizaciones → De proveedores.'; cont.innerHTML = ''; return; }
+    if(!items.length){ info.className = 'info-box'; info.textContent = 'Aún no hay cotizaciones de proveedor. Se suben en cada orden interna.'; cont.innerHTML = ''; return; }
     var viejos = 0;
     var lista = items.filter(function(x){
       if(cos.filtro && x.proveedor !== cos.filtro) return false;
