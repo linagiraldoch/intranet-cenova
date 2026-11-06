@@ -7525,7 +7525,7 @@
     }
     document.getElementById('compSave').hidden = false;
     var filas = r.lineas.map(function(l, n){
-      var v = comp.datos[l.key] || {}, opts = ['comprado','stock'].concat(l.sinCosto && l.venta != null ? ['precio_costo'] : []).concat(['no_usado']);
+      var v = comp.datos[l.key] || {}, opts = ['comprado','stock'].concat(l.venta != null ? ['servicio'] : []).concat(l.sinCosto && l.venta != null ? ['precio_costo'] : []).concat(['no_usado']);
       var real = compraReal(l, v);
       return '<tr data-k="'+escapeHtml(l.key)+'"><td class="col-idx">'+(n+1)+'</td>'+
         '<td>'+escapeHtml(l.nombre)+(l.sinCosto ? '<span class="comp-sinc">sin costo</span>' : '')+(l.dentro ? '<span class="comp-dentro">dentro de: '+escapeHtml(l.dentro)+'</span>' : '')+'</td>'+
@@ -7930,10 +7930,12 @@
        comprado      → se le compró al proveedor: cuenta lo que de verdad costó;
        stock         → ya lo teníamos (bodega, sobrante de otra obra): no le sale plata a esta obra;
        precio_costo  → no tenía costo en la cotización porque se vendió a precio de costo: el costo es lo que se cobró;
+       servicio      → el renglón es un servicio que hicimos (configuración, capacitación…): no se compró nada;
        no_usado      → no se usó.
      Lo que no se valida sigue contando con el costo cotizado. Así se sabe si un ítem sin costo es un error que hay que
      corregir en Precios o algo que se vendió a precio de costo a propósito. */
-  var COMPRA_COMO = {comprado:'Se compró', stock:'Ya lo teníamos', precio_costo:'Vendido a precio de costo', no_usado:'No se usó'};
+  /* servicio (2026-11-06): renglones que son trabajo nuestro (configuración, capacitación…), no compras: no le cuestan a la obra en materiales. */
+  var COMPRA_COMO = {comprado:'Se compró', stock:'Ya lo teníamos', servicio:'Es un servicio (no se compra)', precio_costo:'Vendido a precio de costo', no_usado:'No se usó'};
   function ocLineasCompra(c){
     var out = [];
     (c && c.items || []).forEach(function(it, i){
