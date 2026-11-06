@@ -3063,7 +3063,7 @@
   };
   var MAX_PROV_FILE_BYTES = 174080; // ~170 KB — deja margen bajo el límite de 256 KiB por documento
 
-  var fmtMoney = new Intl.NumberFormat('es-CO', {style:'currency', currency:'COP', maximumFractionDigits:0});
+  var fmtMoney = (function(f){ return {format: function(n){ var v = Number(n); return f.format(Math.abs(v) < 0.5 ? 0 : v); }, formatToParts: function(n){ var v = Number(n); return f.formatToParts(Math.abs(v) < 0.5 ? 0 : v); }}; })(new Intl.NumberFormat('es-CO', {style:'currency', currency:'COP', maximumFractionDigits:0}));   /* sin «-$ 0» */
   function fmtDate(iso){
     if(!iso) return '—';
     var d = new Date(iso + 'T00:00:00');
@@ -8883,7 +8883,7 @@
   function finYmLabel(ym){ var p = ym.split('-'); return MESES_C[Number(p[1])-1] + ' ' + p[0].slice(2); }
   function finYmAdd(ym, n){ var p = ym.split('-'); var d = new Date(Number(p[0]), Number(p[1])-1+n, 1); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
   function finDiasMes(ym){ var p = ym.split('-'); return new Date(Number(p[0]), Number(p[1]), 0).getDate(); }
-  function finMoney(n){ return fmtMoney.format(Math.round(Number(n)||0)); }
+  function finMoney(n){ return fmtMoney.format(Math.round(Number(n)||0) || 0); }   /* «|| 0» evita «-$ 0» (cero negativo) */
   function finCompact(n){
     var a = Math.abs(n), s = n < 0 ? '−' : '';
     if(a >= 1e6) return s + '$' + (Math.round(a/1e5)/10).toString().replace('.', ',') + ' M';
