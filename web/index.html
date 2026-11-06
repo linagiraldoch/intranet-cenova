@@ -1496,7 +1496,9 @@
   .ajs-panel .panel-head{padding:0 0 8px; margin-bottom:6px;}
   .overlay.encima{z-index:55;}
   .oc-prov-acc{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
-  .oc-prov-acc select{width:auto; max-width:100%;}
+  .oc-prov-acc select{width:auto; max-width:100%; flex:1 1 180px; min-width:0;}
+  /* (2026-11-06) En el celular el formulario de la orden se salía de lado (la lista de cotizaciones del proveedor la estiraba) */
+  #ocOverlay .file-drop > *{min-width:0; max-width:100%;}
   .oc-prov-fila{display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; padding:6px 0; border-bottom:1px dashed var(--border);}
   .oc-prov-fila:last-child{border-bottom:none;}
   @media (max-width:760px){
@@ -2602,7 +2604,7 @@
         <div class="file-drop" style="flex-direction:column; align-items:stretch; gap:8px;">
           <div id="ocFacturaLista"></div>
           <label class="btn sm" for="ocFacturaInput" id="ocFacturaBtn" style="align-self:flex-start; cursor:pointer;">Anexar factura electrónica</label>
-          <label style="display:flex; gap:8px; align-items:center; font-size:13px; cursor:pointer;"><input type="checkbox" id="ocSinFactura"> Esta orden no lleva factura electrónica</label>
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; cursor:pointer; min-width:0;"><input type="checkbox" id="ocSinFactura" style="width:18px; height:18px; min-width:18px; flex:0 0 18px; margin:0;"><span style="flex:1 1 auto; min-width:0;">Esta orden no lleva factura electrónica</span></label>
           <div class="field" id="ocSinFacturaWrap" hidden style="margin:0;"><label>Motivo</label><input type="text" id="ocSinFacturaMotivo" placeholder="Ej. trabajo hecho antes de tener NIT; lo cobró un socio con cuenta de cobro a su nombre"></div>
           <input type="file" id="ocFacturaInput" accept=".pdf,.jpg,.jpeg,.png,.xml,.zip" hidden>
         </div>
