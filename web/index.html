@@ -4205,6 +4205,8 @@
     ['pagos','personal','porPagar','novedades','diasSemana','diasSueltos'].forEach(function(k){ if(Array.isArray(ant[k])) data[k] = JSON.parse(JSON.stringify(ant[k])); });
     ['numeroCliente','fechaInicio','modalidad','plazoPagoDias','anticipoPct','sinFactura','provSinCotizacion','diasReales','costoImprevistos','causaDesvio','causaDetalle','notas'].forEach(function(k){ if(ant[k] != null && ant[k] !== '') data[k] = JSON.parse(JSON.stringify(ant[k])); });
     if(ant.fechaInicio) data.fechaConfirmacion = ant.fechaConfirmacion || null;
+    /* Si la instalación ya estaba programada, conserva sus días (la cotización nueva puede traer 0 y la orden quedaba «Por programar») */
+    if(!(Number(data.diasInstalacion) > 0) && Number(ant.diasInstalacion) > 0) data.diasInstalacion = Number(ant.diasInstalacion);
     var cAnt = state.cotizaciones.get(ant.cotizacionId) || {}, comp = {};
     /* Las compras se heredan por descripción (la versión nueva puede tener los renglones en otro orden) */
     var idxNuevo = {}; (c.items||[]).forEach(function(it, i){ idxNuevo[String(it.descripcion||'').trim().toLowerCase()] = i; });
