@@ -7490,7 +7490,8 @@
       var pg = {id: x.id || filaId(), fecha: x.fecha || todayIso(), concepto: x.concepto || 'abono', monto: Number(x.monto)||0, medio: x.medio || 'transferencia', nota: (x.nota||'').trim()};
       if(Number(x.comision) > 0) pg.comision = Number(x.comision);   /* comisión y retención de la pasarela: antes se perdían al guardar la orden */
       if(Number(x.retencion) > 0) pg.retencion = Number(x.retencion);
-      if(x.socio) pg.socio = x.socio;   /* lo cobró un socio a su nombre: en Finanzas entra como aporte de ese socio */
+      if(x.socio) pg.socio = x.socio;
+      if(x.cuentaId) pg.cuentaId = x.cuentaId;   /* cuenta a la que llegó (Nu, Bancolombia…): solo administración la elige */   /* lo cobró un socio a su nombre: en Finanzas entra como aporte de ese socio */
       return pg;
     }).sort(function(a,b){ return a.fecha.localeCompare(b.fecha); });
     var valorNum = document.getElementById('ocValor').value==='' ? 0 : Number(document.getElementById('ocValor').value);
@@ -8742,6 +8743,7 @@
   var PAGO_CONCEPTOS = {anticipo:'Anticipo', abono:'Abono', saldo:'Pago del saldo', otro:'Otro'};
   var PAGO_SOCIOS = ['Lina Giraldo','Ángel Berrocal','Jorge Cantillo'];
   function pgSocio(pg){ return (pg && pg.socio) || ''; }
+  function pgCuentasLista(){ try { return (typeof precAdmin === 'function' && precAdmin() && typeof finAjustes === 'function') ? (finAjustes().cuentas || []) : []; } catch(e){ return []; } }
   var PAGO_MEDIOS = {transferencia:'Transferencia', pasarela:'Pasarela de pago', efectivo:'Efectivo', cheque:'Cheque', otro:'Otro'};
   /* Pasarela de pago (2026-10-09): el cliente paga el monto completo (cuenta para su saldo), pero la pasarela
      descuenta su comisión con IVA (costo de la obra) y una retención (anticipo de renta de Cenova, no es costo). */
@@ -8800,6 +8802,7 @@
           '<div class="pg-pasarela" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">'+
             (pg.medio === 'pasarela' || pgComision(pg) ? '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Comisión + IVA<input type="number" class="pg-com" value="'+(pg.comision!=null?pg.comision:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label>' : '')+
             '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Retención que hizo el cliente<input type="number" class="pg-ret" value="'+(pg.retencion!=null?pg.retencion:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label>'+
+            (pgCuentasLista().length > 1 ? '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Llegó a<select class="pg-cuenta" style="width:170px;"><option value="">Según el medio</option>'+pgCuentasLista().map(function(cu){ return '<option value="'+escapeHtml(cu.id)+'"'+(pg.cuentaId===cu.id?' selected':'')+'>'+escapeHtml(cu.nombre||cu.id)+'</option>'; }).join('')+'</select></label>' : '')+
             '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Lo cobró<select class="pg-socio" style="width:170px;"><option value="">Cenova</option>'+PAGO_SOCIOS.map(function(n){ return '<option value="'+escapeHtml(n)+'"'+(pg.socio===n?' selected':'')+'>'+escapeHtml(n)+' (a su nombre)</option>'; }).join('')+'</select></label></div>'+
         '</td>'+
         '<td class="col-rm"><button type="button" class="icon-btn pg-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
@@ -8812,7 +8815,7 @@
         });
       });
     };
-    bind('pg-fecha','fecha'); bind('pg-concepto','concepto'); bind('pg-monto','monto',true); bind('pg-medio','medio'); bind('pg-nota','nota'); bind('pg-com','comision',true); bind('pg-ret','retencion',true); bind('pg-socio','socio');
+    bind('pg-fecha','fecha'); bind('pg-concepto','concepto'); bind('pg-monto','monto',true); bind('pg-medio','medio'); bind('pg-nota','nota'); bind('pg-com','comision',true); bind('pg-ret','retencion',true); bind('pg-socio','socio'); bind('pg-cuenta','cuentaId');
     body.querySelectorAll('.pg-medio').forEach(function(el){ el.addEventListener('change', function(){ renderOcPagos(); }); });
     body.querySelectorAll('.pg-rm').forEach(function(b){ b.addEventListener('click', function(){ state.ocPagos.splice(+b.closest('tr').dataset.i,1); renderOcPagos(); }); });
     renderOcPagosSummary();
@@ -8959,7 +8962,7 @@
           if(neto > 0) out.push({
             _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'aporte',
             descripcion: 'Aporte de socio · '+pgSocio(pg)+' pasa a Cenova el cobro de '+(o.numero||'la orden')+' ('+(o.cliente||'cliente')+') que hizo a su nombre',
-            tercero: pgSocio(pg), monto: neto, iva: 0, cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '',
+            tercero: pgSocio(pg), monto: neto, iva: 0, cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio), medio: pg.medio || '',
             proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: (pg.nota || '')+(pgRetencion(pg) ? (pg.nota ? ' · ' : '')+'El cliente le retuvo '+fmtMoney.format(pgRetencion(pg))+' a '+pgSocio(pg)+' (certificado a su nombre).' : '')
           });
           return;
@@ -8967,11 +8970,11 @@
         out.push({
           _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'cobro',
           descripcion: 'Pago ' + (o.numero||'orden') + ' · ' + (PAGO_CONCEPTOS[pg.concepto] || 'Pago').toLowerCase(),
-          tercero: o.cliente || '', monto: monto, iva: monto * ratio, cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '',
+          tercero: o.cliente || '', monto: monto, iva: monto * ratio, cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio), medio: pg.medio || '',
           proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: pg.nota || ''
         });
         var base = {fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'egreso', tercero: 'Pasarela de pago', iva: 0,
-          cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: ''};
+          cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio), medio: pg.medio || '', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: ''};
         if(pgComision(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':com', soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i)+':com', categoria:'bancarios', monto: pgComision(pg),
           descripcion: 'Comisión de pasarela con IVA · pago ' + (o.numero||'orden'), nota: 'Ya está en el costo de la obra (imprevistos de la orden).'}));
         if(pgRetencion(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':ret', soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i)+':ret', categoria:'retencion', monto: pgRetencion(pg),
