@@ -7368,7 +7368,9 @@
     var recibido = pagosClean.reduce(function(s,x){ return s + x.monto; }, 0);
     var pagoCompleto = valorNum > 0 && recibido >= valorNum;
     if(estado !== 'anulada') estado = ocEstadoAuto(state.editingOcId, Object.assign({}, prev, f, {estado: prev.estado, valor: valorNum, pagos: pagosClean}));
-    var data = Object.assign({}, f, {
+    /* Parte de lo que ya tenía la orden (2026-11-06): así no se pierde lo que se guarda por fuera del formulario,
+       como las compras validadas («Validar compras»). Antes se armaba solo con el formulario y las borraba. */
+    var data = Object.assign({}, prev, f, {
       numero: prev.numero || nextOcNumero(),
       numeroCliente: document.getElementById('ocNumeroCliente').value.trim(),
       estado: estado,
@@ -7408,6 +7410,8 @@
     } else if(prev.archivoDatos && !state.ocArchivoRemoved){
       data.archivoNombre = prev.archivoNombre; data.archivoTipo = prev.archivoTipo; data.archivoTamano = prev.archivoTamano; data.archivoDatos = prev.archivoDatos;
     }
+    if(!state.ocArchivo && (state.ocArchivoRemoved || !prev.archivoDatos)){ delete data.archivoNombre; delete data.archivoTipo; delete data.archivoTamano; delete data.archivoDatos; }
+
     var col = db.collection('ordenesCompra');
     var p = state.editingOcId ? col.doc(state.editingOcId).set(data).then(function(){ return state.editingOcId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
     p.then(function(ocId){
