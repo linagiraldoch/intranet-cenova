@@ -3660,7 +3660,7 @@
       var o = e[1], v = Number(o.valor)||0, sal = ocSaldo(o), pc = v ? (v-sal)/v : 0, paso = PASOS.indexOf(o.estado);
       return '<button type="button" class="rs-obra" data-rs-go="oc:'+e[0]+'">'+rsRing(pc, 'var(--success)', 52)+
         '<span class="rs-obra-pc">'+Math.round(pc*100)+'%</span>'+
-        '<span class="rs-obra-t"><b>'+escapeHtml((o.numero||'Orden')+' · '+(o.cliente||''))+'</b>'+
+        '<span class="rs-obra-t"><b>'+escapeHtml((ocNum(o)||'Orden')+' · '+(o.cliente||''))+'</b>'+
         '<small>'+(OC_ESTADOS[o.estado]||OC_ESTADOS_VIEJOS[o.estado]||o.estado)+(sal ? ' · por cobrar '+fmtMoney.format(sal) : ' · cobrada')+'</small>'+
         '<span class="rs-pasos">'+PASOS.map(function(x, j){ return '<i class="'+(j <= paso ? 'on' : '')+'" title="'+OC_ESTADOS[x]+'"></i>'; }).join('')+'</span></span></button>';
     }).join('');
@@ -3787,7 +3787,7 @@
     var falta = (!s && (o.estado === 'pagada' || ocRecibido(o) > 0)) ? ocPendientesObra(o) : [];
     var pago = o.estado === 'anulada' ? '' : (s ? (k.pago ? (k.pago < todayIso() ? '<span class="vk-tag crit">Pago vencido '+fmtShort(k.pago)+'</span>' : '<span class="vk-tag">Vence '+fmtShort(k.pago)+'</span>') : '') : '<span class="vk-tag ok">Cobrada</span>');
     return '<article class="vk-oc'+(o.estado === 'anulada' ? ' anulada' : '')+'" data-vk-go="oc:'+id+'" role="button" tabindex="0">'+
-      '<header><span class="vk-oc-n">'+escapeHtml(o.numero||'Orden')+'</span><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||OC_ESTADOS_VIEJOS[o.estado]||o.estado)+'</span></header>'+
+      '<header><span class="vk-oc-n">'+escapeHtml(ocNum(o)||'Orden')+'</span><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||OC_ESTADOS_VIEJOS[o.estado]||o.estado)+'</span></header>'+
       '<div class="vk-oc-cli">'+escapeHtml(o.cliente||'—')+'</div><div class="vk-oc-desc">'+escapeHtml((c.numero ? c.numero+' · ' : '')+(c.descripcion||''))+'</div>'+
       /* Orden visual de la tarjeta (2026-11-06): anillo fijo con su %, valor y saldo en dos columnas, instalación en su propia línea */
       '<div class="vk-oc-mid"><div class="vk-oc-ring">'+rsRing(v ? (v-s)/v : 0, 'var(--success)', 58)+'<span>'+(v ? Math.round(100*(v-s)/v) : 0)+'%</span></div>'+
@@ -4161,9 +4161,11 @@
     }
     var total = Math.round(cotTotal(c)), anulada = c.versionAnulada != null && Number(c.versionAnulada) === Number(c.version || 1);
     var vNueva = anulada ? (Number(c.version) || 1) + 1 : (Number(c.version) || 1);
+    var previa = ocAnuladaDeCot(id), numNuevo = previa ? previa.o.numero : nextOcNumero(), verNueva = previa ? ocVersionSiguiente(previa.o.numero) : 1;
+    var numTxt = numNuevo + (verNueva > 1 ? ' v'+verNueva : '');
     closePreviewSiAbierta();   /* la vista previa queda encima del diálogo */
     return pickDialog({title:'Pasar a orden · '+(c.numero||''),
-      msg:'Confirmas que el cliente aprobó '+(c.numero||'la cotización')+' v'+vNueva+' por '+fmtMoney.format(total)+'. Se crea la orden interna '+nextOcNumero()+' en ejecución y la cotización queda bloqueada: no se cambian ítems, valores ni condiciones. ¿Cómo la aprobó el cliente?',
+      msg:'Confirmas que el cliente aprobó '+(c.numero||'la cotización')+' v'+vNueva+' por '+fmtMoney.format(total)+'. '+(previa ? 'La orden '+previa.o.numero+' (anulada) sigue como '+numTxt+': conserva sus pagos, soportes, fechas y personal' : 'Se crea la orden interna '+numTxt)+' en ejecución y la cotización queda bloqueada: no se cambian ítems, valores ni condiciones. ¿Cómo la aprobó el cliente?',
       options:'<option value="">Elige cómo la aprobó…</option>'+Object.keys(ONT_MEDIOS).map(function(k){ return '<option value="'+k+'">'+escapeHtml(ONT_MEDIOS[k])+'</option>'; }).join(''),
       ok:'Pasar a orden'}).then(function(r){
       if(!r) return;
@@ -4172,7 +4174,7 @@
       /* Primero la cotización (aprobada y, si viene de una orden anulada, versión siguiente); luego la orden. */
       return cotAplicarEstado(id, 'aprobada', extra).then(function(cAprob){
         var data = {
-          numero: nextOcNumero(), estado: 'por_programar',
+          numero: numNuevo, version: verNueva, estado: 'por_programar',
           cotizacionId: id, cotizacionNumero: cAprob.numero || '', cotizacionVersion: Number(cAprob.version) || 1,
           cliente: cAprob.cliente || '', proyectoId: cAprob.proyectoId || '',
           medio: r.value, numeroCliente: '', fechaRecepcion: hoy,
@@ -4184,17 +4186,54 @@
           creadoPorId: state.userId || null, creadoEn: new Date().toISOString(),
           editadoEn: new Date().toISOString(), editadoPorId: state.userId || null
         };
+        if(previa) ocHeredar(data, previa.o, state.cotizaciones.get(id) || cAprob);
         return db.collection('ordenesCompra').add(data).then(function(ref){
           var oid = ref && ref.id; if(!oid) throw new Error('no se creó la orden');
           state.ordenes.set(oid, data);
-          return Promise.all([syncAutoEventsFor('orden', oid), syncAutoEventsFor('cotizacion', id)]).then(function(){
+          return (previa ? ocMoverDeAnulada(previa.id, oid) : Promise.resolve()).then(function(){ return Promise.all([syncAutoEventsFor('orden', oid), syncAutoEventsFor('cotizacion', id)]).then(function(){
             closeCotModal(); closePreviewSiAbierta(); renderAll(); syncProyEstadosPronto();
-            toast((cAprob.numero||'Cotización')+' aprobada · orden interna '+data.numero+' creada: programa los días de instalación'+(r.value === 'llamada' ? '' : ' · anexa la OC del cliente cuando llegue'), 6000);
+            toast((cAprob.numero||'Cotización')+' aprobada · orden interna '+ocNum(data)+(previa ? ' (sigue de la anulada)' : ' creada')+': programa los días de instalación'+(r.value === 'llamada' ? '' : ' · anexa la OC del cliente cuando llegue'), 6000);
             openOcModal(oid);
-          });
+          }); });
         });
       });
     }).catch(function(err){ toast('No se pudo pasar a orden: ' + (err && err.message ? err.message : 'error'), 6000); });
+  }
+  /* La versión nueva hereda de la anulada lo que ya pasó en la obra: pagos, OC del cliente, fechas, personal, otros pagos,
+     novedades y las compras validadas de los renglones que siguen iguales. */
+  function ocHeredar(data, ant, c){
+    ['pagos','personal','porPagar','novedades','diasSemana','diasSueltos'].forEach(function(k){ if(Array.isArray(ant[k])) data[k] = JSON.parse(JSON.stringify(ant[k])); });
+    ['numeroCliente','fechaInicio','modalidad','plazoPagoDias','anticipoPct','sinFactura','provSinCotizacion','diasReales','costoImprevistos','causaDesvio','causaDetalle','notas'].forEach(function(k){ if(ant[k] != null && ant[k] !== '') data[k] = JSON.parse(JSON.stringify(ant[k])); });
+    if(ant.fechaInicio) data.fechaConfirmacion = ant.fechaConfirmacion || null;
+    var cAnt = state.cotizaciones.get(ant.cotizacionId) || {}, comp = {};
+    /* Las compras se heredan por descripción (la versión nueva puede tener los renglones en otro orden) */
+    var idxNuevo = {}; (c.items||[]).forEach(function(it, i){ idxNuevo[String(it.descripcion||'').trim().toLowerCase()] = i; });
+    Object.keys(ant.compras||{}).forEach(function(k){
+      var m = k.match(/^i(\d+)(.*)$/); if(!m) return;
+      var itAnt = (ant.versionItems || [])[+m[1]] || null;
+      var desc = itAnt ? itAnt.descripcion : null;
+      if(desc == null) return;
+      var j = idxNuevo[String(desc).trim().toLowerCase()];
+      if(j != null) comp['i'+j+m[2]] = ant.compras[k];
+    });
+    if(Object.keys(comp).length) data.compras = comp;
+    data.versionDe = ant.numero + (Number(ant.version) > 1 ? ' v'+ant.version : '');
+  }
+  /* Los soportes de la orden anulada (OC del cliente, factura, comprobantes) pasan a la versión nueva;
+     la anulada deja de mostrar los pagos (quedan en la nueva) y apunta a ella. */
+  function ocMoverDeAnulada(oldId, newId){
+    var tareas = [];
+    state.soportes.forEach(function(x, sid){
+      var ref = String(x.ref||'');
+      if(ref === 'oc:'+oldId || ref.indexOf('oc:'+oldId+':') === 0){
+        var nref = 'oc:'+newId + ref.slice(('oc:'+oldId).length), upd = {ref: nref}; if(x.ocId === oldId) upd.ocId = newId;
+        tareas.push(state.db.collection('soportes').doc(sid).update(upd).then(function(){ state.soportes.set(sid, Object.assign({}, x, upd)); }));
+      }
+    });
+    var ant = state.ordenes.get(oldId) || {};
+    var updA = {reemplazadaPorId: newId, pagosMovidos: (ant.pagos||[]).length ? ant.pagos : null, pagos: []};
+    tareas.push(state.db.collection('ordenesCompra').doc(oldId).update(updA).then(function(){ state.ordenes.set(oldId, Object.assign({}, ant, updA)); }));
+    return Promise.all(tareas);
   }
   function ocClienteCelda(oid, o){
     if(o.medio === 'llamada') return '<span class="due ok">Por llamada</span>';
@@ -6946,6 +6985,17 @@
     document.getElementById('ocEstado').innerHTML = Object.keys(OC_ESTADOS).map(function(k){ return '<option value="'+k+'">'+OC_ESTADOS[k]+'</option>'; }).join('');
   })();
 
+  /* Versión de la orden (2026-11-06): al anular una orden y volver a pasar su cotización a orden, la nueva conserva
+     el número (ONT-0005) y sube de versión (v2), como la cotización. Se muestra «ONT-0005 v2». */
+  function ocNum(o){ return o ? String(o.numero||'') + (Number(o.version) > 1 ? ' v'+Number(o.version) : '') : ''; }
+  function ocAnuladaDeCot(cotId){
+    var r = null; state.ordenes.forEach(function(o, oid){ if(o.cotizacionId === cotId && o.estado === 'anulada' && (!r || String(o.creadoEn||'') > String(r.o.creadoEn||''))) r = {id: oid, o: o}; });
+    return r;
+  }
+  function ocVersionSiguiente(numero){
+    var v = 0; state.ordenes.forEach(function(o){ if(o.numero === numero) v = Math.max(v, Number(o.version) || 1); });
+    return v + 1;
+  }
   function nextOcNumero(){
     var max = 0;
     state.ordenes.forEach(function(o){ var m = String(o.numero||'').match(/(\d+)/); if(m){ var n = parseInt(m[1],10); if(n>max) max=n; } });
@@ -6988,7 +7038,7 @@
       var k = ocCalc(o);
       var inst = o.fechaInicio ? (fmtShort(o.fechaInicio)+' → '+fmtShort(k.fin)+'<span class="due ok">'+k.dias.length+(o.modalidad==='dia_a_dia' && Number(o.diasInstalacion) > k.dias.length ? ' de '+Number(o.diasInstalacion) : '')+' día(s) · '+ocModLabel(o.modalidad)+'</span>') : '<span class="due warning">Inicio por confirmar</span>';
       html += '<tr data-id="'+id+'">'+
-        '<td class="num"><strong>'+escapeHtml(o.numero||'—')+'</strong></td>'+
+        '<td class="num"><strong>'+escapeHtml(ocNum(o)||'—')+'</strong></td>'+
         '<td class="num">'+ocClienteCelda(id, o)+'</td>'+
         '<td class="desc-cell"><div class="d-title num">'+escapeHtml(c.numero||'—')+'</div><div class="d-notes">'+escapeHtml(c.descripcion||'')+'</div></td>'+
         '<td>'+escapeHtml(o.cliente||'—')+'</td>'+
@@ -7342,7 +7392,7 @@
     state.editingOcId = id || null;
     var o = id ? state.ordenes.get(id) : {};
     var cT = state.cotizaciones.get(o.cotizacionId) || {};
-    document.getElementById('ocModalTitle').textContent = id ? 'Orden interna '+(o.numero||'')+(cT.numero || o.cotizacionNumero ? ' · '+(cT.numero || o.cotizacionNumero)+(o.cotizacionVersion > 1 ? ' v'+o.cotizacionVersion : '') : '')+(o.cliente ? ' · '+o.cliente : '') : 'Orden interna';
+    document.getElementById('ocModalTitle').textContent = id ? 'Orden interna '+ocNum(o)+(cT.numero || o.cotizacionNumero ? ' · '+(cT.numero || o.cotizacionNumero)+(o.cotizacionVersion > 1 ? ' v'+o.cotizacionVersion : '') : '')+(o.cliente ? ' · '+o.cliente : '') : 'Orden interna';
     document.getElementById('ocNumero').value = o.numero || '';
     document.getElementById('ocNumero').placeholder = 'Se asigna al guardar (' + nextOcNumero() + ')';
     document.getElementById('ocNumeroCliente').value = o.numeroCliente || '';
@@ -7498,6 +7548,8 @@
     if(state.editingOcId && ((prev.numero && data.numero !== prev.numero) || (prev.cotizacionId && data.cotizacionId !== prev.cotizacionId))){
       toast('No se guardó: el formulario quedó mezclado con otra orden. Cierra la orden, recarga la página y vuelve a abrirla.', 9000); return;
     }
+    /* Al anular se guardan los renglones aprobados: la versión siguiente hereda las compras validadas de los que sigan iguales */
+    if(anulando) data.versionItems = (c.items||[]).map(function(it){ return {descripcion: it.descripcion || ''}; });
     var col = db.collection('ordenesCompra');
     var p = state.editingOcId ? col.doc(state.editingOcId).set(data).then(function(){ return state.editingOcId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
     p.then(function(ocId){
@@ -7517,7 +7569,7 @@
         state.cotizaciones.set(cotId, Object.assign({}, c, updA));
         tasks.push(db.collection('cotizaciones').doc(cotId).update(updA).then(function(){ return syncAutoEventsFor('cotizacion', cotId); }));
       }
-      return Promise.all(tasks).then(function(){ toast(anulando ? 'Orden '+data.numero+' anulada · '+(c.numero||'la cotización')+' quedó editable' : 'Orden '+data.numero+' guardada y agenda actualizada', anulando ? 6000 : undefined); closeOcModal(); renderAll(); syncProyEstadosPronto(); });
+      return Promise.all(tasks).then(function(){ toast(anulando ? 'Orden '+ocNum(data)+' anulada · '+(c.numero||'la cotización')+' quedó editable' : 'Orden '+data.numero+' guardada y agenda actualizada', anulando ? 6000 : undefined); closeOcModal(); renderAll(); syncProyEstadosPronto(); });
     }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
 
@@ -7617,7 +7669,7 @@
     var o = state.ordenes.get(oid); if(!o){ toast('No se pudo cargar esa orden.'); return; }
     var c = state.cotizaciones.get(o.cotizacionId) || {};
     comp = {oid: oid, datos: JSON.parse(JSON.stringify(o.compras || {}))};
-    document.getElementById('compTitulo').textContent = 'Validar compras · '+(o.numero || 'Orden');
+    document.getElementById('compTitulo').textContent = 'Validar compras · '+(ocNum(o) || 'Orden');
     document.getElementById('compSub').textContent = [o.cliente, c.numero, c.descripcion].filter(Boolean).join(' · ');
     renderCompras();
     document.getElementById('compOverlay').classList.add('open');
@@ -7745,7 +7797,7 @@
         (byDay[ev.fecha] = byDay[ev.fecha] || []).push(ev);
       });
       var k = ocCalc(o);
-      html += '<div class="c-label" data-oc="'+id+'"><div class="l1">'+escapeHtml(o.numero||'')+' <span class="pill oc-'+o.estado+'" style="font-size:10px; padding:2px 7px;">'+(OC_ESTADOS[o.estado]||'')+'</span></div>'+
+      html += '<div class="c-label" data-oc="'+id+'"><div class="l1">'+escapeHtml(ocNum(o))+' <span class="pill oc-'+o.estado+'" style="font-size:10px; padding:2px 7px;">'+(OC_ESTADOS[o.estado]||'')+'</span></div>'+
         '<div class="l2">'+escapeHtml(o.cliente||'')+'</div>'+
         '<div class="l2">'+(o.fechaInicio ? 'Fin '+fmtShort(k.fin) : 'Inicio por confirmar')+' · Pago '+fmtShort(k.pago)+'</div></div>';
       days.forEach(function(d){
@@ -8236,7 +8288,7 @@
     var h2 = '<div class="table-wrap"><table><thead><tr><th>Orden</th><th>Cliente</th><th>Días cotizados</th><th>Días en la orden</th><th>Días reales</th><th>Extra</th><th>Tarifa día instalación</th><th>Dejado de cobrar</th><th>Personal (cotizado → pagado)</th><th>Materiales dañados / repuestos</th><th>Otros imprevistos</th><th>Causa</th></tr></thead><tbody>';
     dev.forEach(function(e){
       var o = e[1], dv = ocDesvio(o);
-      h2 += '<tr><td class="num"><strong>'+escapeHtml(o.numero||'')+'</strong></td><td>'+escapeHtml(o.cliente||'')+'</td>'+
+      h2 += '<tr><td class="num"><strong>'+escapeHtml(ocNum(o))+'</strong></td><td>'+escapeHtml(o.cliente||'')+'</td>'+
         '<td class="num">'+(dv.diasCot!=null?dv.diasCot:'—')+'</td><td class="num">'+(dv.diasPlan!=null?dv.diasPlan:'—')+'</td><td class="num">'+(dv.reales!=null?dv.reales:'—')+'</td>'+
         '<td class="num'+(dv.extra?' neg':'')+'">'+dv.extra+'</td>'+
         '<td class="num">'+(dv.tarifa?fmtMoney.format(dv.tarifa):'<span class="due warning">sin ítems de instalación</span>')+'</td>'+
@@ -11839,7 +11891,7 @@
   }
   function invObra(m){
     var o = m.ordenId && state.ordenes.get(m.ordenId);
-    if(o) return (o.numero || 'Orden') + (o.cliente ? ' · ' + o.cliente : '');
+    if(o) return (ocNum(o) || 'Orden') + (o.cliente ? ' · ' + o.cliente : '');
     if(m.ordenNumero) return m.ordenNumero;
     var p = m.proyectoId && state.proyectos.get(m.proyectoId);
     return p ? (p.nombre || 'Proyecto') + (p.cliente ? ' · ' + p.cliente : '') : '';
@@ -12061,7 +12113,7 @@
   function invOrdenSelect(sel){
     return '<select id="invOrden"><option value="">'+(inv.tipo === 'salida' ? 'Elige la orden…' : 'Ninguna')+'</option>' + invOrdenes().map(function(o){
       var abierta = ['finalizada','facturada','pagada'].indexOf(o.estado) === -1;
-      return '<option value="'+escapeHtml(o._id)+'"'+(o._id===sel?' selected':'')+'>'+escapeHtml((o.numero||'Orden')+' · '+(o.cliente||'')+(abierta ? '' : ' (cerrada)'))+'</option>'; }).join('') + '</select>';
+      return '<option value="'+escapeHtml(o._id)+'"'+(o._id===sel?' selected':'')+'>'+escapeHtml((ocNum(o)||'Orden')+' · '+(o.cliente||'')+(abierta ? '' : ' (cerrada)'))+'</option>'; }).join('') + '</select>';
   }
   function invCalc(){
     var box = document.getElementById('invCalc'); if(!box) return;
@@ -12447,7 +12499,7 @@
       if(r.plan > 0 || r.real > 0) tvC += r.venta; else sinC++;
       var dif = r.real - r.plan;
       var h = '<tr data-obra="'+escapeHtml(r.id)+'" style="cursor:pointer;">' +
-        '<td class="desc-cell"><div class="d-title">'+escapeHtml((r.o.numero||'Orden') + ' · ' + (r.o.cliente||''))+'</div><div class="d-notes">'+escapeHtml([r.o.cotizacionNumero, r.cerrada ? 'terminada' : 'en curso'].filter(Boolean).join(' · '))+(r.completo ? '' : ' · <span style="color:var(--warning);">'+r.faltan+' ítem(s) sin costo</span>')+'</div></td>' +
+        '<td class="desc-cell"><div class="d-title">'+escapeHtml((ocNum(r.o)||'Orden') + ' · ' + (r.o.cliente||''))+'</div><div class="d-notes">'+escapeHtml([r.o.cotizacionNumero, r.cerrada ? 'terminada' : 'en curso'].filter(Boolean).join(' · '))+(r.completo ? '' : ' · <span style="color:var(--warning);">'+r.faltan+' ítem(s) sin costo</span>')+'</div></td>' +
         '<td class="num">'+fmtMoney.format(r.venta)+'</td>' +
         '<td class="num">'+fmtMoney.format(r.plan)+'</td>' +
         '<td class="num"><strong>'+fmtMoney.format(r.real)+'</strong></td>' +
@@ -12582,7 +12634,7 @@
 
     obras.forEach(function(r){
       var o = r.o, c = r.c, dv = r.dv;
-      if(obras.length > 1) h += '<h2 class="inf-orden">'+escapeHtml((o.numero||'Orden') + ' · ' + (o.cotizacionNumero || c.numero || ''))+'</h2>';
+      if(obras.length > 1) h += '<h2 class="inf-orden">'+escapeHtml((ocNum(o)||'Orden') + ' · ' + (o.cotizacionNumero || c.numero || ''))+'</h2>';
       /* Revisión cruzada (orden, cotización y Finanzas) */
       var rv = ocRevision(o._id, o);
       h += rv.ok ? '<div class="inf-ok">✓ En orden: la orden, la cotización y Finanzas cuadran.</div>' :

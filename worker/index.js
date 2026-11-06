@@ -344,7 +344,14 @@ async function escribir(req, env, s, col, id, metodo) {
   // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
   // Única excepción (2026-10-29): administración pasa una orden vieja OC-0001 a orden interna ONT-0001 (mismo consecutivo).
   const ocAOnt = col === 'ordenesCompra' && s.admin && previo && /^OC-\d+$/.test(String(previo.numero || '')) && data.numero === String(previo.numero).replace(/^OC-/, 'ONT-');
-  if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero && !ocAOnt) {
+  // (2026-11-06) Versión de orden: administración puede dejar una orden con el número de la orden ANULADA de su misma
+  // cotización, como versión siguiente (p. ej. ONT-0006 → ONT-0005 v2).
+  let ocVersion = false;
+  if (col === 'ordenesCompra' && s.admin && previo && previo.numero && data.numero !== previo.numero && Number(data.version) > 1 && data.cotizacionId === previo.cotizacionId) {
+    const an = await env.DB.prepare("SELECT 1 FROM docs WHERE col = 'ordenesCompra' AND id <> ? AND json_extract(data, '$.numero') = ? AND json_extract(data, '$.cotizacionId') = ? AND json_extract(data, '$.estado') = 'anulada' LIMIT 1").bind(id, data.numero, data.cotizacionId).first();
+    ocVersion = !!an;
+  }
+  if ((col === 'cotizaciones' || col === 'ordenesCompra' || col === 'prefacturas') && previo && previo.numero && data.numero !== previo.numero && !ocAOnt && !ocVersion) {
     return err(403, 'regla', 'El número de registro ' + previo.numero + ' no se puede modificar.');
   }
   // Orden interna (2026-10-29): lo que el cliente aprobó queda fijo. Una cotización con orden activa no cambia
