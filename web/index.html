@@ -8900,13 +8900,22 @@
       metaMargen: a.metaMargen != null && a.metaMargen !== '' ? Number(a.metaMargen) : 30,
       margenMinimo: a.margenMinimo != null && a.margenMinimo !== '' ? Number(a.margenMinimo) : 15,
       incluirEspera: !!a.incluirEspera,
+      cuentaDefecto: a.cuentaDefecto || '', cuentaDefectoDesde: a.cuentaDefectoDesde || '',
       configurado: !!(a.cuentas && a.cuentas.length)
     };
   }
   function finCuentaNombre(id){ var c = finAjustes().cuentas.filter(function(x){ return x.id === id; })[0]; return c ? c.nombre : (id ? '—' : 'Sin cuenta'); }
   /* Cuenta a la que llegan los pagos de clientes registrados en las órdenes */
-  function finCuentaParaMedio(medio){
+  /* (2026-11-06) Cuenta por defecto: desde el 6 nov todo pasa por Bancolombia (Nu quedó en cero).
+     Lo anterior a esa fecha sigue en la cuenta que tenía, para no mover la historia. */
+  function finCuentaPorDefecto(fecha){
+    var a = finAjustes(), cs = a.cuentas;
+    if(a.cuentaDefecto && cs.some(function(c){ return c.id === a.cuentaDefecto; }) && (!fecha || !a.cuentaDefectoDesde || fecha >= a.cuentaDefectoDesde)) return a.cuentaDefecto;
+    return null;
+  }
+  function finCuentaParaMedio(medio, fecha){
     var cs = finAjustes().cuentas;
+    if(medio !== 'efectivo'){ var d = finCuentaPorDefecto(fecha || todayIso()); if(d) return d; }
     var pick = function(t){ return cs.filter(function(c){ return c.tipo === t; })[0]; };
     var c = (medio === 'efectivo' ? pick('efectivo') : pick('banco')) || cs[0];
     return c ? c.id : null;
@@ -8965,7 +8974,7 @@
           if(neto > 0) out.push({
             _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'aporte',
             descripcion: 'Aporte de socio · '+pgSocio(pg)+' pasa a Cenova el cobro de '+(o.numero||'la orden')+' ('+(o.cliente||'cliente')+') que hizo a su nombre',
-            tercero: pgSocio(pg), monto: neto, iva: 0, cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio), medio: pg.medio || '',
+            tercero: pgSocio(pg), monto: neto, iva: 0, cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio, pg.fecha || o.fechaRecepcion), medio: pg.medio || '',
             proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: (pg.nota || '')+(pgRetencion(pg) ? (pg.nota ? ' · ' : '')+'El cliente le retuvo '+fmtMoney.format(pgRetencion(pg))+' a '+pgSocio(pg)+' (certificado a su nombre).' : '')
           });
           return;
@@ -8973,11 +8982,11 @@
         out.push({
           _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'cobro',
           descripcion: 'Pago ' + (o.numero||'orden') + ' · ' + (PAGO_CONCEPTOS[pg.concepto] || 'Pago').toLowerCase(),
-          tercero: o.cliente || '', monto: monto, iva: monto * ratio, cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio), medio: pg.medio || '',
+          tercero: o.cliente || '', monto: monto, iva: monto * ratio, cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio, pg.fecha || o.fechaRecepcion), medio: pg.medio || '',
           proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: pg.nota || ''
         });
         var base = {fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'egreso', tercero: 'Pasarela de pago', iva: 0,
-          cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio), medio: pg.medio || '', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: ''};
+          cuentaId: pg.cuentaId || finCuentaParaMedio(pg.medio, pg.fecha || o.fechaRecepcion), medio: pg.medio || '', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: ''};
         if(pgComision(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':com', soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i)+':com', categoria:'bancarios', monto: pgComision(pg),
           descripcion: 'Comisión de pasarela con IVA · pago ' + (o.numero||'orden'), nota: 'Ya está en el costo de la obra (imprevistos de la orden).'}));
         if(pgRetencion(pg)) out.push(Object.assign({}, base, {_id: 'oc:'+oid+':'+i+':ret', soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i)+':ret', categoria:'retencion', monto: pgRetencion(pg),
@@ -8986,7 +8995,7 @@
       /* Lo que se marca «Pagado» en la orden (personal y otros pagos de la obra) sale solo como salida.
          Solo cuenta lo marcado desde que existe la fecha de pago: lo anterior ya se había registrado a mano. */
       var gasto = function(id, ref, fecha, cat, desc, quien, monto){ out.push({_id: 'oc:'+oid+':'+id, soporteRef: 'oc:'+oid+':'+ref, fuente:'orden', ocGasto:true, ocId: oid, fecha: fecha, tipo:'egreso', categoria: cat,
-        descripcion: desc, tercero: quien || '', monto: monto, iva: 0, cuentaId: finCuentaParaMedio('transferencia'), medio:'transferencia', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota:''}); };
+        descripcion: desc, tercero: quien || '', monto: monto, iva: 0, cuentaId: finCuentaParaMedio('transferencia', fecha), medio:'transferencia', proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota:''}); };
       (o.personal||[]).forEach(function(r, i){ var t = personalRowTotal(r); if(r.pagado && r.pagadoFecha && t > 0) gasto('per:'+i, 'per:'+(r.id || 'i'+i), r.pagadoFecha, 'personal', 'Pago a '+(r.nombre||'personal')+' · '+(o.numero||'orden'), r.nombre, t); });
       (o.porPagar||[]).forEach(function(x, i){ var t = Number(x.monto)||0; if(x.pagado && x.pagadoFecha && t > 0) gasto('pp:'+i, 'pp:'+(x.id || 'i'+i), x.pagadoFecha, 'obra', (x.concepto||'Pago de la obra')+' · '+(o.numero||'orden'), x.a, t); });
     });
@@ -10382,6 +10391,7 @@
   /* ---------- Modal: movimiento ---------- */
   function finCuentaOptions(sel, val){
     sel.innerHTML = finAjustes().cuentas.map(function(c){ return '<option value="'+escapeHtml(c.id)+'">'+escapeHtml(c.nombre)+'</option>'; }).join('');
+    val = val || finCuentaPorDefecto();   /* lo nuevo arranca en la cuenta por defecto (Bancolombia) */
     if(val) sel.value = val;
   }
   function finMovSetTipo(t){
