@@ -5774,15 +5774,9 @@
     if(cr.porCorregir) add(cr.porCorregir+' ítem(s) se compraron pero no tenían costo en la cotización: cargarlo en Precios');
     if(!ci.completo && ci.faltan && !(cr.total && cr.validadas === cr.total)) add(ci.faltan+' ítem(s) sin costo: el margen no es confiable');
     /* Compras validadas frente a lo pagado a proveedores en Finanzas (solo administración ve Finanzas) */
-    var fz = ocComprasEnFinanzas(o);
-    if(fz != null && cr.total && cr.validadas === cr.total){
-      var compradas = 0, comp = o.compras || {};
-      cr.lineas.forEach(function(l){ var v = comp[l.key]; if(v && v.como === 'comprado') compradas += compraReal(l, v) || 0; });
-      var c0 = state.cotizaciones.get(o.cotizacionId) || {};
-      compradas += (c0.costosAdicionales||[]).reduce(function(sm, x){ return sm + (Number(x.monto)||0); }, 0);
-      if(compradas > 0 && !fz) add('Las compras ('+fmtMoney.format(compradas)+') no están en Finanzas como «Compras a proveedores» del proyecto', 'crit');
-      else if(Math.abs(compradas - fz) >= 1000) add('Compras validadas + costos adicionales '+fmtMoney.format(compradas)+' ≠ pagado a proveedores en Finanzas '+fmtMoney.format(fz)+' (diferencia '+fmtMoney.format(compradas - fz)+')', 'crit');
-    }
+    var vf = cr.total && cr.validadas === cr.total ? ocComprasVsFinanzas(o) : null;
+    if(vf && vf.orden > 0 && !vf.fz) add('Las compras ('+fmtMoney.format(vf.orden)+') no están en Finanzas como «Compras a proveedores» del proyecto', 'crit');
+    else if(vf && !vf.cuadra) add('Compras de la orden '+fmtMoney.format(vf.orden)+(vf.adicionales ? ' (incluye '+fmtMoney.format(vf.adicionales)+' de costos adicionales de la cotización)' : '')+' ≠ pagado a proveedores en Finanzas '+fmtMoney.format(vf.fz)+' (diferencia '+fmtMoney.format(vf.dif)+')', 'crit');
     if(terminada && ci.personalPlan > 0 && ci.personalReal == null) add('Registrar el personal que trabajó (lo que de verdad se pagó)');
     if(terminada && !ocTieneFactura(oid) && Number(o.valor) > 0) add('Anexar la factura electrónica');
     var k = ocCalc(o), sal = ocSaldo(o);
@@ -7614,9 +7608,9 @@
         '<div><span>Ya lo teníamos</span><b>'+fmtMoney.format(r.bodega)+'</b></div>'+
         '<div><span>Margen cotizado</span><b>'+(mP == null ? '—' : pct(mP))+'</b></div>'+
         '<div><span>Margen real</span><b>'+(mR == null ? '—' : pct(mR))+'</b></div></div>'+
-      (function(){ var fz = ocComprasEnFinanzas(o); if(fz == null) return '';
-        var dif = Math.round(r.real - fz);
-        return '<div class="cot-aviso '+(Math.abs(dif) < 1000 ? 'info' : 'warn')+'" style="margin-top:10px;">Pagado a proveedores en Finanzas para este proyecto: '+fmtMoney.format(fz)+(Math.abs(dif) < 1000 ? ' · cuadra con las compras reales.' : ' · diferencia con las compras reales: '+fmtMoney.format(dif)+'. Revisa que cada compra esté registrada una sola vez y con su IVA.')+'</div>'; })();
+      (function(){ var vf = ocComprasVsFinanzas(o, comp.datos); if(!vf) return '';
+        var det = 'Compras de la orden '+fmtMoney.format(vf.orden)+(vf.adicionales ? ' (lo comprado '+fmtMoney.format(vf.compradas)+' + costos adicionales de la cotización '+fmtMoney.format(vf.adicionales)+')' : '')+' · pagado a proveedores en Finanzas '+fmtMoney.format(vf.fz);
+        return '<div class="cot-aviso '+(vf.cuadra ? 'info' : 'warn')+'" style="margin-top:10px;">'+det+(vf.cuadra ? ' · ✓ cuadra.' : ' · diferencia '+fmtMoney.format(vf.dif)+'. Revisa que cada compra esté registrada una sola vez y con su IVA.')+'</div>'; })();
     body.querySelectorAll('.comp-como').forEach(function(sel){ sel.addEventListener('change', function(){
       var k = sel.closest('tr').dataset.k;
       if(!sel.value) delete comp.datos[k];
@@ -8067,6 +8061,17 @@
     var c = state.cotizaciones.get(o.cotizacionId) || {}, pid = o.proyectoId || c.proyectoId; if(!pid) return null;
     var t = 0; fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.proyectoId === pid && m.estado !== 'pendiente' && m.categoria === 'compras') t += Number(m.monto)||0; });
     return t;
+  }
+
+  /* Compras de la orden frente a Finanzas (una sola cuenta para todos los paneles):
+     renglones «Se compró» + costos adicionales de la cotización (p. ej. el flete) vs. «Compras a proveedores» pagadas del proyecto. */
+  function ocComprasVsFinanzas(o, compras){
+    var fz = ocComprasEnFinanzas(o); if(fz == null) return null;
+    var c = state.cotizaciones.get(o.cotizacionId) || {}, comp = compras || o.compras || {}, compradas = 0;
+    ocLineasCompra(c).forEach(function(l){ var v = comp[l.key]; if(v && v.como === 'comprado') compradas += compraReal(l, v) || 0; });
+    var adic = (c.costosAdicionales||[]).reduce(function(sm, x){ return sm + (Number(x.monto)||0); }, 0);
+    var orden = compradas + adic;
+    return {fz: fz, compradas: compradas, adicionales: adic, orden: orden, dif: Math.round(orden - fz), cuadra: Math.abs(orden - fz) < 1000};
   }
 
   /* Costo directo de una orden: el de su cotización, pero con el personal REAL si ya se registró */
