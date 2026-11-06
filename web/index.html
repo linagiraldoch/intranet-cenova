@@ -413,12 +413,32 @@
   .vk-oc-n{font-family:"IBM Plex Mono",monospace; font-weight:600;}
   .vk-oc-cli{font-weight:600;}
   .vk-oc-desc{font-size:12.5px; color:var(--text-muted); display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;}
-  .vk-oc-mid{display:flex; align-items:center; gap:14px; position:relative;}
-  .vk-oc-pc{position:absolute; left:0; width:58px; text-align:center; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;}
-  .vk-oc-mid dl{margin:0; display:grid; grid-template-columns:repeat(3,auto); gap:4px 14px; font-size:12px;}
-  .vk-oc-mid dt{color:var(--text-muted);}
-  .vk-oc-mid dd{margin:0; font-family:"IBM Plex Mono",monospace; font-weight:600;}
-  .vk-oc-mid dd.warn{color:var(--warning);}
+  .vk-oc-mid{display:grid; grid-template-columns:58px minmax(0,1fr); align-items:center; gap:14px;}
+  .vk-oc-ring{position:relative; width:58px; height:58px;}
+  .vk-oc-ring svg{display:block; width:58px; height:58px;}
+  .vk-oc-ring span{position:absolute; inset:0; display:grid; place-items:center; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600;}
+  .vk-oc-nums{margin:0; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; font-size:12px;}
+  .vk-oc-nums dt{color:var(--text-muted); margin-bottom:2px;}
+  .vk-oc-nums dd{margin:0; font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .vk-oc-nums dd.warn{color:var(--warning);}
+  .vk-oc-inst{display:flex; justify-content:space-between; align-items:baseline; gap:10px; font-size:12px; padding:7px 10px; border-radius:9px; background:var(--surface-2);}
+  .vk-oc-inst span{color:var(--text-muted);}
+  .vk-oc-inst b{font-family:"IBM Plex Mono",monospace; font-weight:600; text-align:right;}
+  .vk-oc-comp{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer;
+    padding:8px 10px; border-radius:9px; border:1px dashed var(--border); background:transparent;}
+  .vk-oc-comp:hover{border-style:solid; border-color:var(--accent);}
+  .vk-oc-comp.pend{border-color:var(--warning);}
+  .vk-oc-comp-l, .vk-oc-comp-m{display:flex; flex-direction:column; gap:1px; min-width:0;}
+  .vk-oc-comp-m{align-items:flex-end;}
+  .vk-oc-comp b{font-size:12.5px;} .vk-oc-comp small{font-size:11.5px; color:var(--text-muted);}
+  .oc-comp-fila{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:8px 12px; border:1px dashed var(--border); border-radius:10px; font-size:13px;}
+  .comp-tabla select{min-width:150px;}
+  .comp-tabla .comp-dentro{display:block; font-size:11px; color:var(--text-muted);}
+  .comp-tabla .comp-sinc{display:inline-block; margin-left:6px; font-size:10.5px; font-weight:600; color:var(--warning);}
+  .comp-res{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:12px;}
+  @media (max-width:760px){ .comp-res{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .comp-res div{background:var(--surface-2); border-radius:10px; padding:9px 12px;}
+  .comp-res span{display:block; font-size:11.5px; color:var(--text-muted);} .comp-res b{font-family:"IBM Plex Mono",monospace; font-size:14px;}
   .vk-pasos{display:flex; gap:4px;}
   .vk-pasos i{flex:1; height:5px; border-radius:99px; background:var(--surface-2);}
   .vk-pasos i.on{background:var(--success);}
@@ -525,7 +545,7 @@
   .pill.st-cerrada{background:var(--surface-2); color:var(--text-muted);}
   .pill.st-finalizado{background:var(--neutral-soft); color:var(--neutral);}
   .pill.mode{background:var(--neutral-soft); color:var(--text-muted);}
-  .pill.oc-recibida{background:var(--accent-soft); color:var(--accent-2);}
+  .pill.oc-recibida, .pill.oc-por_programar{background:var(--accent-soft); color:var(--accent-2);}
   .pill.oc-programada{background:var(--warning-soft); color:var(--warning);}
   .pill.oc-en_ejecucion{background:var(--success-soft); color:var(--success);}
   .pill.oc-finalizada, .pill.oc-facturada{background:var(--neutral-soft); color:var(--text);}
@@ -2391,6 +2411,15 @@
         <div class="field"><label>Ciudad</label><input type="text" id="cliCiudad" placeholder="Cartagena, Bolívar"></div>
       </div>
       <div class="field"><label>Dirección</label><input type="text" id="cliDireccion"></div>
+      <!-- RUT del cliente (2026-11-06): respaldo para facturar, inscribirse como proveedor y otros requisitos -->
+      <div class="fieldset-label" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">RUT <span id="cliRutEstado" style="text-transform:none; letter-spacing:0;"></span></div>
+      <div class="field">
+        <div class="file-drop" style="flex-direction:column; align-items:stretch; gap:8px;">
+          <div id="cliRutLista"></div>
+          <label class="btn sm" for="cliRutInput" style="align-self:flex-start; cursor:pointer;" id="cliRutBtn">Subir RUT (PDF)</label>
+          <input type="file" id="cliRutInput" accept="application/pdf,.pdf,image/*" hidden>
+        </div>
+      </div>
       <div class="fieldset-label">Contactos <span style="font-weight:400; text-transform:none; letter-spacing:0;">— el primero es el principal</span></div>
       <div id="cliContactosBox"></div>
       <button type="button" class="btn sm" id="cliAddContacto" style="align-self:flex-start;">+ Agregar contacto</button>
@@ -2561,6 +2590,15 @@
         <div class="no-file" style="margin-top:4px;">Documento, correo o captura del mensaje. Si la autorizó por llamada, elige «Llamada» en «Cómo se aprobó».</div>
       </div>
       <div class="info-box" id="ocExtractStatus" style="display:none;"></div>
+      <!-- Factura electrónica (2026-11-06): al anexarla la orden pasa sola a «Facturada» (si la instalación ya terminó). -->
+      <div class="fieldset-label" id="ocFacturaLbl" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">Factura electrónica <span id="ocFacturaEstado" style="text-transform:none; letter-spacing:0;"></span></div>
+      <div class="field" id="ocFacturaWrap">
+        <div class="file-drop" style="flex-direction:column; align-items:stretch; gap:8px;">
+          <div id="ocFacturaLista"></div>
+          <label class="btn sm" for="ocFacturaInput" style="align-self:flex-start; cursor:pointer;">Anexar factura electrónica</label>
+          <input type="file" id="ocFacturaInput" accept=".pdf,.jpg,.jpeg,.png,.xml,.zip" hidden>
+        </div>
+      </div>
       <!-- Cotización del proveedor (2026-11-06): se liga aquí para comprobar que el costo cotizado es el real.
            La orden arranca sin ella, pero no se factura ni se cierra sin ella (o sin explicar por qué no hay). -->
       <div class="fieldset-label" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">Cotización del proveedor <span id="ocProvEstado" style="text-transform:none; letter-spacing:0;"></span></div>
@@ -2582,10 +2620,11 @@
       <div class="field-row three">
         <div class="field"><label>N.° orden interna</label><input type="text" id="ocNumero" class="readonly-num" readonly tabindex="-1"><span class="no-file" id="ocNumeroHint">Se asigna automáticamente al guardar y no se puede modificar.</span></div>
         <div class="field"><label>N.° de orden del cliente</label><input type="text" id="ocNumeroCliente" placeholder="El consecutivo que trae su orden"></div>
-        <div class="field"><label>Estado</label><select id="ocEstado"></select></div>
+        <div class="field"><label>Estado</label><select id="ocEstado" disabled></select><span class="no-file" id="ocEstadoHint">Automático: según los días de instalación, la factura y los pagos.</span></div>
       </div>
+      <!-- Orden más simple (2026-11-06): la cotización, el responsable, el valor y la fecha de aprobación vienen de la cotización y no se cambian. -->
+      <div class="field" id="ocCotizacionWrap"><label>Cotización aprobada</label><select id="ocCotizacion"></select></div>
       <div class="field-row three">
-        <div class="field"><label>Cotización aprobada</label><select id="ocCotizacion"></select></div>
         <div class="field"><label>Cómo se aprobó</label>
           <select id="ocMedio">
             <option value="orden_compra">Orden de compra (documento)</option>
@@ -2594,22 +2633,21 @@
             <option value="llamada">Llamada (sin soporte)</option>
             <option value="otro">Otro</option>
           </select>
+          <span class="no-file" id="ocAprobadaTxt"></span>
+          <input type="hidden" id="ocFechaRecepcion">
         </div>
-        <div class="field"><label>Fecha de aprobación</label><input type="date" id="ocFechaRecepcion"></div>
+        <div class="field"><label>Responsable</label><input type="text" id="ocResponsable" class="readonly-num" readonly tabindex="-1"></div>
+        <div class="field"><label>Valor aprobado</label><input type="number" id="ocValor" min="0" step="1000" readonly tabindex="-1" class="readonly-num"></div>
       </div>
       <p class="no-file" id="ocEditadoInfo" hidden></p>
       <div class="info-box" id="ocCotInfo"><span class="muted">Elige la cotización para traer cliente, valor y días de instalación.</span></div>
-      <div class="field-row three">
-        <div class="field"><label>Responsable</label><input type="text" id="ocResponsable" list="equipoList"></div>
-        <div class="field"><label>Valor aprobado</label><input type="number" id="ocValor" min="0" step="1000" readonly tabindex="-1" class="readonly-num"></div>
-        <div class="field"><label>Plazo de pago (días desde la recepción)</label><input type="number" id="ocPlazoPago" min="0" step="1" value="30"></div>
-      </div>
       <div class="info-box warn" id="ocValorAlerta" hidden></div>
 
       <div class="fieldset-label">Pagos del cliente</div>
       <div class="field-row three">
         <div class="field"><label>Anticipo pactado (%)</label><input type="number" id="ocAnticipoPct" min="0" max="100" step="1" placeholder="Ej. 50"><span class="no-file">Si hay anticipo, la agenda te recuerda cobrarlo antes del inicio de labores.</span></div>
-        <div class="field"></div><div class="field"></div>
+        <div class="field"><label>Plazo de pago (días desde la aprobación)</label><input type="number" id="ocPlazoPago" min="0" step="1" value="30"></div>
+        <div class="field"></div>
       </div>
       <div class="items-table-wrap"><table class="items-table">
         <thead><tr><th class="col-idx">#</th><th style="width:16%;">Fecha</th><th style="width:18%;">Concepto</th><th style="width:17%;">Valor recibido</th><th style="width:17%;">Medio</th><th>Nota</th><th class="col-rm"></th></tr></thead>
@@ -2656,6 +2694,7 @@
       <div class="info-box" id="ocCalcOut"></div>
 
       <div class="fieldset-label">Ejecución y cierre</div>
+      <div class="oc-comp-fila" id="ocCompFila"><span id="ocCompTxt"></span><button type="button" class="btn sm" id="ocCompBtn">Validar compras</button></div>
       <div class="field-row three">
         <div class="field"><label>Días reales de ejecución</label><input type="number" id="ocDiasReales" min="0" step="1" placeholder="Al terminar la instalación"></div>
         <div class="field"><label>Otros costos imprevistos ($)</label><input type="number" id="ocCostoImprevistos" min="0" step="1000" placeholder="0"></div>
@@ -2701,10 +2740,27 @@
       <div class="field"><textarea id="ocNotas" placeholder="Condiciones especiales, anticipo, contacto en sitio…"></textarea></div>
     </div>
     <div class="modal-foot">
-      <span class="no-file" id="ocFootNote">Las órdenes no se eliminan: para dejar una sin efecto cámbiala a "Anulada".</span>
+      <button class="btn" id="ocAnular" style="color:var(--critical);">Anular orden</button>
       <div style="display:flex; gap:8px; margin-left:auto;">
         <button class="btn" id="ocCancel">Cancelar</button>
         <button class="btn primary" id="ocSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Validar compras de una orden (2026-11-06): qué se le compró al proveedor y qué ya teníamos, para la rentabilidad real -->
+<div class="overlay" id="compOverlay" style="z-index:1150;">
+  <div class="modal wide">
+    <div class="modal-head">
+      <div><h3 id="compTitulo">Validar compras</h3><div class="no-file" id="compSub" style="margin-top:2px;"></div></div>
+      <button class="modal-close" id="compClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body" id="compBody"></div>
+    <div class="modal-foot">
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="compCancel">Cancelar</button>
+        <button class="btn primary" id="compSave">Guardar</button>
       </div>
     </div>
   </div>
@@ -2951,7 +3007,10 @@
     instalacion:"Instalación", entrega:"Entrega", cotizacion:"Cotización / propuesta",
     /* tipos automáticos */
     seguimiento_cot:"Seguimiento de cotización", revision_pausa:"Revisión de cotización en pausa", confirmar_inicio:"Confirmar inicio", pago_aviso:"Aviso de pago", pago:"Vencimiento de pago"};
-  var OC_ESTADOS = {recibida:"Recibida", programada:"Programada", en_ejecucion:"En ejecución", finalizada:"Instalación finalizada", facturada:"Facturada", pagada:"Pagada", anulada:"Anulada"};
+  /* Estado de la orden automático (2026-11-06): ya no hay «Recibida» (si existe la ONT, se recibió). Ver ocEstadoAuto. */
+  var OC_ESTADOS = {por_programar:"Por programar", programada:"Programada", en_ejecucion:"En ejecución", finalizada:"Instalación finalizada", facturada:"Facturada", pagada:"Pagada", anulada:"Anulada"};
+  var OC_ESTADOS_VIEJOS = {recibida:"Por programar"};
+  var OC_PASOS_AUTO = ['por_programar','programada','en_ejecucion','finalizada','facturada','pagada'];
   var EV_ESTADOS = {pendiente:"Pendiente", cumplido:"Cumplido", cancelado:"Cerrado", vencido:"Vencido"};
   /* Socios de Cenova: contacto e identificación (documento de constitución del 2 oct 2026).
      La clave es el nombre corto que se usa como "responsable" en cotizaciones, proyectos y órdenes. */
@@ -3514,7 +3573,7 @@
     size = size || 56; var r = size/2 - 5, c = 2*Math.PI*r, v = Math.max(0, Math.min(1, pct||0));
     return '<svg class="rs-ring" viewBox="0 0 '+size+' '+size+'" width="'+size+'" height="'+size+'" aria-hidden="true">'+
       '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="var(--surface-2)" stroke-width="6"/>'+
-      '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="6" stroke-linecap="round" stroke-dasharray="'+(c*v).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/></svg>';
+      '<circle cx="'+size/2+'" cy="'+size/2+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="6" stroke-linecap="round"'+(v > 0 ? '' : ' stroke-opacity="0"')+' stroke-dasharray="'+(c*v).toFixed(1)+' '+c.toFixed(1)+'" transform="rotate(-90 '+size/2+' '+size/2+')"/></svg>';
   }
   /* Valores de Finanzas: completos hasta un millón (son plata del día a día), compactos desde ahí. */
   function rsFinV(n){ n = Math.round(Number(n)||0); return Math.abs(n) >= 1e6 ? rsCompact(n) : fmtMoney.format(n); }
@@ -3586,13 +3645,13 @@
       '<button type="button" class="rs-chip" data-rs-go="tab:rechazada">Rechazadas · '+porTab.rechazada.n+'</button></div>';
 
     /* Obras en curso */
-    var PASOS = ['recibida','programada','en_ejecucion','finalizada','facturada','pagada'];
+    var PASOS = OC_PASOS_AUTO;
     var obras = ords.filter(function(e){ return !(e[1].estado === 'pagada' && !ocPendientesObra(e[1]).length && ocSaldo(e[1]) === 0); }).map(function(e){
       var o = e[1], v = Number(o.valor)||0, sal = ocSaldo(o), pc = v ? (v-sal)/v : 0, paso = PASOS.indexOf(o.estado);
       return '<button type="button" class="rs-obra" data-rs-go="oc:'+e[0]+'">'+rsRing(pc, 'var(--success)', 52)+
         '<span class="rs-obra-pc">'+Math.round(pc*100)+'%</span>'+
         '<span class="rs-obra-t"><b>'+escapeHtml((o.numero||'Orden')+' · '+(o.cliente||''))+'</b>'+
-        '<small>'+(OC_ESTADOS[o.estado]||o.estado)+(sal ? ' · por cobrar '+fmtMoney.format(sal) : ' · cobrada')+'</small>'+
+        '<small>'+(OC_ESTADOS[o.estado]||OC_ESTADOS_VIEJOS[o.estado]||o.estado)+(sal ? ' · por cobrar '+fmtMoney.format(sal) : ' · cobrada')+'</small>'+
         '<span class="rs-pasos">'+PASOS.map(function(x, j){ return '<i class="'+(j <= paso ? 'on' : '')+'" title="'+OC_ESTADOS[x]+'"></i>'; }).join('')+'</span></span></button>';
     }).join('');
 
@@ -3685,6 +3744,8 @@
   document.addEventListener('click', function(e){
     var fb = e.target.closest('[data-inv-fam]');
     if(fb){ inv.familia = fb.getAttribute('data-inv-fam') || ''; renderInventario(); return; }
+    var cp = e.target.closest('[data-oc-comp]');
+    if(cp){ e.stopPropagation(); openCompras(cp.getAttribute('data-oc-comp')); return; }
     var m = e.target.closest('[data-vk-inv]');
     if(m){ e.stopPropagation(); var pp = m.getAttribute('data-vk-inv').split(':'); openInvModal(pp[0], pp.slice(1).join(':')); return; }
     var b = e.target.closest('[data-vk-go]'); if(!b) return;
@@ -3695,7 +3756,7 @@
   });
 
   /* ---------- Órdenes de compra ---------- */
-  var OC_PASOS = ['recibida','programada','en_ejecucion','finalizada','facturada','pagada'];
+  var OC_PASOS = OC_PASOS_AUTO;
   function vkOrdenesStrip(){
     var ords = Array.from(state.ordenes.values()).filter(function(o){ return o.estado !== 'anulada'; });
     var vend = 0, porCob = 0, instalando = 0, porCerrar = 0, sinInicio = 0;
@@ -3716,13 +3777,24 @@
     var falta = (!s && (o.estado === 'pagada' || ocRecibido(o) > 0)) ? ocPendientesObra(o) : [];
     var pago = o.estado === 'anulada' ? '' : (s ? (k.pago ? (k.pago < todayIso() ? '<span class="vk-tag crit">Pago vencido '+fmtShort(k.pago)+'</span>' : '<span class="vk-tag">Vence '+fmtShort(k.pago)+'</span>') : '') : '<span class="vk-tag ok">Cobrada</span>');
     return '<article class="vk-oc'+(o.estado === 'anulada' ? ' anulada' : '')+'" data-vk-go="oc:'+id+'" role="button" tabindex="0">'+
-      '<header><span class="vk-oc-n">'+escapeHtml(o.numero||'Orden')+'</span><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||o.estado)+'</span></header>'+
+      '<header><span class="vk-oc-n">'+escapeHtml(o.numero||'Orden')+'</span><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||OC_ESTADOS_VIEJOS[o.estado]||o.estado)+'</span></header>'+
       '<div class="vk-oc-cli">'+escapeHtml(o.cliente||'—')+'</div><div class="vk-oc-desc">'+escapeHtml((c.numero ? c.numero+' · ' : '')+(c.descripcion||''))+'</div>'+
-      '<div class="vk-oc-mid">'+rsRing(v ? (v-s)/v : 0, 'var(--success)', 58)+'<span class="vk-oc-pc">'+(v ? Math.round(100*(v-s)/v) : 0)+'%</span>'+
-        '<dl><div><dt>Valor</dt><dd>'+fmtMoney.format(v)+'</dd></div><div><dt>Saldo</dt><dd class="'+(s ? 'warn' : '')+'">'+fmtMoney.format(s)+'</dd></div>'+
-        '<div><dt>Instalación</dt><dd>'+(o.fechaInicio ? fmtShort(o.fechaInicio)+(k.fin && k.fin !== o.fechaInicio ? ' → '+fmtShort(k.fin) : '') : 'por confirmar')+'</dd></div></dl></div>'+
+      /* Orden visual de la tarjeta (2026-11-06): anillo fijo con su %, valor y saldo en dos columnas, instalación en su propia línea */
+      '<div class="vk-oc-mid"><div class="vk-oc-ring">'+rsRing(v ? (v-s)/v : 0, 'var(--success)', 58)+'<span>'+(v ? Math.round(100*(v-s)/v) : 0)+'%</span></div>'+
+        '<dl class="vk-oc-nums"><div><dt>Valor</dt><dd>'+fmtMoney.format(v)+'</dd></div><div><dt>Saldo</dt><dd class="'+(s ? 'warn' : '')+'">'+fmtMoney.format(s)+'</dd></div></dl></div>'+
+      '<div class="vk-oc-inst"><span>Instalación</span><b>'+(o.fechaInicio ? fmtShort(o.fechaInicio)+(k.fin && k.fin !== o.fechaInicio ? ' → '+fmtShort(k.fin) : '') : 'por programar')+'</b></div>'+
       '<div class="vk-pasos">'+OC_PASOS.map(function(x, j){ return '<i class="'+(paso >= j ? 'on' : '')+'" title="'+OC_ESTADOS[x]+'"></i>'; }).join('')+'</div>'+
+      (o.estado === 'anulada' ? '' : vkOrdenCompras(id, o))+
       '<footer>'+pago+(o.estado === 'anulada' || falta.length ? '' : (o.medio === 'llamada' ? '<span class="vk-tag">Aprobada por llamada</span>' : (ocTieneOcCliente(id, o) ? '<span class="vk-tag ok">OC del cliente ✓</span>' : '<span class="vk-tag warn">Falta OC del cliente</span>')))+(falta.length ? '<span class="vk-tag warn">Falta: '+escapeHtml(falta.join(', '))+'</span>' : '')+(o.retrasoMotivo ? '<span class="vk-tag">Retraso: '+escapeHtml((OC_RETRASO[o.retrasoMotivo]||'').toLowerCase())+'</span>' : '')+'</footer></article>';
+  }
+
+  /* Bloque «Compras» de la tarjeta: cuánto se ha validado y el margen real que va quedando */
+  function vkOrdenCompras(id, o){
+    var r = ocComprasResumen(o), ob = cosObra(o, id), m = ob.mReal, sem = m == null || ob.real <= 0 ? '' : (finSemaforo(m) || '');
+    var txt = !r.total ? 'Sin materiales que validar' : (r.validadas === r.total ? 'Todo validado' : r.validadas+' de '+r.total+' validados');
+    return '<button type="button" class="vk-oc-comp'+(r.total && r.validadas < r.total ? ' pend' : '')+'" data-oc-comp="'+escapeHtml(id)+'" title="Marcar qué se compró y qué ya teníamos">'+
+      '<span class="vk-oc-comp-l"><b>Compras</b><small>'+txt+(r.sinCostoPend ? ' · '+r.sinCostoPend+' sin costo: valídalo' : (r.porCorregir ? ' · '+r.porCorregir+' sin costo en la cotización' : ''))+'</small></span>'+
+      '<span class="vk-oc-comp-m"><small>Margen real</small>'+(m == null || ob.real <= 0 ? '<b>—</b>' : '<b class="fin-badge '+sem+'">'+pct(m)+'</b>')+'</span></button>';
   }
 
   /* ---------- Inventario ---------- */
@@ -4090,7 +4162,7 @@
       /* Primero la cotización (aprobada y, si viene de una orden anulada, versión siguiente); luego la orden. */
       return cotAplicarEstado(id, 'aprobada', extra).then(function(cAprob){
         var data = {
-          numero: nextOcNumero(), estado: 'en_ejecucion',
+          numero: nextOcNumero(), estado: 'por_programar',
           cotizacionId: id, cotizacionNumero: cAprob.numero || '', cotizacionVersion: Number(cAprob.version) || 1,
           cliente: cAprob.cliente || '', proyectoId: cAprob.proyectoId || '',
           medio: r.value, numeroCliente: '', fechaRecepcion: hoy,
@@ -4107,7 +4179,7 @@
           state.ordenes.set(oid, data);
           return Promise.all([syncAutoEventsFor('orden', oid), syncAutoEventsFor('cotizacion', id)]).then(function(){
             closeCotModal(); closePreviewSiAbierta(); renderAll(); syncProyEstadosPronto();
-            toast((cAprob.numero||'Cotización')+' aprobada · orden interna '+data.numero+' en ejecución'+(r.value === 'llamada' ? '' : ' · anexa la OC del cliente cuando llegue'), 6000);
+            toast((cAprob.numero||'Cotización')+' aprobada · orden interna '+data.numero+' creada: programa los días de instalación'+(r.value === 'llamada' ? '' : ' · anexa la OC del cliente cuando llegue'), 6000);
             openOcModal(oid);
           });
         });
@@ -4505,7 +4577,7 @@
       var id = e[0], c = e[1];
       html += '<tr data-id="'+id+'">'+
         '<td><div class="d-title">'+escapeHtml(c.nombre||'—')+(c.alerta && c.alerta.texto ? '<span class="cli-badge '+(c.alerta.nivel === 'cuidado' ? 'cuidado' : 'atencion')+'" title="'+escapeHtml(c.alerta.texto)+'">'+(c.alerta.nivel === 'cuidado' ? '⚠ Cuidado' : 'Atención')+'</span>' : '')+'</div></td>'+
-        '<td>'+escapeHtml(c.nit||'—')+'</td>'+
+        '<td>'+escapeHtml(c.nit||'—')+(cliRutDe(id).length ? ' <span class="due ok" title="RUT anexo">RUT ✓</span>' : '')+'</td>'+
         '<td>'+escapeHtml(c.ciudad||'—')+'</td>'+
         (function(){
           var ks = cliContactos(c), k0 = ks[0] || {};
@@ -4537,6 +4609,7 @@
     state.cliContactos = cliContactos(c).map(function(k){ return {nombre:k.nombre||'', cargo:k.cargo||'', telefono:k.telefono||'', email:k.email||''}; });
     if(!state.cliContactos.length) state.cliContactos.push({nombre:'', cargo:'', telefono:'', email:''});
     cliPintarContactos();
+    state.cliRutPendiente = null; renderCliRut();
     var adm = precAdmin();
     document.getElementById('cliNombre').disabled = !adm && !!id;
     document.getElementById('cliNit').disabled = !adm && !!id;
@@ -4552,6 +4625,43 @@
     else { vista.hidden = true; vista.innerHTML = ''; }
     document.getElementById('cliOverlay').classList.add('open');
   }
+  /* RUT del cliente: soporte clase 'rut' con ref 'cli:<id>'. Un cliente nuevo lo sube al guardarse. El más reciente es el vigente. */
+  function cliRutDe(cid){
+    var out = []; if(!cid) return out;
+    state.soportes.forEach(function(x, id){ if(x.ref === 'cli:'+cid && x.clase === 'rut') out.push(Object.assign({_id: id}, x)); });
+    return out.sort(function(a, b){ return String(b.fecha||'').localeCompare(String(a.fecha||'')); });
+  }
+  function renderCliRut(){
+    var cid = state.editingCliId, lista = cliRutDe(cid), box = document.getElementById('cliRutLista'), pend = state.cliRutPendiente;
+    box.innerHTML = lista.map(function(x, i){
+      return '<div class="sop-item"><div class="r-main"><strong>'+(i === 0 ? 'RUT vigente' : 'RUT anterior')+'</strong><span>'+escapeHtml(x.nombre || '')+' · subido el '+fmtShort(x.fecha)+'</span></div>'+
+        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button>'+
+        (precAdmin() || x.subidoPorId === state.userId ? '<button type="button" class="icon-btn" data-rut-del="'+escapeHtml(x._id)+'" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : '')+'</div></div>';
+    }).join('') + (pend ? '<div class="sop-item"><div class="r-main"><strong>Se sube al guardar</strong><span>'+escapeHtml(pend.name)+'</span></div></div>' : '') +
+      (!lista.length && !pend ? '<span class="no-file">Aún no se ha subido.</span>' : '');
+    document.getElementById('cliRutBtn').textContent = lista.length ? 'Subir RUT actualizado' : 'Subir RUT (PDF)';
+    document.getElementById('cliRutEstado').innerHTML = lista.length ? '<span class="due ok">Anexo ✓</span>' : '';
+  }
+  document.getElementById('cliRutLista').addEventListener('click', function(e){
+    var b = e.target.closest('[data-sop-ver]'); if(b){ sopVer(b.dataset.sopVer); return; }
+    var d = e.target.closest('[data-rut-del]'); if(!d) return;
+    var id = d.dataset.rutDel;
+    confirmDialog('¿Quitar este RUT?', 'Quitar').then(function(ok){ if(!ok) return;
+      state.db.doc('soportes/'+id).delete().then(function(){ state.soportes.delete(id); renderCliRut(); toast('RUT quitado.'); }).catch(function(err){ toast('No se pudo quitar: ' + (err && err.message ? err.message : 'error')); }); });
+  });
+  function cliSubirRut(cid, file){
+    var c = state.clientes.get(cid) || {};
+    return sopSubir(file, 'cli:'+cid, 'rut', {clienteId: cid, cliente: c.nombre || ''});
+  }
+  document.getElementById('cliRutInput').addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0]; e.target.value = ''; if(!file) return;
+    var cid = state.editingCliId;
+    if(!cid){ state.cliRutPendiente = file; renderCliRut(); return; }
+    toast('Subiendo el RUT…', 3000);
+    cliSubirRut(cid, file).then(function(){ toast('RUT guardado.'); setTimeout(renderCliRut, 600); })
+      .catch(function(err){ toast('No se pudo subir: ' + (err && err.message ? err.message : 'error'), 6000); });
+  });
+
   function cliPintarContactos(){
     var box = document.getElementById('cliContactosBox');
     box.innerHTML = state.cliContactos.map(function(k, i){
@@ -4626,8 +4736,12 @@
     });
     if(dup){ toast('Ya existe el cliente "'+dup.nombre+'". Ábrelo y agrega ahí el contacto nuevo.', 5000); return; }
     var col = db.collection('clientes');
-    var p = state.editingCliId ? col.doc(state.editingCliId).set(data) : col.add(data);
-    p.then(function(){ toast('Cliente guardado'); closeCliModal(); }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+    var p = state.editingCliId ? col.doc(state.editingCliId).set(data).then(function(){ return state.editingCliId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
+    var rutPend = state.cliRutPendiente;
+    p.then(function(cid){
+      if(rutPend && cid){ state.clientes.set(cid, data); return cliSubirRut(cid, rutPend).then(function(){ toast('Cliente y RUT guardados'); }, function(err){ toast('El cliente se guardó, pero el RUT no: ' + (err && err.message ? err.message : 'error'), 6000); }); }
+      toast('Cliente guardado');
+    }).then(function(){ state.cliRutPendiente = null; closeCliModal(); }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
   });
 
   document.getElementById('cliDelete').addEventListener('click', function(){
@@ -5555,7 +5669,7 @@
       if(f && f.classList.contains('field')){ var t = f.previousElementSibling; while(t && !t.matches('.fieldset-label')) t = t.previousElementSibling; if(t && f.previousElementSibling === t) return t; }
       return null;
     }
-    document.querySelectorAll('.app .no-file:not([id]), .overlay .no-file:not([id]), .app .info-box:not([id]):not(.fin-setup), #ocNumeroHint, #provFileHint, #ocFootNote').forEach(function(el){
+    document.querySelectorAll('.app .no-file:not([id]), .overlay .no-file:not([id]), .app .info-box:not([id]):not(.fin-setup), #ocNumeroHint, #ocEstadoHint, #provFileHint').forEach(function(el){
       if(el.closest('#provFileCurrent') || el.querySelector('input, select, textarea, button, table')) return;
       var txt = (el.textContent || '').replace(/\s+/g, ' ').trim(); if(txt.length < 20) return;
       var d = destino(el), b = boton(txt);
@@ -6607,6 +6721,60 @@
     };
   }
 
+  /* ===== Estado automático de la orden (2026-11-06) =====
+     - Sin inicio de labores: «Por programar» (si no lleva instalación, pasa directo a lo de cobro).
+     - Inicio en el futuro: «Programada». Desde el primer día: «En ejecución» (consecutivos, intercalados o día a día).
+     - Pasado el último día (en día a día, con todos los días cotizados ya programados): «Instalación finalizada».
+     - Terminada la instalación: «Facturada» al anexar la factura electrónica; «Pagada» cuando los pagos registrados cubren el valor.
+     - «Anulada» es lo único que se pone a mano (botón «Anular orden»). */
+  function ocTieneFactura(oid){
+    if(!oid) return false;
+    var si = false, ref = 'oc:'+oid;
+    state.soportes.forEach(function(x){ if(!si && x.clase === 'factura' && (x.ref === ref || String(x.ref||'').indexOf(ref+':') === 0)) si = true; });
+    return si;
+  }
+  function ocPagadaCompleta(o){
+    var v = Number(o.valor)||0;
+    if(o.estado === 'pagada' && !(o.pagos||[]).length) return true;   /* marcada pagada a mano antes de existir el registro de pagos */
+    return v > 0 && ocRecibido(o) >= v;
+  }
+  function ocEstadoInstalacion(o, hoy){
+    hoy = hoy || todayIso();
+    var dias = installDays(o.fechaInicio, o.diasInstalacion, o.modalidad, o.diasSemana, o.diasSueltos), nCot = Number(o.diasInstalacion)||0;
+    if(!dias.length) return nCot > 0 || o.modalidad === 'dia_a_dia' ? 'por_programar' : 'sin_instalacion';
+    if(dias[0] > hoy) return 'programada';
+    var completa = o.modalidad !== 'dia_a_dia' || dias.length >= nCot;
+    return (completa && dias[dias.length-1] < hoy) ? 'finalizada' : 'en_ejecucion';
+  }
+  function ocEstadoAuto(oid, o, hoy){
+    if(!o) return 'por_programar';
+    if(o.estado === 'anulada') return 'anulada';
+    var inst = ocEstadoInstalacion(o, hoy);
+    if(inst !== 'finalizada' && inst !== 'sin_instalacion') return inst;
+    if(ocPagadaCompleta(o)) return 'pagada';
+    if(ocTieneFactura(oid)) return 'facturada';
+    return 'finalizada';
+  }
+  /* Deja guardado el estado que toca (los días pasan solos, llegan facturas y pagos). Lo hace quien tenga la intranet abierta. */
+  var _ocEstTm = null;
+  function ocEstadosPronto(){
+    clearTimeout(_ocEstTm);
+    _ocEstTm = setTimeout(function(){
+      var db = state.db; if(!db || !state.loaded || !state.loaded.ordenes || !state.loaded.soportes) return;
+      var ops = [];
+      state.ordenes.forEach(function(o, oid){
+        var est = ocEstadoAuto(oid, o);
+        if(est === o.estado) return;
+        var upd = {estado: est};
+        if(est === 'pagada') upd.fechaPago = o.fechaPago || ((o.pagos||[]).map(function(x){ return x.fecha; }).sort().pop()) || todayIso();
+        else if(o.estado === 'pagada') upd.fechaPago = null;
+        state.ordenes.set(oid, Object.assign({}, o, upd));
+        ops.push(db.collection('ordenesCompra').doc(oid).update(upd).then(function(){ return syncAutoEventsFor('orden', oid); }).catch(function(){}));
+      });
+      if(ops.length) Promise.all(ops).then(function(){ try { renderOrdenes(); } catch(e){} syncProyEstadosPronto(); });
+    }, 1500);
+  }
+
   function desiredForOc(id, o){
     var out = [];
     if(!o || o.estado === 'anulada' || !o.fechaRecepcion) return out;
@@ -6772,7 +6940,7 @@
         '<td class="num">'+(o.estado==='anulada'?'—':inst)+'</td>'+
         '<td class="num">'+(o.estado==='anulada'?'—':fmtDate(k.pago)+dueTag(k.pago, ocSaldo(o)===0, 'Pagada'))+'</td>'+
         '<td class="num">'+(Number(o.valor)?fmtMoney.format(Number(o.valor))+(o.estado!=='anulada' && ocRecibido(o) ? '<span class="due '+(ocSaldo(o)?'warning':'ok')+'">'+(ocSaldo(o)?'saldo '+fmtMoney.format(ocSaldo(o)):'pagada completa')+'</span>' : ''):'—')+'</td>'+
-        '<td><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||o.estado)+'</span></td>'+
+        '<td><span class="pill oc-'+o.estado+'">'+(OC_ESTADOS[o.estado]||OC_ESTADOS_VIEJOS[o.estado]||o.estado)+'</span></td>'+
         '<td><div class="row-actions">'+
           (o.archivoDatos ? '<button class="icon-btn view-oc-file" title="Ver soporte"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></button>' : '')+
           '<button class="icon-btn edit-oc" title="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5Z"/></svg></button>'+
@@ -6847,6 +7015,12 @@
       diasSueltos: (state.ocDiasSueltos||[]).slice().sort()
     };
   }
+  /* El estado se ve cambiar mientras se programan los días o se registran pagos (se guarda al pulsar «Guardar»). */
+  function ocEstadoVista(f){
+    var oEd = state.editingOcId ? (state.ordenes.get(state.editingOcId) || {}) : {};
+    if(oEd.estado === 'anulada'){ document.getElementById('ocEstado').value = 'anulada'; return; }
+    document.getElementById('ocEstado').value = ocEstadoAuto(state.editingOcId, Object.assign({}, oEd, f || ocFormData(), {valor: Number(document.getElementById('ocValor').value)||0, pagos: (state.ocPagos||[]).filter(function(x){ return Number(x.monto) > 0; })}));
+  }
   function renderOcCalc(){
     var f = ocFormData();
     document.getElementById('ocDiasSemanaWrap').style.display = f.modalidad==='intercalados' ? 'flex' : 'none';
@@ -6855,6 +7029,7 @@
     fi.readOnly = f.modalidad==='dia_a_dia';
     fi.title = f.modalidad==='dia_a_dia' ? 'En «Día a día» el inicio es el primer día programado.' : '';
     var k = ocCalc(f);
+    ocEstadoVista(f);
     var parts = [];
     if(f.modalidad==='dia_a_dia'){
       var nCot = f.diasInstalacion, nProg = k.dias.length, falta = Math.max(0, nCot - nProg);
@@ -6928,7 +7103,15 @@
     var cid = document.getElementById('ocCotizacion').value;
     var c = cid ? state.cotizaciones.get(cid) : null;
     var box = document.getElementById('ocCotInfo');
+    box.hidden = false;
     if(!c){ box.innerHTML = '<span class="muted">Elige la cotización para traer cliente, valor y días de instalación.</span>'; return; }
+    /* Orden ya creada: la cotización se ve en la tarjeta y en el título; aquí solo queda la alerta comercial del cliente, si hay. */
+    if(state.editingOcId){
+      var alc0 = alertaDeCliente(c.cliente);
+      box.hidden = !alc0;
+      box.innerHTML = alc0 ? '<div class="alerta-cli '+(alc0.nivel === 'cuidado' ? 'cuidado' : 'atencion')+'">'+alertaHtml(alc0)+'</div>' : '';
+      return;
+    }
     var proj = c.proyectoId ? state.proyectos.get(c.proyectoId) : null;
     box.innerHTML = '<strong>'+escapeHtml(c.numero||'')+'</strong> · '+escapeHtml(c.cliente||'—')+' · '+escapeHtml(c.descripcion||'')+
       '<br><span class="muted">Valor cotizado: '+fmtMoney.format(cotTotal(c))+(proj?' · Proyecto: '+escapeHtml(proj.nombre||''):'')+
@@ -6942,7 +7125,7 @@
     if(fillDefaults){
       document.getElementById('ocValor').value = Math.round(cotTotal(c)) || '';
       if(c.diasInstalacion != null) document.getElementById('ocDiasInst').value = c.diasInstalacion;
-      if(!document.getElementById('ocResponsable').value) document.getElementById('ocResponsable').value = c.responsable || '';
+      document.getElementById('ocResponsable').value = c.responsable || '';
       renderOcCalc();
     }
   }
@@ -7023,6 +7206,35 @@
     }).catch(function(){ toast('No se pudo leer el archivo.'); });
   });
 
+  /* Factura electrónica de la orden: soporte clase 'factura' en 'oc:<orden>' (el mismo que pide Finanzas para el cobro). */
+  function renderOcFactura(){
+    var oid = state.editingOcId, box = document.getElementById('ocFacturaLista'), est = document.getElementById('ocFacturaEstado');
+    if(!box) return;
+    document.getElementById('ocFacturaWrap').hidden = !oid; document.getElementById('ocFacturaLbl').hidden = !oid;
+    var lista = []; if(oid) state.soportes.forEach(function(x, id){ if(x.clase === 'factura' && (x.ref === 'oc:'+oid || String(x.ref||'').indexOf('oc:'+oid+':') === 0)) lista.push(Object.assign({_id: id}, x)); });
+    box.innerHTML = lista.map(function(x){
+      return '<div class="sop-item"><div class="r-main"><strong>Factura</strong><span>'+escapeHtml(x.nombre || '')+' · '+fmtShort(x.fecha)+'</span></div>'+
+        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button></div></div>';
+    }).join('') || '<span class="no-file">Aún no se ha anexado.</span>';
+    if(est) est.innerHTML = lista.length ? '<span class="due ok">Anexa ✓</span>' : '';
+  }
+  document.getElementById('ocFacturaLista').addEventListener('click', function(e){ var b = e.target.closest('[data-sop-ver]'); if(b) sopVer(b.dataset.sopVer); });
+  document.getElementById('ocFacturaInput').addEventListener('change', function(e){
+    var file = e.target.files && e.target.files[0], oid = state.editingOcId; e.target.value = '';
+    if(!file || !oid) return;
+    var o = state.ordenes.get(oid) || {};
+    /* Lo que antes se pedía para marcarla «Facturada» a mano: la factura en Siigo cita la OC del cliente y el costo se compara con el proveedor. */
+    if(!ocTieneOcCliente(oid, Object.assign({}, o, {medio: document.getElementById('ocMedio').value})) && !document.getElementById('ocNumeroCliente').value.trim()){
+      toast('Antes de la factura anexa la OC del cliente (o escribe su número): la factura en Siigo debe citarla.', 7000); return; }
+    if(!(ocProvDe(oid, o).length || document.getElementById('ocProvMotivo').value || (o.provSinCotizacion && o.provSinCotizacion.motivo))){
+      toast('Antes de la factura liga la cotización del proveedor (o elige por qué no hay).', 7000); return; }
+    toast('Anexando la factura…', 3000);
+    sopSubir(file, 'oc:'+oid, 'factura', {proyectoId: o.proyectoId || '', ocId: oid}).then(function(){
+      toast('Factura anexada a '+(o.numero||'la orden')+'.'); ocEstadosPronto();
+      setTimeout(function(){ renderOcFactura(); if(state.editingOcId === oid) document.getElementById('ocEstado').value = ocEstadoAuto(oid, state.ordenes.get(oid) || o); }, 700);
+    }).catch(function(err){ toast('No se pudo anexar: ' + (err && err.message ? err.message : 'error'), 6000); });
+  });
+
   function renderOcClienteAnexos(){
     var oid = state.editingOcId, box = document.getElementById('ocClienteAnexos'), est = document.getElementById('ocClienteEstado');
     if(!box) return;
@@ -7055,18 +7267,23 @@
     if(id && !state.ordenes.get(id)){ toast('No se pudo cargar esa orden.'); return; }
     state.editingOcId = id || null;
     var o = id ? state.ordenes.get(id) : {};
-    document.getElementById('ocModalTitle').textContent = id ? 'Orden interna '+(o.numero||'') : 'Orden interna';
+    var cT = state.cotizaciones.get(o.cotizacionId) || {};
+    document.getElementById('ocModalTitle').textContent = id ? 'Orden interna '+(o.numero||'')+(cT.numero || o.cotizacionNumero ? ' · '+(cT.numero || o.cotizacionNumero)+(o.cotizacionVersion > 1 ? ' v'+o.cotizacionVersion : '') : '')+(o.cliente ? ' · '+o.cliente : '') : 'Orden interna';
     document.getElementById('ocNumero').value = o.numero || '';
     document.getElementById('ocNumero').placeholder = 'Se asigna al guardar (' + nextOcNumero() + ')';
     document.getElementById('ocNumeroCliente').value = o.numeroCliente || '';
-    document.getElementById('ocEstado').value = o.estado || 'en_ejecucion';
-    document.getElementById('ocEstado').disabled = o.estado === 'anulada';
+    document.getElementById('ocEstado').value = id ? ocEstadoAuto(id, o) : 'por_programar';
     ocCotizacionOptions(o.cotizacionId || presetCotId || '');
     document.getElementById('ocCotizacion').disabled = !!id;
+    document.getElementById('ocCotizacionWrap').hidden = !!id;
     document.getElementById('ocMedio').value = o.medio || 'orden_compra';
-    document.getElementById('ocFechaRecepcion').value = o.fechaRecepcion || todayIso();
+    /* La aprobación es el día en que nació la orden (al pasar la cotización a orden). */
+    document.getElementById('ocFechaRecepcion').value = o.fechaRecepcion || (o.creadoEn ? String(o.creadoEn).slice(0, 10) : todayIso());
+    document.getElementById('ocAprobadaTxt').textContent = 'Aprobada el '+fmtDate(document.getElementById('ocFechaRecepcion').value)+'.';
+    document.getElementById('ocAnular').hidden = !id || o.estado === 'anulada';
+    state.ocAnularPedido = false;
     var ocEd = document.getElementById('ocEditadoInfo'); ocEd.textContent = editadoTxt(o).trim(); ocEd.hidden = !o.editadoEn;
-    document.getElementById('ocResponsable').value = o.responsable || '';
+    document.getElementById('ocResponsable').value = o.responsable || (state.cotizaciones.get(o.cotizacionId || presetCotId) || {}).responsable || '';
     document.getElementById('ocValor').value = (o.valor != null ? o.valor : '');
     document.getElementById('ocPlazoPago').value = (o.plazoPagoDias != null ? o.plazoPagoDias : 30);
     document.getElementById('ocFechaInicio').value = o.fechaInicio || '';
@@ -7103,17 +7320,16 @@
     renderOcRetraso();
     document.getElementById('ocPfMonto').dataset.tocado = ''; document.getElementById('ocPfLink').value = '';
     renderOcPrefacturas();
-    renderOcClienteAnexos(); renderOcProv();
+    renderOcClienteAnexos(); renderOcProv(); renderOcFactura(); renderOcCompFila();
     var bq = document.getElementById('ocBloqueoNota'), cB = state.cotizaciones.get(o.cotizacionId) || {};
-    bq.hidden = !id;
-    bq.innerHTML = o.estado === 'anulada'
-      ? '<strong>Orden anulada.</strong> La cotización volvió a quedar editable.'
-      : '<strong>Aprobado:</strong> '+escapeHtml(cB.numero || o.cotizacionNumero || '')+' v'+(o.cotizacionVersion || cB.version || 1)+' por '+fmtMoney.format(Number(o.valor)||0)+'. Para cambiarlo, pasa la orden a «Anulada».';
+    bq.hidden = !id || o.estado !== 'anulada';
+    bq.innerHTML = '<strong>Orden anulada.</strong> '+escapeHtml(cB.numero || o.cotizacionNumero || 'La cotización')+' volvió a quedar editable.';
     document.getElementById('ocOverlay').classList.add('open');
   }
   function closeOcModal(){ document.getElementById('ocOverlay').classList.remove('open'); state.editingOcId = null; }
   document.getElementById('ocClose').addEventListener('click', closeOcModal);
   document.getElementById('ocCancel').addEventListener('click', closeOcModal);
+  document.getElementById('ocAnular').addEventListener('click', function(){ if(!state.editingOcId) return; state.ocAnularPedido = true; document.getElementById('ocSave').click(); });
   document.getElementById('ocOverlay').addEventListener('click', function(e){ if(e.target===this) closeOcModal(); });
 
   document.getElementById('ocSave').addEventListener('click', function(){
@@ -7125,29 +7341,23 @@
     if(!f.fechaRecepcion){ toast('Indica la fecha de recepción.'); return; }
     if(f.modalidad==='intercalados' && !f.diasSemana.length){ toast('Marca al menos un día de la semana.'); return; }
     var c = state.cotizaciones.get(cotId) || {};
-    var estadoSel = document.getElementById('ocEstado').value;
+    var estadoSel = (prev.estado === 'anulada' || state.ocAnularPedido) ? 'anulada' : 'auto';
     var anulando = estadoSel === 'anulada' && prev.estado !== 'anulada' && !!state.editingOcId;
     if(anulando && !state.ocAnularOk){
       confirmDialog('¿Anular '+(prev.numero||'la orden')+'? '+(c.numero||'La cotización')+' vuelve a «Enviada» y queda editable. Si el cliente la aprueba de nuevo, se pasa a orden otra vez como la versión '+((Number(c.version)||1)+1)+'.', 'Anular orden')
-        .then(function(ok){ if(ok){ state.ocAnularOk = true; document.getElementById('ocSave').click(); } });
+        .then(function(ok){ if(ok){ state.ocAnularOk = true; document.getElementById('ocSave').click(); } else state.ocAnularPedido = false; });
       return;
     }
     state.ocAnularOk = false;
     if(estadoSel !== 'anulada'){
       var cuad = ocCuadra({cotizacionId: cotId}, document.getElementById('ocValor').value);
       if(!cuad.ok){ toast(cuad.motivo+' Corrige la cotización (o pide al cliente la OC correcta) antes de guardar: la factura debe salir con el mismo valor.', 9000); document.getElementById('ocValor').focus(); return; }
-      if(estadoSel === 'facturada' && !state.ocArchivo && !(prev.archivoDatos && !state.ocArchivoRemoved) && !document.getElementById('ocNumeroCliente').value.trim() && !ocTieneOcCliente(state.editingOcId, {medio: document.getElementById('ocMedio').value})){
-        toast('Para marcarla «Facturada» adjunta la OC del cliente o escribe su número: la factura en Siigo debe citarla.', 7000); return; }
-    }
-    if(estadoSel === 'facturada' && prev.estado !== 'facturada' && !(ocProvDe(state.editingOcId, prev).length || document.getElementById('ocProvMotivo').value)){
-      toast('Para marcarla «Facturada» liga la cotización del proveedor (o elige por qué no hay).', 7000); return;
     }
     if(ocRetrasoAplica() && !document.getElementById('ocRetrasoMotivo').value){
       toast('La obra arranca después del inicio estimado ('+fmtDate(c.inicioEstimado)+'): elige el motivo del retraso.', 5000);
       document.getElementById('ocRetrasoMotivo').focus(); return;
     }
-    var estado = document.getElementById('ocEstado').value;
-    if(estado==='recibida' && f.fechaInicio) estado = 'programada';
+    var estado = estadoSel === 'anulada' ? 'anulada' : null;   /* el estado se calcula abajo, con los datos ya armados */
     var pagosClean = state.ocPagos.filter(function(x){ return Number(x.monto) > 0; }).map(function(x){
       var pg = {id: x.id || filaId(), fecha: x.fecha || todayIso(), concepto: x.concepto || 'abono', monto: Number(x.monto)||0, medio: x.medio || 'transferencia', nota: (x.nota||'').trim()};
       if(Number(x.comision) > 0) pg.comision = Number(x.comision);   /* comisión y retención de la pasarela: antes se perdían al guardar la orden */
@@ -7157,8 +7367,7 @@
     var valorNum = document.getElementById('ocValor').value==='' ? 0 : Number(document.getElementById('ocValor').value);
     var recibido = pagosClean.reduce(function(s,x){ return s + x.monto; }, 0);
     var pagoCompleto = valorNum > 0 && recibido >= valorNum;
-    if(pagoCompleto && estado !== 'anulada') estado = 'pagada';
-    else if(estado === 'pagada' && pagosClean.length && !pagoCompleto){ estado = f.fechaInicio ? 'finalizada' : 'recibida'; toast('La orden tiene saldo pendiente, así que no puede quedar como "Pagada".', 4000); }
+    if(estado !== 'anulada') estado = ocEstadoAuto(state.editingOcId, Object.assign({}, prev, f, {estado: prev.estado, valor: valorNum, pagos: pagosClean}));
     var data = Object.assign({}, f, {
       numero: prev.numero || nextOcNumero(),
       numeroCliente: document.getElementById('ocNumeroCliente').value.trim(),
@@ -7169,7 +7378,7 @@
       cliente: c.cliente || prev.cliente || '',
       proyectoId: c.proyectoId || '',
       medio: document.getElementById('ocMedio').value,
-      responsable: document.getElementById('ocResponsable').value.trim(),
+      responsable: prev.responsable || c.responsable || document.getElementById('ocResponsable').value.trim(),
       valor: document.getElementById('ocValor').value==='' ? null : Number(document.getElementById('ocValor').value),
       notas: document.getElementById('ocNotas').value.trim(),
       diasReales: document.getElementById('ocDiasReales').value==='' ? null : Number(document.getElementById('ocDiasReales').value),
@@ -7295,6 +7504,78 @@
     db.collection('cotizacionesProveedor').doc(pid).update(upd).then(function(){
       state.cotizacionesProveedor.set(pid, Object.assign({}, p, upd)); toast('Cotización de '+(p.proveedor||'proveedor')+' ligada a '+(o.numero||'la orden')); renderOcProv();
     }).catch(function(err){ toast('No se pudo ligar: ' + (err && err.message ? err.message : 'error')); });
+  });
+
+  /* ---------- Ventana «Validar compras» (2026-11-06) ---------- */
+  var comp = null;
+  function openCompras(oid){
+    var o = state.ordenes.get(oid); if(!o){ toast('No se pudo cargar esa orden.'); return; }
+    var c = state.cotizaciones.get(o.cotizacionId) || {};
+    comp = {oid: oid, datos: JSON.parse(JSON.stringify(o.compras || {}))};
+    document.getElementById('compTitulo').textContent = 'Validar compras · '+(o.numero || 'Orden');
+    document.getElementById('compSub').textContent = [o.cliente, c.numero, c.descripcion].filter(Boolean).join(' · ');
+    renderCompras();
+    document.getElementById('compOverlay').classList.add('open');
+  }
+  function renderCompras(){
+    var o = state.ordenes.get(comp.oid) || {}, r = ocComprasResumen(o, comp.datos), body = document.getElementById('compBody');
+    if(!r.total){
+      body.innerHTML = '<div class="empty-state" style="padding:16px;">Esta cotización no tiene materiales ni equipos: no hay compras que validar.</div>';
+      document.getElementById('compSave').hidden = true; return;
+    }
+    document.getElementById('compSave').hidden = false;
+    var filas = r.lineas.map(function(l, n){
+      var v = comp.datos[l.key] || {}, opts = ['comprado','stock'].concat(l.sinCosto && l.venta != null ? ['precio_costo'] : []).concat(['no_usado']);
+      var real = compraReal(l, v);
+      return '<tr data-k="'+escapeHtml(l.key)+'"><td class="col-idx">'+(n+1)+'</td>'+
+        '<td>'+escapeHtml(l.nombre)+(l.sinCosto ? '<span class="comp-sinc">sin costo</span>' : '')+(l.dentro ? '<span class="comp-dentro">dentro de: '+escapeHtml(l.dentro)+'</span>' : '')+'</td>'+
+        '<td class="num">'+invCant(l.cant)+'</td>'+
+        '<td class="num">'+(l.costo == null ? '—' : fmtMoney.format(l.costo))+'</td>'+
+        '<td><select class="comp-como"><option value="">Sin validar</option>'+opts.map(function(k){ return '<option value="'+k+'"'+(v.como === k ? ' selected' : '')+'>'+COMPRA_COMO[k]+'</option>'; }).join('')+'</select></td>'+
+        '<td>'+(v.como === 'comprado' ? '<input type="number" class="input-miles comp-costo" min="0" step="1" value="'+(v.costo != null ? v.costo : (l.costo || ''))+'" placeholder="Total pagado">' : '<span class="num">'+(real == null ? '—' : fmtMoney.format(real))+'</span>')+'</td></tr>';
+    }).join('');
+    var c = state.cotizaciones.get(o.cotizacionId) || {}, venta = finVentaSinIva(c);
+    var ci = ocCostoInfo(Object.assign({}, o, {compras: comp.datos})), dv = ocDesvio(o), costoReal = ci.costo + dv.imprevistos, plan = cotCostoInfo(c).costo;
+    var mR = venta > 0 && costoReal > 0 ? (venta - costoReal) / venta : null, mP = venta > 0 && plan > 0 ? (venta - plan) / venta : null;
+    body.innerHTML = '<div class="items-table-wrap"><table class="items-table comp-tabla"><thead><tr><th class="col-idx">#</th><th>Material o equipo</th><th class="num" style="width:60px;">Cant.</th><th class="num" style="width:120px;">Costo cotizado</th><th style="width:190px;">Cómo salió</th><th style="width:140px;">Costo real (total)</th></tr></thead><tbody>'+filas+'</tbody></table></div>'+
+      (r.porCorregir ? '<div class="cot-aviso warn" style="margin-top:10px;">'+r.porCorregir+' ítem(s) se compraron pero la cotización no tenía su costo: cárgalo en Precios para que no vuelva a pasar.</div>' : '')+
+      '<div class="comp-res">'+
+        '<div><span>Validados</span><b>'+r.validadas+' de '+r.total+'</b></div>'+
+        '<div><span>Compras cotizadas</span><b>'+fmtMoney.format(r.cotizado)+'</b></div>'+
+        '<div><span>Compras reales</span><b>'+fmtMoney.format(r.real)+'</b></div>'+
+        '<div><span>Ya lo teníamos</span><b>'+fmtMoney.format(r.bodega)+'</b></div>'+
+        '<div><span>Margen cotizado</span><b>'+(mP == null ? '—' : pct(mP))+'</b></div>'+
+        '<div><span>Margen real</span><b>'+(mR == null ? '—' : pct(mR))+'</b></div></div>';
+    body.querySelectorAll('.comp-como').forEach(function(sel){ sel.addEventListener('change', function(){
+      var k = sel.closest('tr').dataset.k;
+      if(!sel.value) delete comp.datos[k];
+      else comp.datos[k] = Object.assign({}, comp.datos[k] || {}, {como: sel.value});
+      if(sel.value !== 'comprado' && comp.datos[k]) delete comp.datos[k].costo;
+      renderCompras();
+    }); });
+    body.querySelectorAll('.comp-costo').forEach(function(inp){ inp.addEventListener('change', function(){
+      var k = inp.closest('tr').dataset.k, d = comp.datos[k]; if(!d) return;
+      d.costo = inp.value === '' ? null : Math.max(0, Math.round(Number(inp.value))||0);
+      renderCompras();
+    }); });
+  }
+  function renderOcCompFila(){
+    var oid = state.editingOcId, fila = document.getElementById('ocCompFila'); fila.hidden = !oid; if(!oid) return;
+    var r = ocComprasResumen(state.ordenes.get(oid) || {});
+    document.getElementById('ocCompTxt').textContent = !r.total ? 'Compras: sin materiales que validar.' : 'Compras: '+r.validadas+' de '+r.total+' validados · reales '+fmtMoney.format(r.real)+' de '+fmtMoney.format(r.cotizado)+' cotizados'+(r.bodega ? ' · ya teníamos '+fmtMoney.format(r.bodega) : '')+'.';
+  }
+  document.getElementById('ocCompBtn').addEventListener('click', function(){ if(state.editingOcId) openCompras(state.editingOcId); });
+  function closeCompras(){ document.getElementById('compOverlay').classList.remove('open'); comp = null; if(state.editingOcId) renderOcCompFila(); }
+  document.getElementById('compClose').addEventListener('click', closeCompras);
+  document.getElementById('compCancel').addEventListener('click', closeCompras);
+  document.getElementById('compOverlay').addEventListener('click', function(e){ if(e.target === this) closeCompras(); });
+  document.getElementById('compSave').addEventListener('click', function(){
+    var db = requireDb(); if(!db || !comp) return;
+    var oid = comp.oid, o = state.ordenes.get(oid) || {}, upd = {compras: comp.datos, comprasEditadoEn: new Date().toISOString(), comprasPorId: state.userId || null};
+    var btn = this; btn.disabled = true;
+    db.collection('ordenesCompra').doc(oid).update(upd).then(function(){
+      state.ordenes.set(oid, Object.assign({}, o, upd)); toast('Compras de '+(o.numero||'la orden')+' guardadas.'); closeCompras(); renderAll();
+    }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); }).then(function(){ btn.disabled = false; });
   });
 
   /* «Pasar a orden» / «Ver orden» en el formulario y en la vista previa de la cotización (2026-10-29) */
@@ -7644,6 +7925,54 @@
     return (c.items||[]).filter(function(it){ return (it.categoria||'') === 'Instalación'; })
       .reduce(function(s,it){ return s + (Number(it.cantidad)||0)*(Number(it.precioUnit)||0); }, 0);
   }
+  /* ===== Validar compras (2026-11-06) =====
+     Cada material o equipo de la cotización (también los kits y materiales dentro del servicio de instalación) se marca:
+       comprado      → se le compró al proveedor: cuenta lo que de verdad costó;
+       stock         → ya lo teníamos (bodega, sobrante de otra obra): no le sale plata a esta obra;
+       precio_costo  → no tenía costo en la cotización porque se vendió a precio de costo: el costo es lo que se cobró;
+       no_usado      → no se usó.
+     Lo que no se valida sigue contando con el costo cotizado. Así se sabe si un ítem sin costo es un error que hay que
+     corregir en Precios o algo que se vendió a precio de costo a propósito. */
+  var COMPRA_COMO = {comprado:'Se compró', stock:'Ya lo teníamos', precio_costo:'Vendido a precio de costo', no_usado:'No se usó'};
+  function ocLineasCompra(c){
+    var out = [];
+    (c && c.items || []).forEach(function(it, i){
+      var q = Number(it.cantidad)||0;
+      if(it.inst){
+        (it.inst.materiales||[]).forEach(function(r, j){
+          var cant = q * (Number(r.cant)||0), v = Number(r.valor)||0; if(!cant) return;
+          out.push({key:'i'+i+'m'+j, nombre: r.nombre || 'Material', dentro: it.descripcion || it.inst.nombre || 'Instalación', cant: cant, costo: v ? cant*v : null, sinCosto: !v, venta: null});
+        });
+        return;
+      }
+      if(['Materiales','Equipos'].indexOf(it.categoria || 'Materiales') === -1 || it.diaTecnico) return;
+      var k = precNum(it.costoUnit);
+      out.push({key:'i'+i, nombre: it.descripcion || 'Ítem '+(i+1), cant: q, costo: k ? q*k : null, sinCosto: !k, venta: q*(Number(it.precioUnit)||0)});
+    });
+    return out;
+  }
+  function compraReal(l, v){
+    if(!v || !v.como) return null;
+    if(v.como === 'comprado') return v.costo != null && v.costo !== '' ? Number(v.costo)||0 : (l.costo||0);
+    if(v.como === 'precio_costo') return l.venta || 0;
+    return 0;
+  }
+  function ocComprasResumen(o, compras){
+    var c = state.cotizaciones.get(o.cotizacionId) || {}, lineas = ocLineasCompra(c), comp = compras || o.compras || {};
+    var r = {lineas: lineas, total: lineas.length, validadas: 0, delta: 0, bodega: 0, resueltasSinCosto: 0, sinCosto: 0, cotizado: 0, real: 0, porCorregir: 0, sinCostoPend: 0};
+    lineas.forEach(function(l){
+      var v = comp[l.key], real = compraReal(l, v);
+      r.cotizado += l.costo || 0;
+      if(l.sinCosto) r.sinCosto++;
+      if(real == null){ r.real += l.costo || 0; if(l.sinCosto) r.sinCostoPend++; return; }
+      r.validadas++; r.real += real; r.delta += real - (l.costo || 0);
+      if(v.como === 'stock') r.bodega += l.costo || (v.costo ? Number(v.costo) : 0);
+      if(l.sinCosto && l.venta != null) r.resueltasSinCosto++;
+      if(l.sinCosto && v.como === 'comprado') r.porCorregir++;
+    });
+    return r;
+  }
+
   /* Costo directo de una orden: el de su cotización, pero con el personal REAL si ya se registró */
   function ocCostoInfo(o){
     var c = state.cotizaciones.get(o.cotizacionId) || {};
@@ -7651,6 +7980,14 @@
     var real = (o.personal && o.personal.length) ? personalTotal(o.personal) : null;
     if(real != null) ci.costo = ci.costo - ci.personalPlan + real;
     ci.personalReal = real;
+    /* Compras validadas en la orden (2026-11-06): lo que de verdad costó cada material o equipo */
+    var aj = ocComprasResumen(o);
+    if(aj.validadas){
+      ci.costo += aj.delta;
+      ci.faltan = Math.max(0, ci.faltan - aj.resueltasSinCosto);
+      ci.completo = ci.faltan === 0 && (c.items||[]).length > 0;
+    }
+    ci.compras = aj;
     return ci;
   }
   function ocDesvio(o){
@@ -8227,6 +8564,7 @@
     return Math.max(0, (Number(o.valor)||0) - ocRecibido(o));
   }
   function renderOcPagosSummary(){
+    try { ocEstadoVista(); } catch(e){}
     var valor = Number(document.getElementById('ocValor').value)||0;
     var rec = state.ocPagos.reduce(function(s,p){ return s + (Number(p.monto)||0); }, 0);
     var saldo = Math.max(0, valor - rec);
@@ -8599,7 +8937,7 @@
     /* Compras que faltan para órdenes en curso: costo estimado − lo ya gastado en el proyecto */
     var vistos = {};
     state.ordenes.forEach(function(o){
-      if(['recibida','programada','en_ejecucion'].indexOf(o.estado) === -1) return;
+      if(['por_programar','recibida','programada','en_ejecucion'].indexOf(o.estado) === -1) return;
       var c = state.cotizaciones.get(o.cotizacionId) || {}, pid = o.proyectoId || c.proyectoId || '';
       var est = ocCostoInfo(o).costo;
       var gast = pid && !vistos[pid] ? finEgresosDeProyecto(pid) : 0; if(pid) vistos[pid] = 1;
@@ -9396,7 +9734,7 @@
      Colección `soportes`: {ref, clase, nombre, tipo, tamano, datos, proyectoId, ocId, privado}; el archivo (datos)
      no viaja en la sincronización, se pide con window.cenovaArchivo.
      ===================================================================== */
-  var SOP_CLASES = {factura:'Factura electrónica', oc:'Orden de compra', comprobante:'Comprobante de pago', recibo:'Recibo o documento soporte', otro:'Otro'};
+  var SOP_CLASES = {factura:'Factura electrónica', oc:'Orden de compra', comprobante:'Comprobante de pago', recibo:'Recibo o documento soporte', rut:'RUT', otro:'Otro'};
   var PROY_INTERNOS = {
     'interno-plataformas': {nombre:'Plataformas internas', cliente:'Cenova S.A.S.', estado:'en_ejecucion', interno:true, notas:'Google Workspace, SIIGO y demás plataformas de la empresa.'},
     'interno-administracion': {nombre:'Administración', cliente:'Cenova S.A.S.', estado:'en_ejecucion', interno:true, notas:'Aportes, rendimientos, transferencias, trámites, contador y demás gastos de la empresa.'}
@@ -10160,7 +10498,7 @@
             if(pagos.length && recibido >= newTot && newTot > 0 && o.estado !== 'pagada'){
               upd.estado = 'pagada'; upd.fechaPago = pagos.map(function(x){ return x.fecha; }).sort().pop() || todayIso();
             } else if(pagos.length && o.estado === 'pagada' && recibido < newTot){
-              upd.estado = o.fechaInicio ? 'finalizada' : 'recibida'; upd.fechaPago = null;
+              upd.estado = ocEstadoAuto(it.id, Object.assign({}, o, {valor: newTot})); upd.fechaPago = null;
             }
           }
           if(!Object.keys(upd).length) return;
@@ -10507,10 +10845,12 @@
       setSync(true, 'Sincronizado');
       finInit(db);
 
+      /* Los días pasan aunque nadie toque nada: revisa el estado de las órdenes cada 20 minutos. */
+      setInterval(ocEstadosPronto, 20*60*1000);
       db.collection('ordenesCompra').onSnapshot(function(snap){
         state.ordenes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         state.loaded.ordenes = true;
-        renderAll(); scheduleReconcile(); syncProyEstadosPronto(); migrarOrdenesAOnt();
+        renderAll(); scheduleReconcile(); syncProyEstadosPronto(); migrarOrdenesAOnt(); ocEstadosPronto();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('cotizaciones').onSnapshot(function(snap){
@@ -10554,9 +10894,12 @@
 
       db.collection('soportes').onSnapshot(function(snap){
         state.soportes = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        state.loaded.soportes = true; ocEstadosPronto();
         try { renderFinanzas(); } catch(e){}
         if(sopCtx) renderSoportes();
-        if(state.editingOcId) renderOcClienteAnexos();
+        if(state.editingOcId){ renderOcClienteAnexos(); renderOcFactura(); }
+        if(document.getElementById('cliOverlay').classList.contains('open')) renderCliRut();
+        try { renderClientes(); } catch(e){}
         try { renderOrdenes(); } catch(e){}
         if(document.getElementById('proyOverlay').classList.contains('open') && state.editingProyId) renderProySoportes(state.editingProyId);
       }, function(err){ setSync(false, 'Error de sincronización'); });
@@ -11924,7 +12267,7 @@
       if(cos.filtro === 'curso' && r.cerrada) return false;
       return !q || [r.o.numero, r.o.cliente, r.o.cotizacionNumero, r.c.titulo].join(' ').toLowerCase().indexOf(q) !== -1;
     });
-    info.innerHTML = 'Cotizado = el costo de la cotización. Real = lo mismo, pero con lo que de verdad se le pagó al personal y sumando los imprevistos y materiales dañados registrados en la orden. Toca una orden para ver el detalle.' +
+    info.innerHTML = 'Cotizado = el costo de la cotización. Real = lo mismo, pero con las compras validadas en la orden (lo que se compró y lo que ya teníamos), lo que de verdad se le pagó al personal y sumando los imprevistos y materiales dañados registrados en la orden. Toca una orden para ver el detalle.' +
       (admin ? ' Los gastos ligados al proyecto en Finanzas se muestran aparte para comparar.' : '');
     info.className = 'info-box';
     if(!obras.length){ cont.innerHTML = '<div class="table-wrap"><div class="empty-state">No hay órdenes de compra'+(cos.filtro || q ? ' con ese filtro' : '')+'.</div></div>'; return; }

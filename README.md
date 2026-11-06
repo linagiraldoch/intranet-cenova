@@ -187,3 +187,10 @@ npx wrangler dev
 - **Notas internas y condiciones:** el cuadro crece con el texto.
 - **Cotización del proveedor en la orden:** se quitó la pestaña «De proveedores». En cada orden interna se sube (o se liga una ya subida, `ordenId`) la cotización del proveedor, o se elige por qué no hay (`provSinCotizacion`: bodega, compra en tienda, solo mano de obra, otro). Sin eso no se genera prefactura, no se marca «Facturada» ni se cierra la orden o el proyecto. La orden compara el valor del proveedor (sin IVA) con el costo de materiales y equipos que usamos al cotizar.
 - **Textos de ayuda:** sin subtítulos de sección ni explicaciones fijas en pantalla; quedan en un ícono «?» discreto que se abre al tocarlo (también la regla de cada estado de las cotizaciones).
+
+## Órdenes internas: estado automático, compras validadas y RUT (2026-11-06)
+
+- **Estado automático** (`ocEstadoAuto`): Por programar (sin días) → Programada (el inicio es futuro) → En ejecución (desde el primer día) → Instalación finalizada (pasó el último día; en «Día a día», con todos los días cotizados programados) → Facturada (factura electrónica anexa en la orden, soporte `factura` en `oc:<orden>`) → Pagada (los pagos cubren el valor). «Recibida» ya no existe. Solo «Anulada» se pone a mano, con el botón «Anular orden». Quien tenga la intranet abierta guarda el estado que toca (al cargar, al llegar soportes y cada 20 min).
+- **Formulario más simple**: la cotización, la fecha de aprobación (el día en que nació la orden), el responsable y el valor salen de la cotización y no se cambian. El servidor rechaza que alguien distinto de administración cambie el responsable.
+- **Validar compras** (`o.compras`, por renglón de la cotización, incluidos los materiales del servicio de instalación): Se compró (costo real) · Ya lo teníamos (no le cuesta a la obra) · Vendido a precio de costo (para ítems sin costo) · No se usó. Lo no validado cuenta con el costo cotizado. Entra en `ocCostoInfo`, así que cambia el margen real en la tarjeta, Costos, Estadísticas y la proyección.
+- **RUT del cliente**: soporte clase `rut` con ref `cli:<id>`; el más reciente es el vigente.

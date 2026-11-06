@@ -362,6 +362,10 @@ async function escribir(req, env, s, col, id, metodo) {
     if (previo.estado !== 'anulada' && previo.cotizacionId && (data.cotizacionId !== previo.cotizacionId || (previo.valor != null && Number(data.valor) !== Number(previo.valor)))) {
       return err(403, 'regla', 'La orden ' + (previo.numero || '') + ' conserva la cotización y el valor que aprobó el cliente.');
     }
+    // Responsable fijo (2026-11-06): quien la aprobó responde por la orden hasta el final. Solo administración lo corrige.
+    if (!s.admin && previo.responsable && String(data.responsable || '') !== String(previo.responsable)) {
+      return err(403, 'regla', 'El responsable de la orden ' + (previo.numero || '') + ' no se cambia: responde por ella hasta el final.');
+    }
   }
   const txt = JSON.stringify(data);
   if (txt.length > 1800000) return err(413, 'tamano', 'El registro es demasiado grande (adjunto muy pesado).');
