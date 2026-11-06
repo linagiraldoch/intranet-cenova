@@ -7013,7 +7013,8 @@
   }
 
   function renderOrdenes(){
-    document.getElementById('navCountOc').textContent = state.ordenes.size;
+    var activas = 0; state.ordenes.forEach(function(o){ if(o.estado !== 'anulada') activas++; });
+    document.getElementById('navCountOc').textContent = activas;
     var q = document.getElementById('ocSearch').value.trim().toLowerCase();
     var estF = document.getElementById('ocEstadoFilter').value;
     var container = document.getElementById('ocContainer');
@@ -7025,9 +7026,11 @@
     var rows = Array.from(state.ordenes.entries()).filter(function(e){
       var o = e[1], c = state.cotizaciones.get(o.cotizacionId) || {};
       if(estF && o.estado !== estF) return false;
+      /* (2026-11-06) Las anuladas no se muestran: solo salen al filtrar por «Anulada». */
+      if(!estF && o.estado === 'anulada') return false;
       if(q && !(passFilter(o.numero,q) || passFilter(o.numeroCliente,q) || passFilter(o.cliente,q) || passFilter(c.numero,q) || passFilter(c.descripcion,q))) return false;
       return true;
-    }).sort(function(a,b){ return String(b[1].numero||'').localeCompare(String(a[1].numero||'')); });
+    }).sort(function(a,b){ return String(b[1].numero||'').localeCompare(String(a[1].numero||'')) || ((Number(b[1].version)||1) - (Number(a[1].version)||1)); });
     var modoOc = vkModo('ordenes', 'tarjetas');
     document.getElementById('vkOrdenes').innerHTML = vkOrdenesStrip() + '<div class="vk-barra">'+vkToggle('ordenes', modoOc)+'</div>';
     if(!rows.length){ container.innerHTML = '<div class="table-wrap"><div class="empty-state">Ninguna orden coincide con el filtro.</div></div>'; return; }
