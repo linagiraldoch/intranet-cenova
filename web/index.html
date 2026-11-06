@@ -2512,6 +2512,7 @@
       <div class="field-row" id="finMovCatRow">
         <div class="field"><label>Categoría</label><select id="finMovCategoria"></select></div>
         <div class="field"><label id="finMovTerceroLbl">Proveedor o a quién se pagó</label><input type="text" id="finMovTercero" list="finTercerosList" placeholder="Ej: GVS, Google, contador…"><datalist id="finTercerosList"></datalist></div>
+        <div class="field" id="finMovIvaField"><label>IVA descontable</label><input type="number" id="finMovIva" class="input-miles" min="0" step="1" placeholder="0 · solo si la factura es a nombre de Cenova"></div>
       </div>
       <div class="field"><label>Descripción</label><input type="text" id="finMovDescripcion" placeholder="Qué se pagó o qué entró"></div>
       <div class="field-row">
@@ -8184,7 +8185,7 @@
   function ocComprasEnFinanzas(o){
     if(!precAdmin() || typeof fin === 'undefined' || !fin.movs) return null;
     var c = state.cotizaciones.get(o.cotizacionId) || {}, pid = o.proyectoId || c.proyectoId; if(!pid) return null;
-    var t = 0; fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.proyectoId === pid && m.estado !== 'pendiente' && m.categoria === 'compras') t += Number(m.monto)||0; });
+    var t = 0; fin.movs.forEach(function(m){ if(m.tipo === 'egreso' && m.proyectoId === pid && m.estado !== 'pendiente' && m.categoria === 'compras') t += (Number(m.monto)||0) - (Number(m.iva)||0); });   /* sin el IVA descontable: se compara con las compras validadas sin IVA */
     return t;
   }
 
@@ -9351,6 +9352,9 @@
     var socPor = finPrestamosSocios(), socDebe = Object.keys(socPor).reduce(function(t,k){ return t + Math.max(0, socPor[k]); }, 0);
     var res = finResultados(hoy.slice(0,4));
     var ivaAnio = movs.filter(function(m){ return m.fuente === 'orden' && String(m.fecha).slice(0,4) === hoy.slice(0,4); }).reduce(function(s,m){ return s + (m.iva||0); }, 0);
+    /* menos el IVA descontable de las compras pagadas con factura a nombre de Cenova */
+    ivaAnio -= movs.filter(function(m){ return m.tipo === 'egreso' && m.estado !== 'pendiente' && String(m.fecha).slice(0,4) === hoy.slice(0,4); }).reduce(function(s,m){ return s + (Number(m.iva)||0); }, 0);
+    ivaAnio = Math.max(0, ivaAnio);
 
     var setup = document.getElementById('finSetup');
     if(!a.configurado){ setup.hidden = false; setup.innerHTML = 'Falta escribir el saldo de tus cuentas en <button class="linkish fin-go" data-fin-go="ajustes" style="border:none;background:none;padding:0;color:var(--accent);text-decoration:underline;cursor:pointer;font:inherit;">Cuentas</button>.'; }
@@ -9924,7 +9928,10 @@
           if(iva) lineas.push({c:'2408', d:0, h:iva, aux:'IVA generado'});
           comp = 'RC-'+String(n).padStart(4,'0');
         } else {
-          lineas.push({c:pucContra(m), d:monto, h:0, aux:m.tercero||''}, {c:pucCuentaDinero(m.cuentaId), d:0, h:monto, aux:finCuentaNombre(m.cuentaId)});
+          var ivaD = m.tipo === 'egreso' ? Math.round(Number(m.iva)||0) : 0;
+          lineas.push({c:pucContra(m), d:monto - ivaD, h:0, aux:m.tercero||''});
+          if(ivaD) lineas.push({c:'2408', d:ivaD, h:0, aux:'IVA descontable'});
+          lineas.push({c:pucCuentaDinero(m.cuentaId), d:0, h:monto, aux:finCuentaNombre(m.cuentaId)});
         }
         asientos.push({fecha:m.fecha, comp:comp, det:det, lineas:lineas, movId:m._id});
       });
@@ -10431,6 +10438,7 @@
     document.getElementById('finMovProyField').hidden = false;
     document.getElementById('finMovDestinoField').hidden = t !== 'transferencia';
     document.getElementById('finMovMedioField').hidden = t === 'transferencia';
+    document.getElementById('finMovIvaField').hidden = t !== 'egreso';
     document.getElementById('finMovCuentaLbl').textContent = t === 'transferencia' ? 'Sale de' : (t === 'ingreso' ? 'Entra a la cuenta' : 'Se paga desde');
     document.getElementById('finMovTerceroLbl').textContent = t === 'ingreso' ? 'De quién' : 'Proveedor o a quién se pagó';
     document.getElementById('finMovTitle').textContent = (fin.editingMovId ? 'Editar ' : 'Registrar ') + (t === 'ingreso' ? 'entrada' : t === 'egreso' ? 'gasto' : 'transferencia');
@@ -10455,6 +10463,7 @@
     document.getElementById('finMovMonto').value = m.monto != null ? m.monto : '';
     document.getElementById('finMovEstadoSel').value = m.estado || 'pagado';
     document.getElementById('finMovTercero').value = m.tercero || '';
+    document.getElementById('finMovIva').value = m.tipo !== 'ingreso' && m.iva ? m.iva : '';
     document.getElementById('finMovDescripcion').value = m.descripcion || '';
     document.getElementById('finMovMedio').value = m.medio || 'transferencia';
     proySel.value = m.proyectoId || (id ? '' : proyPorDefecto(m.tipo || 'egreso', m.categoria));
@@ -10574,6 +10583,9 @@
     /* Los abonos no se pierden al editar: el monto es el saldo y el total se recalcula */
     if(prev.abonos && prev.abonos.length){ data.abonos = prev.abonos; data.montoTotal = data.estado === 'pendiente' ? monto + finAbonosSuma(prev) : (prev.montoTotal || monto + finAbonosSuma(prev)); }
     if(prev.abonoDe) data.abonoDe = prev.abonoDe;
+    /* (2026-11-06) IVA descontable de una compra con factura a nombre de Cenova: no es costo (se descuenta en la declaración) */
+    var ivaD = Math.round(Number(document.getElementById('finMovIva').value) || 0);
+    if(t === 'egreso' && ivaD > 0){ if(ivaD >= monto){ toast('El IVA descontable no puede ser igual o mayor que el monto.'); return; } data.iva = ivaD; }
     if(prev.fechaCausacion) data.fechaCausacion = prev.fechaCausacion;
     if(t === 'transferencia' && data.cuentaId === data.cuentaDestinoId){ toast('La cuenta de origen y la de destino deben ser distintas.'); return; }
     if(!data.proyectoId){
