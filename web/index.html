@@ -2601,7 +2601,9 @@
       <div class="field" id="ocFacturaWrap">
         <div class="file-drop" style="flex-direction:column; align-items:stretch; gap:8px;">
           <div id="ocFacturaLista"></div>
-          <label class="btn sm" for="ocFacturaInput" style="align-self:flex-start; cursor:pointer;">Anexar factura electrónica</label>
+          <label class="btn sm" for="ocFacturaInput" id="ocFacturaBtn" style="align-self:flex-start; cursor:pointer;">Anexar factura electrónica</label>
+          <label style="display:flex; gap:8px; align-items:center; font-size:13px; cursor:pointer;"><input type="checkbox" id="ocSinFactura"> Esta orden no lleva factura electrónica</label>
+          <div class="field" id="ocSinFacturaWrap" hidden style="margin:0;"><label>Motivo</label><input type="text" id="ocSinFacturaMotivo" placeholder="Ej. trabajo hecho antes de tener NIT; lo cobró un socio con cuenta de cobro a su nombre"></div>
           <input type="file" id="ocFacturaInput" accept=".pdf,.jpg,.jpeg,.png,.xml,.zip" hidden>
         </div>
       </div>
@@ -6769,8 +6771,12 @@
      - Pasado el último día (en día a día, con todos los días cotizados ya programados): «Instalación finalizada».
      - Terminada la instalación: «Facturada» al anexar la factura electrónica; «Pagada» cuando los pagos registrados cubren el valor.
      - «Anulada» es lo único que se pone a mano (botón «Anular orden»). */
+  /* (2026-11-06) Orden que no lleva factura electrónica (p. ej. trabajo hecho antes de que Cenova tuviera NIT
+     y cobrado por un socio a su nombre): con el motivo escrito, cuenta como resuelta en estado, revisión y cierre. */
+  function ocSinFactura(o){ return !!(o && o.sinFactura && o.sinFactura.motivo); }
   function ocTieneFactura(oid){
     if(!oid) return false;
+    if(ocSinFactura(state.ordenes.get(oid))) return true;
     var si = false, ref = 'oc:'+oid;
     state.soportes.forEach(function(x){ if(!si && x.clase === 'factura' && (x.ref === ref || String(x.ref||'').indexOf(ref+':') === 0)) si = true; });
     return si;
@@ -6780,10 +6786,16 @@
     if(o.estado === 'pagada' && !(o.pagos||[]).length) return true;   /* marcada pagada a mano antes de existir el registro de pagos */
     return v > 0 && ocRecibido(o) >= v;
   }
+  /* (2026-11-06) Una orden cuya cotización trae renglones de instalación no queda «sin instalación» aunque
+     no tenga días: queda «Por programar» hasta que se le pongan las fechas (caso ONT-0004 del switch del OSH). */
+  function ocCotLlevaInstalacion(o){
+    var c = o && o.cotizacionId ? state.cotizaciones.get(o.cotizacionId) : null;
+    return !!c && ((Number(c.diasInstalacion)||0) > 0 || (c.items||[]).some(function(it){ return /instalaci/i.test(String(it.categoria||'')); }));
+  }
   function ocEstadoInstalacion(o, hoy){
     hoy = hoy || todayIso();
     var dias = installDays(o.fechaInicio, o.diasInstalacion, o.modalidad, o.diasSemana, o.diasSueltos), nCot = Number(o.diasInstalacion)||0;
-    if(!dias.length) return nCot > 0 || o.modalidad === 'dia_a_dia' ? 'por_programar' : 'sin_instalacion';
+    if(!dias.length) return nCot > 0 || o.modalidad === 'dia_a_dia' || ocCotLlevaInstalacion(o) ? 'por_programar' : 'sin_instalacion';
     if(dias[0] > hoy) return 'programada';
     var completa = o.modalidad !== 'dia_a_dia' || dias.length >= nCot;
     return (completa && dias[dias.length-1] < hoy) ? 'finalizada' : 'en_ejecucion';
@@ -6794,7 +6806,7 @@
     var inst = ocEstadoInstalacion(o, hoy);
     if(inst !== 'finalizada' && inst !== 'sin_instalacion') return inst;
     if(ocPagadaCompleta(o)) return 'pagada';
-    if(ocTieneFactura(oid)) return 'facturada';
+    if(!ocSinFactura(o) && ocTieneFactura(oid)) return 'facturada';
     return 'finalizada';
   }
   /* Deja guardado el estado que toca (los días pasan solos, llegan facturas y pagos). Lo hace quien tenga la intranet abierta. */
@@ -7061,7 +7073,8 @@
   function ocEstadoVista(f){
     var oEd = state.editingOcId ? (state.ordenes.get(state.editingOcId) || {}) : {};
     if(oEd.estado === 'anulada'){ document.getElementById('ocEstado').value = 'anulada'; return; }
-    document.getElementById('ocEstado').value = ocEstadoAuto(state.editingOcId, Object.assign({}, oEd, f || ocFormData(), {valor: Number(document.getElementById('ocValor').value)||0, pagos: (state.ocPagos||[]).filter(function(x){ return Number(x.monto) > 0; })}));
+    document.getElementById('ocEstado').value = ocEstadoAuto(state.editingOcId, Object.assign({}, oEd, f || ocFormData(), {valor: Number(document.getElementById('ocValor').value)||0, pagos: (state.ocPagos||[]).filter(function(x){ return Number(x.monto) > 0; }),
+      sinFactura: document.getElementById('ocSinFactura').checked && document.getElementById('ocSinFacturaMotivo').value.trim() ? {motivo: document.getElementById('ocSinFacturaMotivo').value.trim()} : null}));
   }
   function renderOcCalc(){
     var f = ocFormData();
@@ -7256,11 +7269,16 @@
     var lista = []; if(oid) state.soportes.forEach(function(x, id){ if(x.clase === 'factura' && (x.ref === 'oc:'+oid || String(x.ref||'').indexOf('oc:'+oid+':') === 0)) lista.push(Object.assign({_id: id}, x)); });
     box.innerHTML = lista.map(function(x){
       return '<div class="sop-item"><div class="r-main"><strong>Factura</strong><span>'+escapeHtml(x.nombre || '')+' · '+fmtShort(x.fecha)+'</span></div>'+
-        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button></div></div>';
-    }).join('') || '<span class="no-file">Aún no se ha anexado.</span>';
-    if(est) est.innerHTML = lista.length ? '<span class="due ok">Anexa ✓</span>' : '';
+        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button><button type="button" class="icon-btn" data-sop-quitar="'+escapeHtml(x._id)+'" title="Quitar (si se anexó por error)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>';
+    }).join('') || (document.getElementById('ocSinFactura').checked ? '' : '<span class="no-file">Aún no se ha anexado.</span>');
+    var sinF = document.getElementById('ocSinFactura').checked;
+    document.getElementById('ocSinFacturaWrap').hidden = !sinF;
+    document.getElementById('ocFacturaBtn').hidden = sinF;
+    if(est) est.innerHTML = lista.length ? '<span class="due ok">Anexa ✓</span>' : (sinF ? '<span class="due ok">No lleva factura</span>' : '');
   }
-  document.getElementById('ocFacturaLista').addEventListener('click', function(e){ var b = e.target.closest('[data-sop-ver]'); if(b) sopVer(b.dataset.sopVer); });
+  document.getElementById('ocFacturaLista').addEventListener('click', function(e){ var b = e.target.closest('[data-sop-ver]'); if(b) sopVer(b.dataset.sopVer); var q = e.target.closest('[data-sop-quitar]'); if(q) ocQuitarAnexo(q.dataset.sopQuitar, 'la factura'); });
+  document.getElementById('ocSinFactura').addEventListener('change', function(){ renderOcFactura(); try { ocEstadoVista(); } catch(e){} if(this.checked) document.getElementById('ocSinFacturaMotivo').focus(); });
+  document.getElementById('ocSinFacturaMotivo').addEventListener('input', function(){ try { ocEstadoVista(); } catch(e){} });
   document.getElementById('ocFacturaInput').addEventListener('change', function(e){
     var file = e.target.files && e.target.files[0], oid = state.editingOcId; e.target.value = '';
     if(!file || !oid) return;
@@ -7283,13 +7301,25 @@
     var lista = oid ? sopDe('oc:'+oid).filter(function(x){ return x.clase === 'oc'; }) : [];
     box.innerHTML = lista.map(function(x){
       return '<div class="sop-item"><div class="r-main"><strong>OC del cliente</strong><span>'+escapeHtml(x.nombre || '')+' · '+fmtShort(x.fecha)+'</span></div>'+
-        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button></div></div>';
+        '<div class="sop-acc"><button type="button" class="btn sm" data-sop-ver="'+escapeHtml(x._id)+'">Ver</button><button type="button" class="icon-btn" data-sop-quitar="'+escapeHtml(x._id)+'" title="Quitar (si se anexó por error)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div></div>';
     }).join('') || (state.ocArchivo ? '' : '<span class="no-file">Aún no se ha anexado.</span>');
     var o = oid ? Object.assign({}, state.ordenes.get(oid) || {}, {medio: document.getElementById('ocMedio').value}) : {};
     var ok = oid && ocTieneOcCliente(oid, o);
     if(est) est.innerHTML = !oid ? '' : (o.medio === 'llamada' ? '<span class="due ok">Autorizada por llamada · no lleva soporte</span>' : (ok ? '<span class="due ok">Anexa ✓</span>' : '<span class="due warning">Falta anexar · sin ella la orden no se cierra</span>'));
   }
-  document.getElementById('ocClienteAnexos').addEventListener('click', function(e){ var b = e.target.closest('[data-sop-ver]'); if(b) sopVer(b.dataset.sopVer); });
+  /* (2026-11-06) Quitar una OC o una factura anexada por error (p. ej. la OC de otra orden).
+     Lo puede hacer administración o quien la subió (el servidor lo hace cumplir). */
+  function ocQuitarAnexo(id, que){
+    var x = state.soportes.get(id); if(!x) return;
+    confirmDialog('¿Quitar '+que+' «'+(x.nombre||'')+'» de esta orden? Úsalo si se anexó por error; el archivo se borra.', 'Quitar').then(function(ok){ if(!ok) return;
+      state.db.doc('soportes/'+id).delete().then(function(){
+        state.soportes.delete(id); renderOcClienteAnexos(); renderOcFactura(); ocEstadosPronto();
+        if(state.editingOcId){ var oq = state.ordenes.get(state.editingOcId); if(oq) document.getElementById('ocEstado').value = ocEstadoAuto(state.editingOcId, oq); }
+        toast(que.charAt(0).toUpperCase()+que.slice(1)+' quitada.');
+      }).catch(function(err){ toast('No se pudo quitar: ' + (err && err.message ? err.message : 'error'), 6000); });
+    });
+  }
+  document.getElementById('ocClienteAnexos').addEventListener('click', function(e){ var b = e.target.closest('[data-sop-ver]'); if(b) sopVer(b.dataset.sopVer); var q = e.target.closest('[data-sop-quitar]'); if(q) ocQuitarAnexo(q.dataset.sopQuitar, 'la OC del cliente'); });
   document.getElementById('ocMedio').addEventListener('change', renderOcClienteAnexos);
 
   function ocCotizacionOptions(selectedId){
@@ -7345,6 +7375,9 @@
     state.ocPersonal = (o.personal||[]).map(function(r){ return Object.assign({}, r); });
     document.getElementById('ocAnticipoPct').value = (o.anticipoPct != null ? o.anticipoPct : '');
     document.getElementById('ocProvMotivo').value = (o.provSinCotizacion && o.provSinCotizacion.motivo) || '';
+    document.getElementById('ocSinFactura').checked = ocSinFactura(o);
+    document.getElementById('ocSinFacturaMotivo').value = (o.sinFactura && o.sinFactura.motivo) || '';
+    document.getElementById('ocSinFacturaWrap').hidden = !ocSinFactura(o);
     document.getElementById('ocProvNota').value = (o.provSinCotizacion && o.provSinCotizacion.nota) || '';
     state.ocPagos = (o.pagos||[]).map(function(x){ return Object.assign({}, x); });
     renderPersonalTable('ocPersonalBody', state.ocPersonal, renderOcPersonalSummary);
@@ -7405,12 +7438,15 @@
       var pg = {id: x.id || filaId(), fecha: x.fecha || todayIso(), concepto: x.concepto || 'abono', monto: Number(x.monto)||0, medio: x.medio || 'transferencia', nota: (x.nota||'').trim()};
       if(Number(x.comision) > 0) pg.comision = Number(x.comision);   /* comisión y retención de la pasarela: antes se perdían al guardar la orden */
       if(Number(x.retencion) > 0) pg.retencion = Number(x.retencion);
+      if(x.socio) pg.socio = x.socio;   /* lo cobró un socio a su nombre: en Finanzas entra como aporte de ese socio */
       return pg;
     }).sort(function(a,b){ return a.fecha.localeCompare(b.fecha); });
     var valorNum = document.getElementById('ocValor').value==='' ? 0 : Number(document.getElementById('ocValor').value);
     var recibido = pagosClean.reduce(function(s,x){ return s + x.monto; }, 0);
     var pagoCompleto = valorNum > 0 && recibido >= valorNum;
-    if(estado !== 'anulada') estado = ocEstadoAuto(state.editingOcId, Object.assign({}, prev, f, {estado: prev.estado, valor: valorNum, pagos: pagosClean}));
+    var sinFacturaVal = document.getElementById('ocSinFactura').checked && document.getElementById('ocSinFacturaMotivo').value.trim() ? {motivo: document.getElementById('ocSinFacturaMotivo').value.trim()} : null;
+    if(document.getElementById('ocSinFactura').checked && !sinFacturaVal){ toast('Escribe el motivo por el que esta orden no lleva factura electrónica.', 5000); document.getElementById('ocSinFacturaMotivo').focus(); return; }
+    if(estado !== 'anulada') estado = ocEstadoAuto(state.editingOcId, Object.assign({}, prev, f, {estado: prev.estado, valor: valorNum, pagos: pagosClean, sinFactura: sinFacturaVal}));
     /* Parte de lo que ya tenía la orden (2026-11-06): así no se pierde lo que se guarda por fuera del formulario,
        como las compras validadas («Validar compras»). Antes se armaba solo con el formulario y las borraba. */
     var data = Object.assign({}, prev, f, {
@@ -7440,6 +7476,7 @@
       fechaConfirmacion: prev.fechaConfirmacion || (f.fechaInicio ? todayIso() : null),
       fechaPago: estado==='pagada' ? (pagoCompleto ? pagosClean[pagosClean.length-1].fecha : (prev.fechaPago || todayIso())) : null,
       anticipoPct: document.getElementById('ocAnticipoPct').value==='' ? null : Number(document.getElementById('ocAnticipoPct').value),
+      sinFactura: sinFacturaVal,
       provSinCotizacion: document.getElementById('ocProvMotivo').value ? {motivo: document.getElementById('ocProvMotivo').value, nota: document.getElementById('ocProvNota').value.trim()} : null,
       pagos: pagosClean,
       creadoPorId: prev.creadoPorId || state.userId || null,
@@ -8649,6 +8686,8 @@
      Pagos del cliente (anticipos y abonos) — la cartera es el saldo
      ===================================================================== */
   var PAGO_CONCEPTOS = {anticipo:'Anticipo', abono:'Abono', saldo:'Pago del saldo', otro:'Otro'};
+  var PAGO_SOCIOS = ['Lina Giraldo','Ángel Berrocal','Jorge Cantillo'];
+  function pgSocio(pg){ return (pg && pg.socio) || ''; }
   var PAGO_MEDIOS = {transferencia:'Transferencia', pasarela:'Pasarela de pago', efectivo:'Efectivo', cheque:'Cheque', otro:'Otro'};
   /* Pasarela de pago (2026-10-09): el cliente paga el monto completo (cuenta para su saldo), pero la pasarela
      descuenta su comisión con IVA (costo de la obra) y una retención (anticipo de renta de Cenova, no es costo). */
@@ -8684,7 +8723,10 @@
       html += '<br>Anticipo pactado ('+antPct+' %): '+fmtMoney.format(ant)+' — '+(rec >= ant ? '<span style="color:var(--success); font-weight:600;">recibido</span>' : '<span style="color:var(--warning); font-weight:600;">faltan '+fmtMoney.format(ant-rec)+'</span>');
     }
     var com = state.ocPagos.reduce(function(s,p){ return s + pgComision(p); }, 0), ret = state.ocPagos.reduce(function(s,p){ return s + pgRetencion(p); }, 0);
-    if(com || ret) html += '<br>Descuentos de la pasarela: comisión con IVA '+fmtMoney.format(com)+' (costo de la obra) · retención '+fmtMoney.format(ret)+' (saldo a favor en renta) · <strong>neto que llegó: '+fmtMoney.format(rec - com - ret)+'</strong>';
+    var retSocio = state.ocPagos.reduce(function(s,p){ return s + (pgSocio(p) ? pgRetencion(p) : 0); }, 0);
+    if(com || ret) html += '<br>Descuentos: '+(com ? 'comisión de la pasarela con IVA '+fmtMoney.format(com)+' (costo de la obra) · ' : '')+(ret - retSocio ? 'retención '+fmtMoney.format(ret - retSocio)+' (saldo a favor de Cenova en renta) · ' : '')+(retSocio ? 'retención '+fmtMoney.format(retSocio)+' a nombre del socio que cobró (no es de Cenova) · ' : '')+'<strong>neto que llegó: '+fmtMoney.format(rec - com - ret)+'</strong>';
+    var porSocio = state.ocPagos.filter(function(p){ return pgSocio(p) && Number(p.monto) > 0; });
+    if(porSocio.length) html += '<br>Cobrado por un socio a su nombre: lo que entró a Cenova queda en Finanzas como <strong>aporte de socio</strong>, no como venta.';
     if(valor && saldo === 0 && rec) html += '<br><span style="color:var(--success); font-weight:600;">Orden pagada completa: al guardar queda en estado "Pagada".</span>';
     box.innerHTML = html;
     box.className = 'info-box' + (valor && saldo===0 && rec ? ' ok' : '');
@@ -8699,9 +8741,12 @@
         '<td><input type="number" class="pg-monto" value="'+(pg.monto!=null?pg.monto:'')+'" min="0" step="1000" placeholder="$"></td>'+
         '<td><select class="pg-medio">'+opt(PAGO_MEDIOS, pg.medio||'transferencia')+'</select></td>'+
         '<td><input type="text" class="pg-nota" value="'+escapeHtml(pg.nota||'')+'" placeholder="Referencia, banco…">'+
-          (pg.medio === 'pasarela' || pgComision(pg) || pgRetencion(pg) ? '<div class="pg-pasarela" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">'+
-            '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Comisión + IVA<input type="number" class="pg-com" value="'+(pg.comision!=null?pg.comision:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label>'+
-            '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Retención<input type="number" class="pg-ret" value="'+(pg.retencion!=null?pg.retencion:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label></div>' : '')+
+          /* (2026-11-06) La retención va en cualquier pago (los clientes empresa retienen); la comisión solo en pasarela.
+             «Lo cobró» un socio: el cliente le pagó a él con cuenta de cobro a su nombre (antes del NIT de Cenova). */
+          '<div class="pg-pasarela" style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">'+
+            (pg.medio === 'pasarela' || pgComision(pg) ? '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Comisión + IVA<input type="number" class="pg-com" value="'+(pg.comision!=null?pg.comision:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label>' : '')+
+            '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Retención que hizo el cliente<input type="number" class="pg-ret" value="'+(pg.retencion!=null?pg.retencion:'')+'" min="0" step="any" placeholder="$" style="width:120px;"></label>'+
+            '<label style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px;">Lo cobró<select class="pg-socio" style="width:170px;"><option value="">Cenova</option>'+PAGO_SOCIOS.map(function(n){ return '<option value="'+escapeHtml(n)+'"'+(pg.socio===n?' selected':'')+'>'+escapeHtml(n)+' (a su nombre)</option>'; }).join('')+'</select></label></div>'+
         '</td>'+
         '<td class="col-rm"><button type="button" class="icon-btn pg-rm" title="Quitar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
     }).join('');
@@ -8713,7 +8758,7 @@
         });
       });
     };
-    bind('pg-fecha','fecha'); bind('pg-concepto','concepto'); bind('pg-monto','monto',true); bind('pg-medio','medio'); bind('pg-nota','nota'); bind('pg-com','comision',true); bind('pg-ret','retencion',true);
+    bind('pg-fecha','fecha'); bind('pg-concepto','concepto'); bind('pg-monto','monto',true); bind('pg-medio','medio'); bind('pg-nota','nota'); bind('pg-com','comision',true); bind('pg-ret','retencion',true); bind('pg-socio','socio');
     body.querySelectorAll('.pg-medio').forEach(function(el){ el.addEventListener('change', function(){ renderOcPagos(); }); });
     body.querySelectorAll('.pg-rm').forEach(function(b){ b.addEventListener('click', function(){ state.ocPagos.splice(+b.closest('tr').dataset.i,1); renderOcPagos(); }); });
     renderOcPagosSummary();
@@ -8853,6 +8898,18 @@
       var c = state.cotizaciones.get(o.cotizacionId) || {}, ratio = finIvaRatio(c);
       (o.pagos||[]).forEach(function(pg, i){
         var monto = Number(pg.monto)||0; if(!monto) return;
+        if(pgSocio(pg)){
+          /* (2026-11-06) Lo cobró un socio con cuenta de cobro a su nombre (Cenova aún no tenía NIT): para Cenova no es venta,
+             es lo que el socio le pasó = aporte de socio por el neto que llegó. La retención quedó a nombre del socio (no es saldo a favor de Cenova). */
+          var neto = monto - pgComision(pg) - pgRetencion(pg);
+          if(neto > 0) out.push({
+            _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'aporte',
+            descripcion: 'Aporte de socio · '+pgSocio(pg)+' pasa a Cenova el cobro de '+(o.numero||'la orden')+' ('+(o.cliente||'cliente')+') que hizo a su nombre',
+            tercero: pgSocio(pg), monto: neto, iva: 0, cuentaId: finCuentaParaMedio(pg.medio), medio: pg.medio || '',
+            proyectoId: o.proyectoId || c.proyectoId || '', estado:'pagado', nota: (pg.nota || '')+(pgRetencion(pg) ? (pg.nota ? ' · ' : '')+'El cliente le retuvo '+fmtMoney.format(pgRetencion(pg))+' a '+pgSocio(pg)+' (certificado a su nombre).' : '')
+          });
+          return;
+        }
         out.push({
           _id: 'oc:'+oid+':'+i, soporteRef: 'oc:'+oid+':pago:'+(pg.id || 'i'+i), fuente:'orden', ocId: oid, fecha: pg.fecha || o.fechaRecepcion || '', tipo:'ingreso', categoria:'cobro',
           descripcion: 'Pago ' + (o.numero||'orden') + ' · ' + (PAGO_CONCEPTOS[pg.concepto] || 'Pago').toLowerCase(),
@@ -9879,7 +9936,7 @@
     if(m.categoria === 'cobro' && m.ocId){
       var o = state.ordenes.get(m.ocId) || {}, enOc = sopDe('oc:'+m.ocId), enPago = sopDe(m.soporteRef), todos = enOc.concat(enPago);
       var tiene = function(k){ return todos.some(function(x){ return x.clase === k; }); };
-      if(!tiene('factura')) r.falta.push('factura electrónica');
+      if(!tiene('factura') && !ocSinFactura(o)) r.falta.push('factura electrónica');
       if(!o.archivoNombre && !tiene('oc') && o.medio !== 'llamada') r.falta.push('orden de compra del cliente');
       if(!enPago.some(function(x){ return x.clase === 'comprobante'; })) r.falta.push('comprobante del pago');
       r.n = todos.length + (o.archivoNombre ? 1 : 0);
