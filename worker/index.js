@@ -9,8 +9,9 @@
  */
 
 import { calcularAlertas } from './alertas.js';
+import { revisarFacturaOrden } from './facturacion.js';
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'proveedores', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos', 'ajustes'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'proveedores', 'solicitudesProv', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos', 'ajustes'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
@@ -102,7 +103,7 @@ async function auditar(env, usuario, accion, col, id, detalle, req) {
    Solo lectura de las colecciones que usa el radar de la agenda (sin archivos adjuntos).
    Se entra únicamente con la llave secreta AGENDA_TOKEN (la misma que tiene la agenda como
    INTRANET_TOKEN). Sin esa llave configurada, la ruta no existe. */
-const AGENDA_COLS = ['cotizaciones', 'ordenesCompra', 'proyectos', 'clientes', 'cotizacionesProveedor', 'eventos', 'prefacturas', 'finGastosFijos', 'finMovimientos', 'finAjustes'];
+const AGENDA_COLS = ['cotizaciones', 'ordenesCompra', 'proyectos', 'clientes', 'cotizacionesProveedor', 'solicitudesProv', 'eventos', 'prefacturas', 'finGastosFijos', 'finMovimientos', 'finAjustes'];
 // Devuelve una respuesta de error si la llave de la Agenda MH falta o no coincide; null si es válida.
 async function agendaLlave(req, env) {
   if (!env.AGENDA_TOKEN || env.AGENDA_TOKEN.length < 32) return err(404, 'ruta', 'No encontrado.');
@@ -298,8 +299,8 @@ async function escribir(req, env, s, col, id, metodo) {
   if (col === 'precios' && !s.admin) {
     if (metodo === 'DELETE' || !previo) return err(403, 'regla', 'Solo administración crea o borra ítems de Precios.');
   }
-  if (col === 'clientes' && !s.admin && (metodo === 'DELETE' || !previo)) {
-    return err(403, 'regla', 'Solo administración (Lina) crea o borra clientes. Si es una persona nueva de un cliente que ya existe, agrégala como contacto.');
+  if (col === 'clientes' && !s.admin && metodo === 'DELETE') {
+    return err(403, 'regla', 'Solo administración (Lina) borra clientes.');
   }
   if (col === 'documentos' && !s.admin && metodo === 'DELETE') return err(403, 'regla', 'Los documentos guardados solo los borra administración.');
   if (col === 'inventario' && !s.admin && (metodo === 'DELETE' || previo)) {
@@ -334,11 +335,14 @@ async function escribir(req, env, s, col, id, metodo) {
       if (JSON.stringify(previo[k]) !== JSON.stringify(data[k])) return err(403, 'regla', 'Los costos, márgenes y precios solo los cambia administración. Tú puedes actualizar el stock y el contenido de los kits.');
     }
   }
-  if (col === 'clientes' && !s.admin && (String(data.nombre || '').trim() !== String(previo.nombre || '').trim() || String(data.nit || '') !== String(previo.nit || ''))) {
-    return err(403, 'regla', 'El nombre y el NIT del cliente solo los cambia administración. Puedes agregar o editar contactos.');
+  // Cualquiera crea clientes; el nombre y el NIT, una vez escritos, solo los corrige administración (si estaban vacíos, cualquiera los completa).
+  if (col === 'clientes' && !s.admin && previo) {
+    const nomCambia = String(previo.nombre || '').trim() && String(data.nombre || '').trim() !== String(previo.nombre || '').trim();
+    const nitCambia = String(previo.nit || '').trim() && String(data.nit || '') !== String(previo.nit || '');
+    if (nomCambia || nitCambia) return err(403, 'regla', 'El nombre y el NIT del cliente, una vez escritos, solo los cambia administración. Puedes completar los demás datos y los contactos.');
   }
   // La alerta comercial de un cliente (lista negra suave) solo la escribe administración; el resto la ve.
-  if (col === 'clientes' && !s.admin && previo && JSON.stringify(previo.alerta || null) !== JSON.stringify(data.alerta || null)) {
+  if (col === 'clientes' && !s.admin && JSON.stringify((previo && previo.alerta) || null) !== JSON.stringify(data.alerta || null)) {
     return err(403, 'regla', 'La alerta comercial de un cliente solo la escribe administración.');
   }
   // Los números de registro (COT-xxxx, OC-xxxx, PF-xxxx) no se pueden cambiar una vez asignados.
@@ -377,6 +381,11 @@ async function escribir(req, env, s, col, id, metodo) {
     if (!s.admin && previo.responsable && String(data.responsable || '') !== String(previo.responsable)) {
       return err(403, 'regla', 'El responsable de la orden ' + (previo.numero || '') + ' no se cambia: responde por ella hasta el final.');
     }
+  }
+  // Factura de una orden: el cliente debe tener todos los datos para facturar (o el motivo de cada faltante).
+  if (col === 'soportes' && !previo && data.clase === 'factura' && /^oc:[A-Za-z0-9_-]+/.test(String(data.ref || ''))) {
+    const msg = await revisarFacturaOrden(env, String(data.ref).split(':')[1]);
+    if (msg) return err(409, 'regla', msg);
   }
   const txt = JSON.stringify(data);
   if (txt.length > 1800000) return err(413, 'tamano', 'El registro es demasiado grande (adjunto muy pesado).');

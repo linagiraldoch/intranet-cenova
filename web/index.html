@@ -1495,6 +1495,18 @@
   .ajs-panel{max-width:760px; padding:14px 18px 16px;}
   .ajs-panel .panel-head{padding:0 0 8px; margin-bottom:6px;}
   .overlay.encima{z-index:55;}
+  .lista-precio{font-size:11px; color:var(--text-muted); margin-top:2px; line-height:1.35;}
+  .lista-envios{margin-top:10px; border:1px solid var(--border); border-radius:10px; padding:8px 10px; background:var(--surface-2);}
+  .lista-envios .ni-tit2{font-size:10.5px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;}
+  .lista-envio{display:flex; gap:6px; align-items:center; flex-wrap:wrap; padding:4px 0;} .lista-envio > span{flex:1 1 160px; min-width:0;}
+  .sol-lista{display:grid; gap:8px; margin-bottom:16px;}
+  .sol-row{display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; border:1px solid var(--border); border-left:4px solid var(--warning); border-radius:10px; padding:10px 12px; background:var(--surface);}
+  .sol-main{display:flex; flex-direction:column; gap:3px; min-width:0; flex:1 1 240px;} .sol-main > span{font-size:12px; color:var(--text-muted);} .sol-main .due{align-self:flex-start;}
+  .sol-acc{display:flex; gap:6px; flex-wrap:wrap;}
+  .cli-fm{display:flex; gap:8px; align-items:center; margin-top:6px;}
+  .cli-fm span{flex:0 0 38%; font-size:12px; color:var(--text-muted);}
+  .cli-fm input{flex:1; min-width:0;}
+  @media(max-width:600px){ .cli-fm{flex-direction:column; align-items:stretch; gap:2px;} }
 
   /* Proveedores y lista de materiales (2026-11-24) */
   .prov-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:12px; margin-bottom:18px;}
@@ -1699,6 +1711,7 @@
             Nuevo proveedor
           </button>
         </div>
+        <div id="provSolicitudes"></div>
         <div id="provSinRegistrar"></div>
         <div id="provDirContainer"></div>
 
@@ -1763,13 +1776,13 @@
         <h2>Clientes</h2>
         <div class="filters">
           <input type="search" id="cliSearch" placeholder="Buscar cliente…">
-          <button class="btn primary fin-admin" id="btnAddCli" hidden>
+          <button class="btn primary" id="btnAddCli">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
             Nuevo cliente
           </button>
         </div>
       </div>
-      <div class="no-file" style="margin:-6px 0 14px;">Cada cliente se registra una sola vez y se elige al crear una cotización o proyecto. Un cliente puede tener varios contactos (gerente, mantenimiento, compras…): si aparece una persona nueva, ábrelo y agrégala como contacto. <strong>Solo administración crea clientes nuevos.</strong></div>
+      <div class="no-file" style="margin:-6px 0 14px;">Cada cliente se registra una sola vez y se elige al crear una cotización o proyecto. Un cliente puede tener varios contactos (gerente, mantenimiento, compras…): si aparece una persona nueva, ábrelo y agrégala como contacto. Cualquiera del equipo puede crear clientes; para facturar, deben tener todos sus datos.</div>
       <div id="cliContainer"></div>
     </section>
 
@@ -2284,13 +2297,15 @@
     <div class="modal-body">
       <div class="lista-pregunta"><b>Esta es la lista. ¿Descargas todo o quitas puntos?</b><span>Lo que quites o corrijas aquí solo cambia el PDF, no la cotización. Sale en formato Cenova, sin precios ni datos del cliente.</span></div>
       <div id="listaNota"></div>
-      <div class="field-row">
+      <label class="aiu-check" style="margin:8px 0 0;"><input type="checkbox" id="listaIncNF"> Incluir proveedores que no facturan a Cenova</label>
+      <div id="listaEnvios"></div>
+      <div class="field-row" style="margin-top:10px;">
         <div class="field"><label>Para (opcional)</label><select id="listaPara"></select></div>
         <div class="field"><label>Observaciones para el proveedor (opcional)</label><input type="text" id="listaObs" placeholder="Ej. Favor cotizar marca original, entrega en Cartagena"></div>
       </div>
       <div class="items-table-wrap">
       <table class="items-table lista-tabla">
-        <thead><tr><th class="col-idx">#</th><th class="col-desc">Descripción / referencia</th><th class="col-num">Cant.</th><th class="col-unit">Unidad</th><th style="width:20%;">Dónde comprarlo (interno)</th><th class="col-rm"></th></tr></thead>
+        <thead><tr><th class="col-idx">#</th><th class="col-desc">Descripción / referencia</th><th class="col-num">Cant.</th><th class="col-unit">Unidad</th><th style="width:27%;">Dónde comprarlo (interno)</th><th class="col-rm"></th></tr></thead>
         <tbody id="listaBody"></tbody>
       </table>
       </div>
@@ -2299,8 +2314,10 @@
     </div>
     <div class="modal-foot">
       <button class="btn" id="listaGuardarNota" style="display:none;">Guardar la sugerencia en las notas internas</button>
-      <div style="display:flex; gap:8px; margin-left:auto;">
+      <div style="display:flex; gap:8px; margin-left:auto; flex-wrap:wrap; justify-content:flex-end;">
         <button class="btn" id="listaCancel">Cancelar</button>
+        <button class="btn" id="listaWa" title="Envía la lista al proveedor elegido en «Para»">WhatsApp</button>
+        <button class="btn" id="listaMail" title="Envía la lista al proveedor elegido en «Para»">Correo</button>
         <button class="btn primary" id="listaDescargar">Descargar todo</button>
       </div>
     </div>
@@ -2552,6 +2569,12 @@
         <div class="field"><label>Ciudad</label><input type="text" id="cliCiudad" placeholder="Cartagena, Bolívar"></div>
       </div>
       <div class="field"><label>Dirección</label><input type="text" id="cliDireccion"></div>
+      <div class="fieldset-label" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">Datos para facturar <span id="cliFactEstado" style="text-transform:none; letter-spacing:0;"></span></div>
+      <div class="lista-pregunta" style="margin:0 0 4px;">Puedes guardar el cliente incompleto, pero para anexar la factura de una orden deben estar todos estos datos, o escribir el motivo de cada uno que no aplique (por ejemplo: persona natural).</div>
+      <div class="field-row">
+        <div class="field"><label>Tipo de persona</label><select id="cliTipoPersona"><option value="">— Elegir —</option><option value="juridica">Persona jurídica (empresa)</option><option value="natural">Persona natural</option></select></div>
+        <div class="field"><label>Correo para la factura electrónica</label><input type="email" id="cliCorreoFact" placeholder="facturacion@cliente.com"></div>
+      </div>
       <!-- RUT del cliente (2026-11-06): respaldo para facturar, inscribirse como proveedor y otros requisitos -->
       <div class="fieldset-label" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">RUT <span id="cliRutEstado" style="text-transform:none; letter-spacing:0;"></span></div>
       <div class="field">
@@ -2561,10 +2584,11 @@
           <input type="file" id="cliRutInput" accept="application/pdf,.pdf,image/*" hidden>
         </div>
       </div>
+      <div id="cliFactMotivos"></div>
       <div class="fieldset-label">Contactos <span style="font-weight:400; text-transform:none; letter-spacing:0;">— el primero es el principal</span></div>
       <div id="cliContactosBox"></div>
       <button type="button" class="btn sm" id="cliAddContacto" style="align-self:flex-start;">+ Agregar contacto</button>
-      <div class="no-file" id="cliNoAdminNota" style="display:none;">El nombre y el NIT solo los cambia administración. Puedes agregar o corregir contactos.</div>
+      <div class="no-file" id="cliNoAdminNota" style="display:none;">Una vez escritos, el nombre y el NIT solo los corrige administración. Puedes completar el resto de datos y los contactos.</div>
       <div class="alerta-cli-form" id="cliAlertaAdmin" hidden>
         <div class="fieldset-label">Alerta comercial · solo la escribe administración; el equipo la ve al atender a este cliente</div>
         <div class="field-row">
@@ -3189,7 +3213,7 @@
   var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
   var state = {
-    cotizaciones: new Map(), proyectos: new Map(), eventos: new Map(), cotizacionesProveedor: new Map(), proveedores: new Map(), clientes: new Map(), ordenes: new Map(), prefacturas: new Map(), previewingPfId: null,
+    cotizaciones: new Map(), proyectos: new Map(), eventos: new Map(), cotizacionesProveedor: new Map(), proveedores: new Map(), solicitudesProv: new Map(), clientes: new Map(), ordenes: new Map(), prefacturas: new Map(), previewingPfId: null,
     loaded: {}, userId: null, evtApoyo: [], proyForCot: false, ocNovedades: [], costosAdicionales: [], personal: [], ocPersonal: [], ocPagos: [], ocPorPagar: [], editingOcId: null, ocArchivo: null, ocArchivoRemoved: false, ocDiasSemana: [0,2,4], ocDiasSueltos: [], cronoStart: null,
     db: null, editingCotId: null, editingProyId: null, editingEvtId: null, editingProvId: null, editingCliId: null, previewingCotId: null,
     expandedProyId: null,
@@ -4760,8 +4784,7 @@
 
     var container = document.getElementById('cliContainer');
     if(state.clientes.size === 0){
-      container.innerHTML = precAdmin() ? emptyState('No hay clientes registrados todavía', 'Registra tus clientes para autocompletar sus datos en cada cotización.', 'btnAddCliEmpty')
-        : '<div class="table-wrap"><div class="empty-state">No hay clientes registrados todavía. Administración los crea.</div></div>';
+      container.innerHTML = emptyState('No hay clientes registrados todavía', 'Registra tus clientes para autocompletar sus datos en cada cotización.', 'btnAddCliEmpty');
       var b = document.getElementById('btnAddCliEmpty'); if(b) b.addEventListener('click', function(){ openCliModal(); });
       return;
     }
@@ -4772,7 +4795,7 @@
       var id = e[0], c = e[1];
       html += '<tr data-id="'+id+'">'+
         '<td><div class="d-title">'+escapeHtml(c.nombre||'—')+(c.alerta && c.alerta.texto ? '<span class="cli-badge '+(c.alerta.nivel === 'cuidado' ? 'cuidado' : 'atencion')+'" title="'+escapeHtml(c.alerta.texto)+'">'+(c.alerta.nivel === 'cuidado' ? '⚠ Cuidado' : 'Atención')+'</span>' : '')+'</div></td>'+
-        '<td>'+escapeHtml(c.nit||'—')+(cliRutDe(id).length ? ' <span class="due ok" title="RUT anexo">RUT ✓</span>' : '')+'</td>'+
+        '<td>'+escapeHtml(c.nit||'—')+(cliRutDe(id).length ? ' <span class="due ok" title="RUT anexo">RUT ✓</span>' : '')+(function(){ var f = cliFactFaltantes(c, cliRutDe(id).length > 0); return f.length ? ' <span class="due warning" title="Falta para facturar: '+escapeHtml(f.map(function(x){ return x[1]; }).join(', '))+'">Faltan '+f.length+' para facturar</span>' : ''; })()+'</td>'+
         '<td>'+escapeHtml(c.ciudad||'—')+'</td>'+
         (function(){
           var ks = cliContactos(c), k0 = ks[0] || {};
@@ -4791,6 +4814,43 @@
   document.getElementById('cliSearch').addEventListener('input', renderClientes);
   document.getElementById('btnAddCli').addEventListener('click', function(){ openCliModal(); });
 
+  /* Datos para facturar (2026-11-24): la misma regla que worker/facturacion.js. Un dato faltante con motivo cuenta como resuelto. */
+  var CLI_FACT_CAMPOS = [['tipoPersona','Tipo de persona'],['nit','NIT o cédula'],['direccion','Dirección'],['ciudad','Ciudad'],['correoFact','Correo para la factura electrónica'],['rut','RUT']];
+  var CLI_FACT_EJEMPLO = {tipoPersona:'', nit:'Ej.: extranjero, aún no entrega el NIT', direccion:'', ciudad:'', correoFact:'Ej.: recibe la factura por WhatsApp', rut:'Ej.: persona natural no obligada a tener RUT'};
+  function cliFactFaltantes(c, tieneRut){
+    c = c || {}; var m = (c.factMotivos && typeof c.factMotivos === 'object') ? c.factMotivos : {}, out = [];
+    CLI_FACT_CAMPOS.forEach(function(f){
+      var v = f[0] === 'rut' ? tieneRut : String(c[f[0]] == null ? '' : c[f[0]]).trim();
+      if(v) return;
+      if(String(m[f[0]] || '').trim().length >= 3) return;
+      out.push(f);
+    });
+    return out;
+  }
+  function cliFactDeForm(){
+    return {tipoPersona: document.getElementById('cliTipoPersona').value, nit: document.getElementById('cliNit').value.trim(), direccion: document.getElementById('cliDireccion').value.trim(),
+      ciudad: document.getElementById('cliCiudad').value.trim(), correoFact: document.getElementById('cliCorreoFact').value.trim(), factMotivos: state.cliFactMotivos || {}};
+  }
+  function cliTieneRutForm(){ return !!(cliRutDe(state.editingCliId).length || state.cliRutPendiente); }
+  function cliFactChip(){
+    var f = cliFactFaltantes(cliFactDeForm(), cliTieneRutForm());
+    document.getElementById('cliFactEstado').innerHTML = f.length ? '<span class="due warning">Faltan '+f.length+' para facturar</span>' : '<span class="due ok">Completo para facturar ✓</span>';
+  }
+  function cliFactPintar(){
+    var c = cliFactDeForm(), box = document.getElementById('cliFactMotivos'), tr = cliTieneRutForm();
+    var miss = CLI_FACT_CAMPOS.filter(function(f){ return !(f[0] === 'rut' ? tr : String(c[f[0]]||'').trim()); });
+    box.innerHTML = miss.length ? '<div class="field"><label>Lo que falta · si no aplica, escribe el motivo</label>'+miss.map(function(f){
+      return '<div class="cli-fm"><span>'+escapeHtml(f[1])+'</span><input type="text" data-fm="'+f[0]+'" value="'+escapeHtml((state.cliFactMotivos||{})[f[0]]||'')+'" placeholder="'+escapeHtml(CLI_FACT_EJEMPLO[f[0]] || 'Motivo, o complétalo arriba')+'"></div>';
+    }).join('')+'</div>' : '';
+    cliFactChip();
+  }
+  document.getElementById('cliFactMotivos').addEventListener('input', function(e){
+    var k = e.target && e.target.dataset && e.target.dataset.fm; if(!k) return;
+    state.cliFactMotivos = state.cliFactMotivos || {}; state.cliFactMotivos[k] = e.target.value; cliFactChip();
+  });
+  ['cliTipoPersona','cliNit','cliDireccion','cliCiudad','cliCorreoFact'].forEach(function(i){
+    var el = document.getElementById(i); el.addEventListener('input', cliFactPintar); el.addEventListener('change', cliFactPintar);
+  });
   function openCliModal(id){
     if(id && !state.clientes.get(id)){ toast('No se pudo cargar ese cliente — vuelve a intentar.'); return; }
     state.editingCliId = id || null;
@@ -4800,15 +4860,20 @@
     document.getElementById('cliNit').value = c.nit || '';
     document.getElementById('cliCiudad').value = c.ciudad || '';
     document.getElementById('cliDireccion').value = c.direccion || '';
+    document.getElementById('cliTipoPersona').value = c.tipoPersona || '';
+    document.getElementById('cliCorreoFact').value = c.correoFact || '';
+    state.cliFactMotivos = JSON.parse(JSON.stringify(c.factMotivos || {}));
     document.getElementById('cliNotas').value = c.notas || '';
     state.cliContactos = cliContactos(c).map(function(k){ return {nombre:k.nombre||'', cargo:k.cargo||'', telefono:k.telefono||'', email:k.email||''}; });
     if(!state.cliContactos.length) state.cliContactos.push({nombre:'', cargo:'', telefono:'', email:''});
     cliPintarContactos();
     state.cliRutPendiente = null; renderCliRut();
     var adm = precAdmin();
-    document.getElementById('cliNombre').disabled = !adm && !!id;
-    document.getElementById('cliNit').disabled = !adm && !!id;
-    document.getElementById('cliNoAdminNota').style.display = adm ? 'none' : 'block';
+    /* Nombre y NIT: cualquiera los escribe si están vacíos; ya escritos, solo administración los corrige */
+    document.getElementById('cliNombre').disabled = !adm && !!String(c.nombre||'').trim();
+    document.getElementById('cliNit').disabled = !adm && !!String(c.nit||'').trim();
+    document.getElementById('cliNoAdminNota').style.display = (adm || !id) ? 'none' : 'block';
+    cliFactPintar();
     document.getElementById('cliDelete').style.display = (id && adm) ? 'inline-flex' : 'none';
     /* Alerta comercial: administración la escribe; el resto solo la ve */
     var al = c.alerta || null;
@@ -4836,6 +4901,7 @@
       (!lista.length && !pend ? '<span class="no-file">Aún no se ha subido.</span>' : '');
     document.getElementById('cliRutBtn').textContent = lista.length ? 'Subir RUT actualizado' : 'Subir RUT (PDF)';
     document.getElementById('cliRutEstado').innerHTML = lista.length ? '<span class="due ok">Anexo ✓</span>' : '';
+    try { cliFactPintar(); } catch(e){}
   }
   document.getElementById('cliRutLista').addEventListener('click', function(e){
     var b = e.target.closest('[data-sop-ver]'); if(b){ sopVer(b.dataset.sopVer); return; }
@@ -4905,15 +4971,23 @@
   document.getElementById('cliSave').addEventListener('click', function(){
     var db = requireDb(); if(!db) return;
     var prevCli = state.editingCliId ? (state.clientes.get(state.editingCliId) || {}) : null;
-    if(!prevCli && !precAdmin()){ toast('Solo administración crea clientes nuevos.'); return; }
     var data = Object.assign({}, prevCli || {}, {
       nombre: document.getElementById('cliNombre').value.trim(),
       nit: document.getElementById('cliNit').value.trim(),
       ciudad: document.getElementById('cliCiudad').value.trim(),
       direccion: document.getElementById('cliDireccion').value.trim(),
+      tipoPersona: document.getElementById('cliTipoPersona').value,
+      correoFact: document.getElementById('cliCorreoFact').value.trim(),
       notas: document.getElementById('cliNotas').value.trim()
     }, cliCamposContacto(state.cliContactos || []));
     if(!data.nombre){ toast('Escribe el nombre del cliente'); return; }
+    /* Solo se guardan los motivos de lo que de verdad sigue faltando */
+    var mot = {}, tr0 = cliTieneRutForm();
+    CLI_FACT_CAMPOS.forEach(function(f){
+      var lleno = f[0] === 'rut' ? tr0 : String(data[f[0]]||'').trim(), t = String((state.cliFactMotivos||{})[f[0]]||'').trim();
+      if(!lleno && t) mot[f[0]] = t;
+    });
+    if(Object.keys(mot).length) data.factMotivos = mot; else delete data.factMotivos;
     if(precAdmin()){
       var nv = document.getElementById('cliAlertaNivel').value, tx = document.getElementById('cliAlertaTexto').value.trim();
       if(nv && !tx){ toast('Escribe qué debe saber quien atienda a este cliente, o deja «Sin alerta».'); document.getElementById('cliAlertaTexto').focus(); return; }
@@ -5241,6 +5315,7 @@
       data.archivoNombre = null; data.archivoTipo = null; data.archivoTamano = null; data.archivoDatos = null;
     }
     var col = db.collection('cotizacionesProveedor');
+    var eraNueva = !state.editingProvId;
     return provResolverProveedor(proveedor).then(function(pid){
       data.proveedorId = pid || '';
       var p;
@@ -5251,7 +5326,7 @@
       } else {
         p = col.add(data).then(function(ref){ var nid = ref && ref.id; if(nid){ state.editingProvId = nid; state.cotizacionesProveedor.set(nid, data); document.getElementById('provDelete').style.display='inline-flex'; } return nid; });
       }
-      return p;
+      return p.then(function(qid){ if(eraNueva && pid){ try { slAlRecibir(pid); } catch(e){} } return qid; });
     });
   }
   document.getElementById('provSave').addEventListener('click', function(){
@@ -6183,6 +6258,7 @@
   }
   function renderProvDirectorio(){
     var box = document.getElementById('provDirContainer'); if(!box) return;
+    try { renderSolicitudes(); } catch(e){}
     var selV = document.getElementById('provDirVende'), cur = selV.value;
     var tags = {};
     state.proveedores.forEach(function(p){ (p.vende||[]).forEach(function(t){ tags[t] = 1; }); });
@@ -6391,9 +6467,10 @@
     return h;
   }
   /* items: [{descripcion}] → proveedores que cubren cada ítem, con la razón. */
-  function pvEvaluar(items){
+  function pvEvaluar(items, opts){
+    opts = opts || {};
     var provs = [];
-    state.proveedores.forEach(function(p, id){ if(p.activo !== false) provs.push({id: id, p: p, nombre: p.nombre || 'Proveedor', cubre: [], razones: {}, score: 0}); });
+    state.proveedores.forEach(function(p, id){ if(p.activo !== false) provs.push({id: id, p: p, nombre: p.nombre || 'Proveedor', cubre: [], razones: {}, score: 0, noFact: p.facturaCenova === 'no'}); });
     if(!provs.length) return [];
     var hist = pvHistorial();
     items.forEach(function(it, i){
@@ -6415,11 +6492,36 @@
         if(pts >= 1.5){ r.cubre.push(i); r.razones[i] = why.slice(0,2); r.score += pts; }
       });
     });
-    return provs.filter(function(r){ return r.cubre.length; }).sort(function(a,b){ return b.cubre.length - a.cubre.length || b.score - a.score; });
+    var out = provs.filter(function(r){ return r.cubre.length; }).sort(function(a,b){ return b.cubre.length - a.cubre.length || b.score - a.score; });
+    /* Los que no facturan a nombre de Cenova no se sugieren (el IVA no sería descontable), salvo que se pida incluirlos. */
+    var excl = opts.incluirNF ? [] : out.filter(function(r){ return r.noFact; });
+    if(excl.length) out = out.filter(function(r){ return !r.noFact; });
+    out.excluidos = excl;
+    return out;
+  }
+  /* Comparación de precios: el último costo que cada proveedor nos cotizó de un ítem parecido. El ★ marca el más barato. */
+  function pvPrecios(descripcion, hist, incluirNF){
+    var tk = pvTokens(descripcion), out = [];
+    if(!tk.length) return out;
+    state.proveedores.forEach(function(p, pid){
+      var mejor = null;
+      (hist[pid] || []).forEach(function(h){
+        if(!(h.costo > 0)) return;
+        var comunes = tk.filter(function(t){ return h.tk.indexOf(t) !== -1; }).length;
+        if(comunes >= Math.min(2, tk.length) && comunes / tk.length >= 0.6 && (!mejor || h.fecha > mejor.fecha)) mejor = h;
+      });
+      if(mejor) out.push({pid: pid, nombre: p.nombre || 'Proveedor', costo: mejor.costo, fecha: mejor.fecha, noFact: p.facturaCenova === 'no'});
+    });
+    var comp = out.filter(function(x){ return incluirNF || !x.noFact; });
+    if(comp.length > 1){
+      var min = Math.min.apply(null, comp.map(function(x){ return x.costo; }));
+      comp.forEach(function(x){ if(x.costo === min) x.barato = true; });
+    }
+    return out.sort(function(a,b){ return a.costo - b.costo; });
   }
   /* Arma el plan: el menor número de proveedores (máx. 3) que cubre la lista. */
-  function pvPlan(items){
-    var total = items.length, res = pvEvaluar(items);
+  function pvPlan(items, opts){
+    var total = items.length, res = pvEvaluar(items, opts);
     var restantes = {}; items.forEach(function(_, i){ restantes[i] = true; });
     var plan = [], pool = res.slice();
     while(Object.keys(restantes).length && plan.length < 3){
@@ -6436,7 +6538,7 @@
     }
     var enPlan = plan.map(function(x){ return x.r; });
     var alternativas = res.filter(function(r){ return enPlan.indexOf(r) === -1 && r.cubre.length >= Math.max(1, Math.ceil(total * 0.5)); }).slice(0,3);
-    return {res: res, plan: plan, sinProveedor: Object.keys(restantes).map(Number), alternativas: alternativas, total: total};
+    return {res: res, plan: plan, sinProveedor: Object.keys(restantes).map(Number), alternativas: alternativas, total: total, excluidos: res.excluidos || []};
   }
   function pvRazonResumen(r, idx){
     var cuenta = {};
@@ -6444,18 +6546,21 @@
     return Object.keys(cuenta).sort(function(a,b){ return cuenta[b]-cuenta[a]; }).slice(0,2).join(' · ');
   }
   /* Devuelve {html, texto}: el mensaje interno y su versión para las notas internas de la cotización. */
-  function pvSugerencia(items){
+  function pvSugerencia(items, opts){
     if(!items.length) return {html:'', texto:''};
     if(!state.proveedores.size) return {html:'Aún no tienes proveedores registrados. Regístralos en <b>Cotizaciones → Proveedores</b> (dónde están y qué venden) y aquí te diré a cuál pedirle cada lista.', texto:''};
-    var pl = pvPlan(items), nom = function(x){ return x.r.nombre; };
-    if(!pl.plan.length) return {html:'Ningún proveedor registrado vende estos materiales todavía. Revisa en cada ficha «qué vende» y las marcas que distribuye.', texto:''};
+    var pl = pvPlan(items, opts), nom = function(x){ return x.r.nombre; };
+    var notaNF = pl.excluidos.length ? '<div style="margin-top:6px;" class="lista-donde">No sugerido: '+pl.excluidos.map(function(r){ return escapeHtml(r.nombre); }).join(', ')+' (no factura'+(pl.excluidos.length>1?'n':'')+' a nombre de Cenova; el IVA no sería descontable).</div>' : '';
+    if(!pl.plan.length) return {html: pl.excluidos.length
+      ? 'Quien vende estos materiales no factura a nombre de Cenova ('+pl.excluidos.map(function(r){ return escapeHtml(r.nombre); }).join(', ')+'). Marca «Incluir proveedores que no facturan a Cenova» si aun así quieres pedirles.'
+      : 'Ningún proveedor registrado vende estos materiales todavía. Revisa en cada ficha «qué vende» y las marcas que distribuye.', texto:''};
     var html = '', texto = '';
     var desc = function(idx){ return idx.map(function(i){ return escapeHtml(items[i].descripcion); }).join('; '); };
-    var avisoFact = function(r){ return r.p.facturaCenova === 'no' ? ' <span class="prov-warn">(no factura a Cenova)</span>' : ''; };
+    var avisoFact = function(r){ return r.p.facturaCenova === 'no' ? ' <span class="prov-warn">(no factura a Cenova)</span>' : (r.p.facturaCenova === 'depende' ? ' <span class="prov-warn">(confirmar si factura a Cenova)</span>' : ''); };
     if(pl.plan.length === 1){
       var x = pl.plan[0], todo = pl.sinProveedor.length === 0;
       html = todo
-        ? 'Esta lista conviene pedirla a <b>'+escapeHtml(nom(x))+'</b>'+avisoFact(x.r)+': vende los '+pl.total+' puntos'+(pvRazonResumen(x.r, x.idx) ? ' ('+escapeHtml(pvRazonResumen(x.r, x.idx))+')' : '')+'.'
+        ? 'Esta lista conviene pedirla a <b>'+escapeHtml(nom(x))+'</b>'+avisoFact(x.r)+': vende '+(pl.total === 1 ? 'el punto' : 'los '+pl.total+' puntos')+''+(pvRazonResumen(x.r, x.idx) ? ' ('+escapeHtml(pvRazonResumen(x.r, x.idx))+')' : '')+'.'
         : 'Conviene pedirla a <b>'+escapeHtml(nom(x))+'</b>'+avisoFact(x.r)+': cubre '+x.idx.length+' de '+pl.total+' puntos'+(pvRazonResumen(x.r, x.idx) ? ' ('+escapeHtml(pvRazonResumen(x.r, x.idx))+')' : '')+'.';
       texto = 'Sugerencia de compra: '+nom(x)+' ('+x.idx.length+' de '+pl.total+' puntos)';
     } else {
@@ -6466,6 +6571,7 @@
     }
     if(pl.sinProveedor.length) html += '<div style="margin-top:6px;">Sin proveedor registrado para: '+desc(pl.sinProveedor)+'.</div>';
     if(pl.alternativas.length) html += '<div style="margin-top:6px;" class="lista-donde">También venden varios de estos: '+pl.alternativas.map(function(r){ return escapeHtml(r.nombre)+' ('+r.cubre.length+' de '+pl.total+')'; }).join(', ')+'.</div>';
+    html += notaNF;
     return {html: html, texto: texto, plan: pl};
   }
 
@@ -6498,14 +6604,15 @@
       items.push({descripcion: String(it.descripcion).trim(), cantidad: it.cantidad || 0, unidad: it.unidad || '', categoria: providerCatLabel(cat), quitado: false});
     });
     if(!items.length){ toast('Agrega primero los materiales de la cotización.'); return; }
-    state.lista = {items: items, sensibles: listaPalabrasSensibles()};
+    state.lista = {items: items, sensibles: listaPalabrasSensibles(), incNF: false};
     document.getElementById('listaObs').value = '';
-    var pr = pvPlan(items);
+    document.getElementById('listaIncNF').checked = false;
+    var pr = pvPlan(items, {incluirNF: false});
     var sel = document.getElementById('listaPara');
     var recom = pr.plan.map(function(x){ return x.r.id; });
     var provs = Array.from(state.proveedores.entries()).filter(function(e){ return e[1].activo !== false; })
       .sort(function(a,b){ return (recom.indexOf(b[0]) !== -1) - (recom.indexOf(a[0]) !== -1) || String(a[1].nombre||'').localeCompare(String(b[1].nombre||''), 'es'); });
-    sel.innerHTML = '<option value="">Sin destinatario (lista general)</option>' + provs.map(function(e){ return '<option value="'+e[0]+'">'+escapeHtml(e[1].nombre||'Proveedor')+(recom.indexOf(e[0]) !== -1 ? ' — sugerido' : '')+'</option>'; }).join('');
+    sel.innerHTML = '<option value="">Sin destinatario (lista general)</option>' + provs.map(function(e){ return '<option value="'+e[0]+'">'+escapeHtml(e[1].nombre||'Proveedor')+(recom.indexOf(e[0]) !== -1 ? ' — sugerido' : (e[1].facturaCenova === 'no' ? ' — no factura a Cenova' : ''))+'</option>'; }).join('');
     listaPintar();
     document.getElementById('listaOverlay').classList.add('open');
   }
@@ -6536,15 +6643,24 @@
   function listaActualizar(){
     var L = state.lista; if(!L) return;
     var vig = listaVigentes(), quitados = L.items.length - vig.length;
-    var plan = pvSugerencia(vig.filter(function(it){ return String(it.descripcion).trim(); }));
-    var donde = {};
+    var vv = vig.filter(function(it){ return String(it.descripcion).trim(); });
+    var plan = pvSugerencia(vv, {incluirNF: L.incNF});
+    var donde = {}, hist = pvHistorial();
     if(plan.plan){
-      var vv = vig.filter(function(it){ return String(it.descripcion).trim(); });
       vv.forEach(function(it, k){
-        var ps = plan.plan.res.filter(function(r){ return r.cubre.indexOf(k) !== -1; }).slice(0,3).map(function(r){ return r.nombre; });
-        donde[vig.indexOf(it)] = ps.length ? '→ '+ps.join(', ') : 'sin proveedor registrado';
+        var ps = plan.plan.res.filter(function(r){ return r.cubre.indexOf(k) !== -1; }).slice(0,3).map(function(r){ return escapeHtml(r.nombre); });
+        var h = ps.length ? '→ '+ps.join(', ') : 'sin proveedor registrado';
+        var pc = pvPrecios(it.descripcion, hist, L.incNF);
+        if(pc.length) h += '<div class="lista-precio" title="Último costo unitario que cada proveedor nos cotizó de un ítem parecido">Último costo: '+pc.slice(0,3).map(function(x){ return escapeHtml(x.nombre)+' '+fmtMoney.format(x.costo)+(x.barato ? ' ★' : ''); }).join(' · ')+'</div>';
+        donde[vig.indexOf(it)] = h;
       });
     }
+    /* Botones de envío por proveedor sugerido: cada uno recibe solo sus puntos */
+    L.vv = vv; L.planX = (plan.plan && plan.plan.plan) || [];
+    document.getElementById('listaEnvios').innerHTML = L.planX.length ? '<div class="lista-envios"><div class="ni-tit2">Enviar la lista (cada proveedor recibe solo sus puntos)</div>'+L.planX.map(function(x, k){
+      return '<div class="lista-envio" data-k="'+k+'"><span><b>'+escapeHtml(x.r.nombre)+'</b> · '+x.idx.length+' punto'+(x.idx.length>1?'s':'')+'</span>'+
+        '<button type="button" class="btn sm" data-via="wa">WhatsApp</button><button type="button" class="btn sm" data-via="mail">Correo</button><button type="button" class="btn sm" data-via="pdf">PDF</button></div>';
+    }).join('')+'</div>' : '';
     var n = 0, hayS = 0;
     document.querySelectorAll('#listaBody tr').forEach(function(tr){
       var it = L.items[Number(tr.dataset.i)]; n++;
@@ -6552,7 +6668,7 @@
       var s = listaTocaSensible(it.descripcion);
       tr.classList.toggle('sens', s.length > 0); if(s.length) hayS++;
       tr.querySelector('.lista-sens').textContent = s.length ? 'Menciona «'+s.join('», «')+'» (dato del cliente o del proyecto). Cámbialo o quita el punto.' : '';
-      var d = donde[vig.indexOf(it)]; tr.querySelector('.lista-dnd').textContent = d || '';
+      var d = donde[vig.indexOf(it)]; tr.querySelector('.lista-dnd').innerHTML = d || '';
     });
     var nota = document.getElementById('listaNota');
     nota.innerHTML = plan.html ? '<div class="nota-interna"><div class="ni-tit">Nota interna · no sale en el PDF</div>'+plan.html+'</div>' : '';
@@ -6566,6 +6682,7 @@
     document.getElementById('listaAvisoSens').textContent = hayS ? hayS+' punto'+(hayS>1?'s mencionan':' menciona')+' datos del cliente o del proyecto.' : '';
   }
 
+  document.getElementById('listaIncNF').addEventListener('change', function(){ if(state.lista){ state.lista.incNF = this.checked; listaActualizar(); } });
   document.getElementById('listaClose').addEventListener('click', closeLista);
   document.getElementById('listaCancel').addEventListener('click', closeLista);
   document.getElementById('listaOverlay').addEventListener('click', function(e){ if(e.target === this) closeLista(); });
@@ -6588,12 +6705,138 @@
     var btn = document.getElementById('listaDescargar');
     var ir = function(){
       offerPdfDownload(filename, buildProviderDocument(rows, {ref: numero, para: para, obs: obs}), 'Lista de materiales descargada: formato Cenova, sin precios ni datos del cliente.', btn);
+      if(paraId) slRegistrar(paraId, rows, 'pdf', {cid: state.editingCotId || '', numero: numero});
       closeLista();
     };
     if(sens) confirmDialog('Hay '+sens+' punto'+(sens>1?'s que mencionan':' que menciona')+' datos del cliente o del proyecto. ¿Descargar de todos modos?', 'Descargar igual').then(function(ok){ if(ok) ir(); });
     else ir();
   });
   document.getElementById('cotProviderViewBtn').addEventListener('click', openLista);
+
+  /* ---------- Enviar la lista por WhatsApp o correo y seguir la respuesta (2026-11-24) ---------- */
+  function slTelWa(t){
+    var d = String(t||'').replace(/\D/g, '');
+    if(d.length === 10) d = '57' + d;
+    return d.length >= 11 ? d : '';
+  }
+  function slAbrir(url){ var a = document.createElement('a'); a.href = url; a.target = '_blank'; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove(); }
+  function slMensaje(rows, prov, obs, numero){
+    var l = ['Hola, buenos días'+(prov && prov.contacto ? ' '+String(prov.contacto).split(' ')[0] : '')+'. Le escribimos de Cenova S.A.S. (Cartagena).',
+      'Por favor su cotización de estos materiales, con disponibilidad y tiempo de entrega. La factura debe ir a nombre de Cenova S.A.S., NIT '+EMPRESA.nit+'.', ''];
+    rows.forEach(function(it, i){ l.push((i+1)+'. '+it.descripcion+' — '+(it.cantidad||0)+(it.unidad ? ' '+it.unidad : '')); });
+    if(obs) l.push('', 'Observaciones: '+obs);
+    l.push('', 'Quedamos atentos. Gracias.', 'Cenova S.A.S. · cotizaciones@cenovasas.com · 320 717 4937');
+    return l.join('\n');
+  }
+  /* Registra (o actualiza) la solicitud pendiente de ese proveedor para esa cotización y deja el recordatorio en la agenda. */
+  function slRegistrar(pid, rows, via, ctx){
+    var db = state.db; if(!db || !pid) return Promise.resolve();
+    ctx = ctx || {};
+    var prov = state.proveedores.get(pid) || {}, hoy = todayIso(), ya = null, yaId = null;
+    state.solicitudesProv.forEach(function(x, id){
+      if(!ya && x.estado === 'pendiente' && x.proveedorId === pid && (x.cotizacionId||'') === (ctx.cid||'') && (x.cotNumero||'') === (ctx.numero||'')){ ya = x; yaId = id; }
+    });
+    var data = Object.assign({}, ya || {}, {
+      proveedorId: pid, proveedor: prov.nombre || '', cotizacionId: ctx.cid || '', cotNumero: ctx.numero || '',
+      items: rows.map(function(it){ return {descripcion: it.descripcion, cantidad: it.cantidad || 0, unidad: it.unidad || ''}; }),
+      via: via, enviada: hoy, recordar: habilesAdd(hoy, 2), estado: 'pendiente', envios: ya ? (Number(ya.envios)||1) + 1 : 1,
+      creadoPorId: ya ? (ya.creadoPorId || null) : (state.userId || null)
+    });
+    var col = db.collection('solicitudesProv');
+    var p = yaId ? col.doc(yaId).set(data).then(function(){ return yaId; }) : col.add(data).then(function(ref){ return ref && ref.id; });
+    return p.then(function(id){
+      if(id){ state.solicitudesProv.set(id, data); syncAutoEventsFor('solicitud', id); }
+      renderAll();
+      toast('Quedó anotado: le pediste cotización a '+(prov.nombre||'el proveedor')+'. Te lo recuerdo el '+fmtShort(data.recordar)+' si no responde.', 6000);
+    }).catch(function(err){ toast('Se envió, pero no se pudo anotar el seguimiento: ' + (err && err.message ? err.message : 'error'), 6000); });
+  }
+  function slEnviar(pid, rows, via, ctx, obs){
+    var prov = state.proveedores.get(pid) || {};
+    if(!rows.length){ toast('No quedan puntos para enviar.'); return; }
+    var numero = (ctx && ctx.numero) || '';
+    if(via === 'wa'){
+      var tel = slTelWa(prov.telefono);
+      if(!tel){ toast((prov.nombre||'El proveedor')+' no tiene un WhatsApp válido en su ficha. Agrégalo en Cotizaciones → Proveedores.', 6000); return; }
+      slAbrir('https://wa.me/'+tel+'?text='+encodeURIComponent(slMensaje(rows, prov, obs, numero)));
+    } else if(via === 'mail'){
+      if(!/@/.test(String(prov.correo||''))){ toast((prov.nombre||'El proveedor')+' no tiene correo en su ficha. Agrégalo en Cotizaciones → Proveedores.', 6000); return; }
+      slAbrir('mailto:'+String(prov.correo).split(/[;,\s]+/)[0]+'?subject='+encodeURIComponent('Solicitud de cotización — Cenova S.A.S.')+'&body='+encodeURIComponent(slMensaje(rows, prov, obs, numero)));
+    } else {
+      var fn = 'Materiales-' + slugFile(numero || 'Cenova') + '-' + slugFile(prov.nombre || 'proveedor') + '.pdf';
+      offerPdfDownload(fn, buildProviderDocument(rows, {ref: numero, para: prov.nombre || '', obs: obs}), 'Lista descargada para '+(prov.nombre||'el proveedor')+'.', null);
+    }
+    slRegistrar(pid, rows, via, ctx);
+  }
+  function listaEnviarFilas(rows, via, pid){
+    var obs = document.getElementById('listaObs').value.trim();
+    var sens = rows.filter(function(it){ return listaTocaSensible(it.descripcion).length; }).length;
+    var ctx = {cid: state.editingCotId || '', numero: document.getElementById('cotNumero').value.trim()};
+    var go = function(){ slEnviar(pid, rows, via, ctx, obs); };
+    if(sens) confirmDialog('Hay '+sens+' punto'+(sens>1?'s que mencionan':' que menciona')+' datos del cliente o del proyecto. ¿Enviar de todos modos?', 'Enviar igual').then(function(ok){ if(ok) go(); });
+    else go();
+  }
+  document.getElementById('listaEnvios').addEventListener('click', function(e){
+    var b = e.target.closest('[data-via]'), fila = e.target.closest('[data-k]'); if(!b || !fila || !state.lista) return;
+    var x = (state.lista.planX || [])[Number(fila.dataset.k)]; if(!x) return;
+    listaEnviarFilas(x.idx.map(function(i){ return state.lista.vv[i]; }), b.dataset.via, x.r.id);
+  });
+  ['listaWa','listaMail'].forEach(function(id){
+    document.getElementById(id).addEventListener('click', function(){
+      var pid = document.getElementById('listaPara').value;
+      if(!pid){ toast('Elige primero a quién va en «Para», o usa los botones de cada proveedor sugerido.', 5000); return; }
+      listaEnviarFilas(listaVigentes().filter(function(it){ return String(it.descripcion).trim(); }), id === 'listaWa' ? 'wa' : 'mail', pid);
+    });
+  });
+
+  /* Solicitudes pendientes (pestaña Proveedores) */
+  function slDias(iso){ return Math.max(0, Math.round((new Date(todayIso()+'T00:00:00') - new Date(iso+'T00:00:00')) / 86400000)); }
+  function renderSolicitudes(){
+    var box = document.getElementById('provSolicitudes'); if(!box) return;
+    var pend = [];
+    state.solicitudesProv.forEach(function(x, id){ if(x.estado === 'pendiente') pend.push(Object.assign({_id: id}, x)); });
+    pend.sort(function(a, b){ return String(a.enviada||'').localeCompare(String(b.enviada||'')); });
+    if(!pend.length){ box.innerHTML = ''; return; }
+    var hoy = todayIso();
+    box.innerHTML = '<div class="fieldset-label" style="margin:2px 0 8px;">Esperando cotización de proveedores ('+pend.length+')</div><div class="sol-lista">'+pend.map(function(x){
+      var d = slDias(x.enviada || hoy), toca = x.recordar && x.recordar <= hoy;
+      return '<div class="sol-row" data-sid="'+escapeHtml(x._id)+'"><div class="sol-main"><b>'+escapeHtml(x.proveedor||'Proveedor')+'</b>'+
+        '<span>'+(x.cotNumero ? escapeHtml(x.cotNumero)+' · ' : '')+(x.items||[]).length+' punto'+((x.items||[]).length!==1?'s':'')+' · '+({wa:'WhatsApp',mail:'correo',pdf:'PDF'}[x.via]||'enviada')+' el '+fmtShort(x.enviada)+' · '+(d === 0 ? 'hoy' : 'hace '+d+' día'+(d>1?'s':''))+((x.envios||1) > 1 ? ' · '+x.envios+' envíos' : '')+'</span>'+
+        (toca ? '<span class="due warning">Toca pedir respuesta</span>' : '<span class="due">Te lo recuerdo el '+fmtShort(x.recordar)+'</span>')+'</div>'+
+        '<div class="sol-acc"><button type="button" class="btn sm primary" data-sl="llego">Llegó la cotización</button><button type="button" class="btn sm" data-sl="reenviar">Reenviar</button><button type="button" class="btn sm" data-sl="descartar">Descartar</button></div></div>';
+    }).join('')+'</div>';
+  }
+  document.getElementById('provSolicitudes').addEventListener('click', function(e){
+    var b = e.target.closest('[data-sl]'), r = e.target.closest('[data-sid]'); if(!b || !r) return;
+    var sid = r.dataset.sid, x = state.solicitudesProv.get(sid); if(!x) return;
+    var db = requireDb(); if(!db) return;
+    if(b.dataset.sl === 'llego'){ openProvModal(null, {proveedorId: x.proveedorId, solicitudId: sid}); }
+    else if(b.dataset.sl === 'reenviar'){
+      var via = x.via === 'mail' ? 'mail' : 'wa';
+      slEnviar(x.proveedorId, x.items || [], via, {cid: x.cotizacionId || '', numero: x.cotNumero || ''}, '');
+    } else {
+      confirmDialog('¿Descartar la solicitud a '+(x.proveedor||'este proveedor')+'? Ya no te la recordaré.', 'Descartar').then(function(ok){
+        if(!ok) return;
+        var nx = Object.assign({}, x, {estado: 'descartada'});
+        db.collection('solicitudesProv').doc(sid).set(nx).then(function(){ state.solicitudesProv.set(sid, nx); syncAutoEventsFor('solicitud', sid); renderAll(); toast('Solicitud descartada.'); })
+          .catch(function(err){ toast('No se pudo: ' + (err && err.message ? err.message : 'error')); });
+      });
+    }
+  });
+  /* Al guardar una cotización nueva de un proveedor con solicitud pendiente, esa solicitud queda respondida. */
+  function slAlRecibir(pid){
+    var db = state.db; if(!db || !pid) return;
+    var sid = state.provPreset && state.provPreset.solicitudId, x = sid ? state.solicitudesProv.get(sid) : null;
+    if(!x || x.estado !== 'pendiente'){
+      sid = null; x = null;
+      state.solicitudesProv.forEach(function(v, id){ if(v.estado === 'pendiente' && v.proveedorId === pid && (!x || String(v.enviada||'') > String(x.enviada||''))){ x = v; sid = id; } });
+    }
+    if(!x) return;
+    var nx = Object.assign({}, x, {estado: 'recibida', respondida: todayIso()});
+    db.collection('solicitudesProv').doc(sid).set(nx).then(function(){
+      state.solicitudesProv.set(sid, nx); syncAutoEventsFor('solicitud', sid); renderAll();
+      toast('Llegó la cotización de '+(x.proveedor||'el proveedor')+': quité el recordatorio.', 5000);
+    }).catch(function(){});
+  }
 
   /* PDF de la lista: formato Cenova (logo, NIT, contacto), sin precios ni datos del cliente. */
   function buildProviderDocument(rows, opts){
@@ -7421,6 +7664,22 @@
     return out;
   }
 
+  /* Solicitudes de cotización enviadas a proveedores (2026-11-24): mientras no llegue la respuesta, queda un recordatorio en la agenda. */
+  function desiredForSol(id, sl){
+    var out = []; if(!sl) return out;
+    var nom = sl.proveedor || 'proveedor', ref = sl.cotNumero ? ' ('+sl.cotNumero+')' : '';
+    var base = {auto:true, origen:'solicitud', origenId:id, clave:'espera', tipo:'seguimiento', cliente:'', proyectoId:'', creadoPorId:sl.creadoPorId||null};
+    if(sl.estado === 'pendiente' && sl.recordar){
+      out.push(Object.assign({}, base, {fecha:sl.recordar, estado:'pendiente', fechaCumplido:null, etiqueta:'Cotiz. '+nom,
+        titulo:'Pedir respuesta a '+nom+' — cotización de materiales'+ref,
+        motivo:'Se le envió la lista de materiales a '+nom+' el '+fmtDate(sl.enviada||todayIso())+' y aún no llega su cotización. Escribirle o llamarlo; cuando llegue, regístrala en Cotizaciones → Proveedores («Llegó la cotización»).'}));
+    } else if(sl.estado === 'recibida'){
+      var fr = sl.respondida || sl.recordar || todayIso();
+      out.push(Object.assign({}, base, {fecha:fr, estado:'cumplido', fechaCumplido:fr, etiqueta:'Cotiz. '+nom+' ✓',
+        titulo:'Llegó la cotización de '+nom+ref, motivo:'Cotización recibida el '+fmtDate(fr)+'.'}));
+    }
+    return out;
+  }
   function ocModLabel(m){ return m === 'intercalados' ? 'intercalados' : (m === 'dia_a_dia' ? 'día a día' : 'consecutivos'); }
   function ocCalc(o){
     var dias = installDays(o.fechaInicio, o.diasInstalacion, o.modalidad, o.diasSemana, o.diasSueltos);
@@ -7568,14 +7827,15 @@
     var db = state.db; if(!db) return Promise.resolve();
     var want = new Map();
     function addFor(origen, id, rec){
-      (origen==='orden' ? desiredForOc(id, rec) : desiredForCot(id, rec)).forEach(function(ev){ want.set(autoId(id, ev.clave), ev); });
+      (origen==='orden' ? desiredForOc(id, rec) : origen==='solicitud' ? desiredForSol(id, rec) : desiredForCot(id, rec)).forEach(function(ev){ want.set(autoId(id, ev.clave), ev); });
     }
     if(scope){
-      var rec = scope.origen==='orden' ? state.ordenes.get(scope.id) : state.cotizaciones.get(scope.id);
+      var rec = scope.origen==='orden' ? state.ordenes.get(scope.id) : scope.origen==='solicitud' ? state.solicitudesProv.get(scope.id) : state.cotizaciones.get(scope.id);
       if(rec) addFor(scope.origen, scope.id, rec);
     } else {
       state.cotizaciones.forEach(function(c, id){ addFor('cotizacion', id, c); });
       state.ordenes.forEach(function(o, id){ addFor('orden', id, o); });
+      state.solicitudesProv.forEach(function(sl, id){ addFor('solicitud', id, sl); });
     }
     var ops = [];
     want.forEach(function(ev, docId){
@@ -7594,7 +7854,7 @@
   function syncAutoEventsFor(origen, id){ return reconcileAuto({origen:origen, id:id}); }
   var _reconcileTm = null, _reconcileBusy = false;
   function scheduleReconcile(){
-    if(!(state.loaded.cotizaciones && state.loaded.eventos && state.loaded.ordenes)) return;
+    if(!(state.loaded.cotizaciones && state.loaded.eventos && state.loaded.ordenes && state.loaded.solicitudesProv)) return;
     clearTimeout(_reconcileTm);
     _reconcileTm = setTimeout(function(){
       if(_reconcileBusy) return scheduleReconcile();
@@ -7970,6 +8230,14 @@
       toast('Antes de la factura anexa la OC del cliente (o escribe su número): la factura en Siigo debe citarla.', 7000); return; }
     if(!(ocProvDe(oid, o).length || document.getElementById('ocProvMotivo').value || (o.provSinCotizacion && o.provSinCotizacion.motivo))){
       toast('Antes de la factura liga la cotización del proveedor (o elige por qué no hay).', 7000); return; }
+    /* (2026-11-24) El cliente debe tener todos los datos para facturar (o el motivo de cada faltante). */
+    var cidF = findClienteIdByNombre(o.cliente);
+    if(!cidF){ toast('El cliente «'+(o.cliente||'')+'» no está registrado. Créalo en Clientes y completa sus datos para facturar.', 7000); return; }
+    var falF = cliFactFaltantes(state.clientes.get(cidF), cliRutDe(cidF).length > 0);
+    if(falF.length){
+      confirmDialog('Antes de facturar faltan datos de «'+(o.cliente||'')+'»: '+falF.map(function(x){ return x[1]; }).join(', ')+'. Complétalos, o escribe el motivo de cada uno que no aplique (p. ej. persona natural). ¿Abrir el cliente ahora?', 'Abrir cliente').then(function(ok){ if(ok) openCliModal(cidF); });
+      return;
+    }
     toast('Anexando la factura…', 3000);
     sopSubir(file, 'oc:'+oid, 'factura', {proyectoId: o.proyectoId || '', ocId: oid}).then(function(){
       toast('Factura anexada a '+(o.numero||'la orden')+'.'); ocEstadosPronto();
@@ -11770,6 +12038,12 @@
       db.collection('proveedores').onSnapshot(function(snap){
         state.proveedores = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         renderAll();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
+      db.collection('solicitudesProv').onSnapshot(function(snap){
+        state.solicitudesProv = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        state.loaded.solicitudesProv = true;
+        renderAll(); scheduleReconcile();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 
       db.collection('prefacturas').onSnapshot(function(snap){
