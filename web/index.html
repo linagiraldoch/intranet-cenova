@@ -1495,6 +1495,33 @@
   .ajs-panel{max-width:760px; padding:14px 18px 16px;}
   .ajs-panel .panel-head{padding:0 0 8px; margin-bottom:6px;}
   .overlay.encima{z-index:55;}
+
+  /* Proveedores y lista de materiales (2026-11-24) */
+  .prov-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(290px,1fr)); gap:12px; margin-bottom:18px;}
+  .prov-card{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px 14px; display:flex; flex-direction:column; gap:7px; box-shadow:var(--shadow);}
+  .prov-card h4{margin:0; font-size:14.5px; color:var(--accent-2); display:flex; justify-content:space-between; gap:8px; align-items:flex-start;}
+  .prov-card .prov-estrellas{color:#c2930a; font-size:12px; letter-spacing:1px; white-space:nowrap;}
+  .prov-meta{font-size:12px; color:var(--text-muted); line-height:1.5;}
+  .prov-meta a{color:var(--accent);}
+  .prov-tags{display:flex; flex-wrap:wrap; gap:5px;}
+  .prov-tag{font-size:11px; font-weight:600; padding:3px 8px; border-radius:99px; background:var(--accent-soft); color:var(--accent-2);}
+  .prov-tag.marca{background:var(--warning-soft); color:var(--warning);}
+  .prov-acc{display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; padding-top:4px;}
+  .prov-warn{font-size:11.5px; color:var(--warning);}
+  .prov-inactivo{opacity:.6;}
+  .chip-pick{display:flex; flex-wrap:wrap; gap:6px;}
+  .chip-pick label{display:inline-flex; align-items:center; gap:5px; padding:5px 10px; border:1px solid var(--border); border-radius:99px; font-size:12px; cursor:pointer; background:var(--surface); color:var(--text);}
+  .chip-pick input{width:auto; margin:0;}
+  .chip-pick label.on{background:var(--accent-soft); border-color:var(--accent); color:var(--accent-2); font-weight:600;}
+  .nota-interna{border:1.5px dashed var(--warning); background:var(--warning-soft); border-radius:10px; padding:10px 12px; font-size:12.8px; line-height:1.5; color:var(--text);}
+  .nota-interna .ni-tit{font-weight:700; color:var(--warning); font-size:10.5px; letter-spacing:.07em; text-transform:uppercase; margin-bottom:4px;}
+  .nota-interna ul{margin:6px 0 0; padding-left:18px;}
+  .lista-tabla input[type=text], .lista-tabla input[type=number]{width:100%;}
+  .lista-tabla tr.sens td{background:var(--critical-soft);}
+  .lista-sens{font-size:11.5px; color:var(--critical); margin-top:3px;}
+  .lista-sens:empty{display:none;}
+  .lista-donde{font-size:11.5px; color:var(--text-muted);}
+  .lista-pregunta{display:flex; flex-direction:column; gap:3px; font-size:13.5px; color:var(--text);} .lista-pregunta span{font-size:12px; color:var(--text-muted); line-height:1.5;}
   .oc-prov-acc{display:flex; gap:8px; flex-wrap:wrap; align-items:center;}
   .oc-prov-acc select{width:auto; max-width:100%; flex:1 1 180px; min-width:0;}
   /* (2026-11-06) En el celular el formulario de la orden se salía de lado (la lista de cotizaciones del proveedor la estiraba) */
@@ -1641,10 +1668,10 @@
         <h2>Cotizaciones</h2>
       </div>
 
-      <!-- La pestaña «De proveedores» se quitó (2026-11-06): la cotización del proveedor se sube en cada orden interna. -->
-      <div class="subtabs" id="cotSubtabs" hidden>
+      <!-- Proveedores (2026-11-24): ficha de cada proveedor (dónde está, qué vende, marcas) y sus cotizaciones. -->
+      <div class="subtabs" id="cotSubtabs">
         <button class="subtab-btn active" data-subtab="internas">A clientes</button>
-        <button class="subtab-btn" data-subtab="proveedores">De proveedores<span class="count" id="navCountProv" style="margin-left:6px;">0</span></button>
+        <button class="subtab-btn" data-subtab="proveedores">Proveedores<span class="count" id="navCountProv" style="margin-left:6px;">0</span></button>
       </div>
 
       <!-- Subvista: cotizaciones a clientes (la de siempre) -->
@@ -1662,14 +1689,26 @@
         <div id="cotContainer"></div>
       </div>
 
-      <!-- Subvista: cotizaciones recibidas de proveedores, ligadas a proyecto/cotización -->
+      <!-- Subvista: proveedores registrados y las cotizaciones que han enviado -->
       <div class="subview" id="subview-proveedores">
+        <div class="filters" style="margin-bottom:14px;">
+          <input type="search" id="provDirSearch" placeholder="Buscar proveedor, ciudad, marca o qué vende…">
+          <select id="provDirVende"><option value="">Todo lo que venden</option></select>
+          <button class="btn primary" id="btnAddProvReg">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Nuevo proveedor
+          </button>
+        </div>
+        <div id="provSinRegistrar"></div>
+        <div id="provDirContainer"></div>
+
+        <div class="fieldset-label" style="margin:6px 0 10px;">Cotizaciones recibidas de proveedores</div>
         <div class="filters" style="margin-bottom:14px;">
           <input type="search" id="provSearch" placeholder="Buscar proveedor o referencia…">
           <select id="provProyFilter"><option value="">Todos los proyectos</option></select>
-          <button class="btn primary" id="btnAddProv">
+          <button class="btn" id="btnAddProv">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
-            Nueva cotización de proveedor
+            Subir cotización de proveedor
           </button>
         </div>
         <div id="provContainer"></div>
@@ -2168,6 +2207,101 @@
         <button class="btn" id="cotPreviewBtn" style="display:none;">Vista previa / Imprimir</button>
         <button class="btn" id="cotCancel">Cancelar</button>
         <button class="btn primary" id="cotSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ficha de proveedor (2026-11-24) -->
+<div class="overlay roomy" id="provRegOverlay">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h3 id="pvrTitle">Nuevo proveedor</h3>
+      <button class="modal-close" id="pvrClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row three">
+        <div class="field"><label>Proveedor (nombre o razón social)</label><input type="text" id="pvrNombre" placeholder="Ej. Hytera"></div>
+        <div class="field"><label>NIT</label><input type="text" id="pvrNit" placeholder="Opcional"></div>
+        <div class="field"><label>Tipo</label><select id="pvrTipo"><option value="">—</option><option value="tienda">Tienda física</option><option value="distribuidor">Distribuidor / mayorista</option><option value="online">Tienda en línea</option><option value="fabricante">Fabricante</option><option value="servicio">Servicio técnico</option></select></div>
+      </div>
+
+      <div class="fieldset-label">Dónde está</div>
+      <div class="field-row">
+        <div class="field"><label>Ciudad</label><input type="text" id="pvrCiudad" placeholder="Ej. Cartagena, Bogotá"></div>
+        <div class="field"><label>Dirección o cómo llegar</label><input type="text" id="pvrDireccion" placeholder="Barrio, local, enlace del mapa…"></div>
+      </div>
+
+      <div class="fieldset-label">Contacto</div>
+      <div class="field-row">
+        <div class="field"><label>Persona de contacto</label><input type="text" id="pvrContacto"></div>
+        <div class="field"><label>Teléfono / WhatsApp</label><input type="text" id="pvrTelefono" placeholder="Ej. 300 123 4567"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Correo</label><input type="text" id="pvrCorreo"></div>
+        <div class="field"><label>Página web</label><input type="text" id="pvrWeb"></div>
+      </div>
+
+      <div class="fieldset-label">Qué venden</div>
+      <div class="field"><div class="chip-pick" id="pvrVende"></div></div>
+      <div class="field"><label>Otras cosas que venden (separadas por coma)</label><input type="text" id="pvrVendeOtros" placeholder="Ej. baterías, repuestos RVA50"></div>
+      <div class="field"><label>Marcas que distribuye (separadas por coma)</label><input type="text" id="pvrMarcas" placeholder="Ej. Motorola, Hytera, Kenwood"></div>
+      <div class="field"><label>Productos concretos que consigues con ellos (palabras clave, separadas por coma)</label><textarea id="pvrPalabras" rows="2" placeholder="Ej. tubo EMT, canaleta Dexson, jack Cat6 Siemon"></textarea></div>
+
+      <div class="fieldset-label">Condiciones</div>
+      <div class="field-row">
+        <div class="field"><label>Forma de pago</label><input type="text" id="pvrPago" placeholder="Ej. Contado, 30 días"></div>
+        <div class="field"><label>Tiempo de entrega</label><input type="text" id="pvrEntrega" placeholder="Ej. 2 días, inmediata"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>¿Hace envíos?</label><select id="pvrEnvios"><option value="">—</option><option value="si">Sí</option><option value="no">No (hay que recoger)</option></select></div>
+        <div class="field"><label>¿Factura a nombre de Cenova S.A.S.?</label><select id="pvrFactura"><option value="">—</option><option value="si">Sí</option><option value="no">No</option><option value="depende">Depende</option></select></div>
+        <div class="field"><label>Calificación</label><select id="pvrCalif"><option value="">Sin calificar</option><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option><option value="2">★★</option><option value="1">★</option></select></div>
+      </div>
+      <div class="field"><label>Notas internas</label><textarea id="pvrNotas" rows="2" placeholder="Precios, trato, quién atiende mejor…"></textarea></div>
+      <label class="aiu-check"><input type="checkbox" id="pvrActivo" checked> Proveedor activo (si lo desmarcas, no se sugiere al armar listas)</label>
+
+      <div class="fieldset-label" style="display:flex; justify-content:space-between; align-items:center; gap:10px;">Cotizaciones de este proveedor <button type="button" class="btn sm primary" id="pvrCotNueva">Subir cotización</button></div>
+      <div id="pvrCots"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="pvrDelete" style="color:var(--critical); display:none;">Eliminar</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="pvrCancel">Cancelar</button>
+        <button class="btn primary" id="pvrSave">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Lista de materiales para el proveedor (2026-11-24) -->
+<div class="overlay roomy encima" id="listaOverlay">
+  <div class="modal wide">
+    <div class="modal-head">
+      <h3>Lista de materiales para el proveedor</h3>
+      <button class="modal-close" id="listaClose"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="lista-pregunta"><b>Esta es la lista. ¿Descargas todo o quitas puntos?</b><span>Lo que quites o corrijas aquí solo cambia el PDF, no la cotización. Sale en formato Cenova, sin precios ni datos del cliente.</span></div>
+      <div id="listaNota"></div>
+      <div class="field-row">
+        <div class="field"><label>Para (opcional)</label><select id="listaPara"></select></div>
+        <div class="field"><label>Observaciones para el proveedor (opcional)</label><input type="text" id="listaObs" placeholder="Ej. Favor cotizar marca original, entrega en Cartagena"></div>
+      </div>
+      <div class="items-table-wrap">
+      <table class="items-table lista-tabla">
+        <thead><tr><th class="col-idx">#</th><th class="col-desc">Descripción / referencia</th><th class="col-num">Cant.</th><th class="col-unit">Unidad</th><th style="width:20%;">Dónde comprarlo (interno)</th><th class="col-rm"></th></tr></thead>
+        <tbody id="listaBody"></tbody>
+      </table>
+      </div>
+      <div class="no-file" id="listaQuitados"></div>
+      <div class="lista-sens" id="listaAvisoSens"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="listaGuardarNota" style="display:none;">Guardar la sugerencia en las notas internas</button>
+      <div style="display:flex; gap:8px; margin-left:auto;">
+        <button class="btn" id="listaCancel">Cancelar</button>
+        <button class="btn primary" id="listaDescargar">Descargar todo</button>
       </div>
     </div>
   </div>
@@ -3055,7 +3189,7 @@
   var MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
   var state = {
-    cotizaciones: new Map(), proyectos: new Map(), eventos: new Map(), cotizacionesProveedor: new Map(), clientes: new Map(), ordenes: new Map(), prefacturas: new Map(), previewingPfId: null,
+    cotizaciones: new Map(), proyectos: new Map(), eventos: new Map(), cotizacionesProveedor: new Map(), proveedores: new Map(), clientes: new Map(), ordenes: new Map(), prefacturas: new Map(), previewingPfId: null,
     loaded: {}, userId: null, evtApoyo: [], proyForCot: false, ocNovedades: [], costosAdicionales: [], personal: [], ocPersonal: [], ocPagos: [], ocPorPagar: [], editingOcId: null, ocArchivo: null, ocArchivoRemoved: false, ocDiasSemana: [0,2,4], ocDiasSueltos: [], cronoStart: null,
     db: null, editingCotId: null, editingProyId: null, editingEvtId: null, editingProvId: null, editingCliId: null, previewingCotId: null,
     expandedProyId: null,
@@ -3491,6 +3625,7 @@
   function proveedorOptionsRefresh(){
     var set = new Set();
     state.cotizacionesProveedor.forEach(function(p){ if(p.proveedor) set.add(p.proveedor); });
+    state.proveedores.forEach(function(p){ if(p.nombre) set.add(p.nombre); });
     document.getElementById('proveedoresList').innerHTML = Array.from(set).sort().map(function(p){ return '<option value="'+escapeHtml(p)+'">'; }).join('');
   }
   function provProyFilterRefresh(){
@@ -5041,12 +5176,12 @@
   function openProvModal(id, preset){
     preset = preset || {};
     state.provPreset = preset;
-    document.getElementById('provOverlay').classList.toggle('encima', !!preset.desdeOrden);
+    document.getElementById('provOverlay').classList.toggle('encima', !!(preset.desdeOrden || preset.encima));
     state.editingProvId = id || null;
     state.provArchivo = null; state.provArchivoRemoved = false;
     var p = id ? (state.cotizacionesProveedor.get(id) || {}) : {};
     document.getElementById('provModalTitle').textContent = id ? 'Editar cotización de proveedor' : 'Nueva cotización de proveedor';
-    document.getElementById('provProveedor').value = p.proveedor || '';
+    document.getElementById('provProveedor').value = p.proveedor || ((preset.proveedorId && state.proveedores.get(preset.proveedorId)) ? state.proveedores.get(preset.proveedorId).nombre : '');
     document.getElementById('provNumero').value = p.numero || '';
     document.getElementById('provFecha').value = p.fecha || '';
     document.getElementById('provNotas').value = p.notas || '';
@@ -5106,15 +5241,18 @@
       data.archivoNombre = null; data.archivoTipo = null; data.archivoTamano = null; data.archivoDatos = null;
     }
     var col = db.collection('cotizacionesProveedor');
-    var p;
-    if(state.editingProvId){
-      var existing = state.cotizacionesProveedor.get(state.editingProvId) || {};
-      var merged = Object.assign({}, existing, data);
-      p = col.doc(state.editingProvId).set(merged).then(function(){ state.cotizacionesProveedor.set(state.editingProvId, merged); return state.editingProvId; });
-    } else {
-      p = col.add(data).then(function(ref){ var nid = ref && ref.id; if(nid){ state.editingProvId = nid; state.cotizacionesProveedor.set(nid, data); document.getElementById('provDelete').style.display='inline-flex'; } return nid; });
-    }
-    return p;
+    return provResolverProveedor(proveedor).then(function(pid){
+      data.proveedorId = pid || '';
+      var p;
+      if(state.editingProvId){
+        var existing = state.cotizacionesProveedor.get(state.editingProvId) || {};
+        var merged = Object.assign({}, existing, data);
+        p = col.doc(state.editingProvId).set(merged).then(function(){ state.cotizacionesProveedor.set(state.editingProvId, merged); return state.editingProvId; });
+      } else {
+        p = col.add(data).then(function(ref){ var nid = ref && ref.id; if(nid){ state.editingProvId = nid; state.cotizacionesProveedor.set(nid, data); document.getElementById('provDelete').style.display='inline-flex'; } return nid; });
+      }
+      return p;
+    });
   }
   document.getElementById('provSave').addEventListener('click', function(){
     saveProvDoc().then(function(){ toast('Cotización de proveedor guardada'); closeProvModal(); })
@@ -5132,12 +5270,12 @@
 
   function renderAll(){
     clienteOptionsRefresh(); respOptionsRefresh(); proyectoOptionsRefresh(); proveedorOptionsRefresh(); provProyFilterRefresh();
-    renderResumen(); renderCotizaciones(); renderOrdenes(); renderProyectos(); renderProveedores(); renderClientes();
+    renderResumen(); renderCotizaciones(); renderOrdenes(); renderProyectos(); renderProveedores(); renderProvDirectorio(); renderClientes();
     if(document.getElementById('view-agenda').classList.contains('active')) renderCronograma();
     if(document.getElementById('view-estadisticas').classList.contains('active')) renderEstadisticas();
     renderFinanzas(); invCostRefresh(); vkRenderTodo();
     document.getElementById('navCountEvt').textContent = state.eventos.size;
-    document.getElementById('navCountProv').textContent = state.cotizacionesProveedor.size;
+    document.getElementById('navCountProv').textContent = state.proveedores.size;
     if(document.getElementById('view-agenda').classList.contains('active')){ renderCalendar(); renderDayPanel(); }
   }
 
@@ -5979,63 +6117,548 @@
       '</body></html>';
   }
 
+  /* ===== Proveedores registrados y lista de materiales (2026-11-24) =====
+     - Cada proveedor se registra con sus datos (dónde está, qué vende, qué marcas distribuye, condiciones).
+     - Cada cotización que envía un proveedor queda ligada a él (proveedorId).
+     - Al generar la lista de materiales de una cotización, una nota interna (no sale en el PDF) dice
+       a qué proveedor(es) conviene pedirla, según lo que vende cada uno.
+     - La lista se descarga en PDF con el formato de Cenova, sin datos del cliente, y se pueden quitar puntos antes. */
+  var PROV_CATS = {
+    'CCTV y videovigilancia': ['camara','domo','bala','dvr','nvr','hikvision','dahua','hilook','ezviz','videovigilancia','cctv','disco duro','balun','fuente 12v','poe','ptz','lente','grabador','xvr'],
+    'Radiocomunicaciones': ['radio','handy','repetidora','repetidor','motorola','hytera','kenwood','icom','vhf','uhf','walkie','portatil de radio','diadema','antena vhf','antena uhf'],
+    'Redes y cableado': ['utp','cat6','cat 6','cat5','cat 5','cat6a','rj45','jack','faceplate','patch','patch panel','patch cord','switch','router','access point','fibra','wifi','rack','gabinete','organizador','keystone','ubiquiti','tp link','mikrotik'],
+    'Canalización y ferretería': ['emt','tubo','conduit','canaleta','dexson','dexxon','caja 2x4','caja de paso','radwell','tapa ciega','angulo','chazo','tornillo','abrazadera','amarre','curva','union','conector emt','riel','tuerca','grapa'],
+    'Eléctrico y energía': ['breaker','toma','tomacorriente','thhn','thw','ups','regulador','bateria','inversor','tablero','supresor','cable electrico','extension','multitoma','fuente de poder'],
+    'Control de acceso': ['cerradura','ventosa','lector','torniquete','biometrico','boton de salida','electroiman','citofono','intercomunicador','control de acceso','tarjeta de proximidad','fob'],
+    'Alarmas y detección': ['sensor','sirena','alarma','detector','humo','pir','contacto magnetico','panel de alarma'],
+    'Cómputo y periféricos': ['computador','portatil','laptop','monitor','teclado','mouse','impresora','tinta','toner','ssd','memoria ram','servidor','nas','tablet'],
+    'Software y licencias': ['licencia','software','antivirus','office','windows','suscripcion']
+  };
+  var PROV_TIPOS = {tienda:'Tienda física', distribuidor:'Distribuidor / mayorista', online:'Tienda en línea', fabricante:'Fabricante', servicio:'Servicio técnico'};
+  var PV_STOP = {'con':1,'del':1,'los':1,'las':1,'una':1,'uno':1,'por':1,'sin':1,'para':1,'und':1,'unidad':1,'unidades':1,'mts':1,'metro':1,'metros':1,'tipo':1,'color':1,'marca':1,'referencia':1,'incluye':1,'incluido':1};
+  var PV_GENERICAS = {'sas':1,'ltda':1,'hotel':1,'edificio':1,'conjunto':1,'proyecto':1,'cliente':1,'puntos':1,'punto':1,'grupo':1,'centro':1,'torre':1,'casa':1,'local':1,'oficina':1,'sede':1,'inversiones':1,'servicios':1,'tecnologia':1};
+
+  /* Texto sin tildes ni signos, con un espacio a cada lado: así se busca una palabra completa con indexOf(' palabra '). */
+  function pvNorm(s){ return ' ' + String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,' ').trim() + ' '; }
+  function pvTiene(norm, kw){
+    kw = pvNorm(kw).trim(); if(kw.length < 2) return false;
+    return norm.indexOf(' '+kw+' ') !== -1 || norm.indexOf(' '+kw+'s ') !== -1 || norm.indexOf(' '+kw+'es ') !== -1;
+  }
+  function pvLista(s){ return String(s||'').split(/[,;\n]+/).map(function(x){ return x.trim(); }).filter(Boolean); }
+  function pvNombreClave(s){ return pvNorm(s).trim().replace(/\b(s a s|sas|s a|ltda|e u|y cia|s en c|cia)\b/g,' ').replace(/\s+/g,' ').trim(); }
+  function pvPorNombre(nombre){
+    var k = pvNombreClave(nombre); if(!k) return null;
+    var hit = null;
+    state.proveedores.forEach(function(p, id){ if(!hit && pvNombreClave(p.nombre) === k) hit = id; });
+    return hit;
+  }
+  /* A qué proveedor registrado pertenece una cotización de proveedor (por su id o, si es antigua, por el nombre). */
+  function pvDeCotizacion(q){
+    if(q.proveedorId && state.proveedores.has(q.proveedorId)) return q.proveedorId;
+    return pvPorNombre(q.proveedor);
+  }
+  function pvTelWa(tel){
+    var d = String(tel||'').replace(/\D/g,'');
+    if(d.length === 10 && d.charAt(0) === '3') return '57' + d;
+    if(d.length === 12 && d.indexOf('57') === 0) return d;
+    return '';
+  }
+  function pvEstrellas(n){ n = Number(n)||0; return n ? '★★★★★'.slice(0,n) + '☆☆☆☆☆'.slice(0,5-n) : ''; }
+
+  /* ---------- Directorio de proveedores ---------- */
+  function pvCotizacionesDe(id){
+    var out = [];
+    state.cotizacionesProveedor.forEach(function(q, qid){ if(pvDeCotizacion(q) === id) out.push(Object.assign({_id: qid}, q)); });
+    return out.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+  }
+  function pvSinRegistrar(){
+    var m = {};
+    state.cotizacionesProveedor.forEach(function(q, qid){
+      var nom = String(q.proveedor||'').trim(); if(!nom || pvDeCotizacion(q)) return;
+      var k = pvNombreClave(nom); if(!k) return;
+      if(!m[k]) m[k] = {nombre: nom, ids: []};
+      m[k].ids.push(qid);
+    });
+    return Object.keys(m).map(function(k){ return m[k]; });
+  }
+  function renderProvDirectorio(){
+    var box = document.getElementById('provDirContainer'); if(!box) return;
+    var selV = document.getElementById('provDirVende'), cur = selV.value;
+    var tags = {};
+    state.proveedores.forEach(function(p){ (p.vende||[]).forEach(function(t){ tags[t] = 1; }); });
+    selV.innerHTML = '<option value="">Todo lo que venden</option>' + Object.keys(tags).sort().map(function(t){ return '<option value="'+escapeHtml(t)+'">'+escapeHtml(t)+'</option>'; }).join('');
+    selV.value = tags[cur] ? cur : '';
+    var q = pvNorm(document.getElementById('provDirSearch').value).trim(), vf = selV.value;
+
+    var sr = pvSinRegistrar(), srBox = document.getElementById('provSinRegistrar');
+    srBox.innerHTML = sr.length ? '<div class="cot-aviso warn" style="margin-bottom:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;"><span>Hay '+sr.length+' proveedor'+(sr.length>1?'es':'')+' en cotizaciones recibidas que aún no '+(sr.length>1?'están registrados':'está registrado')+': <b>'+sr.slice(0,6).map(function(x){ return escapeHtml(x.nombre); }).join(', ')+(sr.length>6?'…':'')+'</b>.</span><button type="button" class="btn sm" id="provRegistrarTodos">Registrarlos</button></div>' : '';
+    var rb = document.getElementById('provRegistrarTodos'); if(rb) rb.addEventListener('click', provRegistrarSinRegistrar);
+
+    if(!state.proveedores.size){
+      box.innerHTML = emptyState('Aún no hay proveedores registrados', 'Registra a quién le compras: dónde está, qué vende y qué marcas distribuye. Así, al armar la lista de materiales de una cotización, la intranet te dice a quién pedírsela.', 'btnAddProvRegEmpty');
+      var b = document.getElementById('btnAddProvRegEmpty'); if(b) b.addEventListener('click', function(){ openProvReg(); });
+      return;
+    }
+    var rows = Array.from(state.proveedores.entries()).filter(function(e){
+      var p = e[1];
+      if(vf && (p.vende||[]).indexOf(vf) === -1) return false;
+      if(q){
+        var hay = pvNorm([p.nombre, p.ciudad, p.direccion, p.contacto, (p.vende||[]).join(' '), (p.marcas||[]).join(' '), p.palabras].join(' '));
+        if(hay.indexOf(q) === -1) return false;
+      }
+      return true;
+    }).sort(function(a,b){
+      var ai = a[1].activo === false ? 1 : 0, bi = b[1].activo === false ? 1 : 0;
+      return ai - bi || String(a[1].nombre||'').localeCompare(String(b[1].nombre||''), 'es');
+    });
+    if(!rows.length){ box.innerHTML = '<div class="table-wrap"><div class="empty-state">Ningún proveedor coincide con el filtro.</div></div>'; return; }
+    box.innerHTML = '<div class="prov-grid">' + rows.map(function(e){
+      var id = e[0], p = e[1], cots = pvCotizacionesDe(id);
+      var ult = cots.length ? cots[0] : null;
+      var wa = pvTelWa(p.telefono);
+      return '<div class="prov-card'+(p.activo===false?' prov-inactivo':'')+'" data-id="'+id+'">'+
+        '<h4><span>'+escapeHtml(p.nombre||'Proveedor')+(p.activo===false?' <span class="no-file">(inactivo)</span>':'')+'</span><span class="prov-estrellas">'+pvEstrellas(p.calificacion)+'</span></h4>'+
+        '<div class="prov-meta">'+(p.tipo && PROV_TIPOS[p.tipo] ? escapeHtml(PROV_TIPOS[p.tipo]) : '')+((p.ciudad||p.direccion) ? (p.tipo && PROV_TIPOS[p.tipo] ? ' · ' : '')+escapeHtml([p.ciudad, p.direccion].filter(Boolean).join(' · ')) : '')+'</div>'+
+        ((p.vende||[]).length || (p.marcas||[]).length ? '<div class="prov-tags">'+(p.vende||[]).map(function(t){ return '<span class="prov-tag">'+escapeHtml(t)+'</span>'; }).join('')+(p.marcas||[]).map(function(t){ return '<span class="prov-tag marca">'+escapeHtml(t)+'</span>'; }).join('')+'</div>' : '<div class="prov-meta">Aún sin «qué vende»: ábrelo y complétalo.</div>')+
+        '<div class="prov-meta">'+
+          (p.contacto ? escapeHtml(p.contacto)+(p.telefono?' · ':'') : '')+(p.telefono ? (wa ? '<a href="https://wa.me/'+wa+'" target="_blank" rel="noopener">'+escapeHtml(p.telefono)+' (WhatsApp)</a>' : '<a href="tel:'+escapeHtml(String(p.telefono).replace(/[^\d+]/g,''))+'">'+escapeHtml(p.telefono)+'</a>') : '')+
+          (p.correo ? '<br>'+escapeHtml(p.correo) : '')+
+          (p.entrega ? '<br>Entrega: '+escapeHtml(p.entrega) : '')+(p.pago ? '<br>Pago: '+escapeHtml(p.pago) : '')+
+        '</div>'+
+        (p.facturaCenova === 'no' ? '<div class="prov-warn">No factura a nombre de Cenova (el IVA no sería descontable).</div>' : '')+
+        '<div class="prov-meta">'+(cots.length ? cots.length+' cotización'+(cots.length>1?'es':'')+(ult && ult.fecha ? ' · última '+fmtShort(ult.fecha) : '') : 'Sin cotizaciones subidas')+'</div>'+
+        '<div class="prov-acc"><button type="button" class="btn sm pv-editar">Ver / editar</button><button type="button" class="btn sm primary pv-subir">Subir cotización</button></div>'+
+      '</div>';
+    }).join('') + '</div>';
+    box.querySelectorAll('.prov-card').forEach(function(card){
+      var id = card.dataset.id;
+      card.querySelector('.pv-editar').addEventListener('click', function(){ openProvReg(id); });
+      card.querySelector('.pv-subir').addEventListener('click', function(){ openProvModal(null, {proveedorId: id}); });
+    });
+  }
+  ['provDirSearch','provDirVende'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', renderProvDirectorio);
+    document.getElementById(id).addEventListener('change', renderProvDirectorio);
+  });
+  document.getElementById('btnAddProvReg').addEventListener('click', function(){ openProvReg(); });
+
+  /* Registra de una vez a los proveedores que ya aparecen en cotizaciones y liga cada cotización a su proveedor. */
+  function provRegistrarSinRegistrar(){
+    var db = requireDb(); if(!db) return;
+    var sr = pvSinRegistrar(); if(!sr.length) return;
+    Promise.all(sr.map(function(x){
+      var data = {nombre: x.nombre, tipo:'', ciudad:'', vende:[], marcas:[], palabras:'', activo:true, creado: todayIso()};
+      return db.collection('proveedores').add(data).then(function(ref){
+        var nid = ref && ref.id; if(!nid) return;
+        state.proveedores.set(nid, data);
+        return Promise.all(x.ids.map(function(qid){
+          var prev = state.cotizacionesProveedor.get(qid) || {};
+          return db.collection('cotizacionesProveedor').doc(qid).update({proveedorId: nid}).then(function(){ state.cotizacionesProveedor.set(qid, Object.assign({}, prev, {proveedorId: nid})); });
+        }));
+      });
+    })).then(function(){ toast('Listo: '+sr.length+' proveedor'+(sr.length>1?'es registrados':' registrado')+'. Ábrelos y completa dónde están y qué venden.', 6000); renderAll(); })
+      .catch(function(err){ toast('No se pudieron registrar: ' + (err && err.message ? err.message : 'error')); });
+  }
+
+  /* ---------- Ficha del proveedor ---------- */
+  function pvrChips(sel, otros){
+    var box = document.getElementById('pvrVende');
+    box.innerHTML = Object.keys(PROV_CATS).map(function(c){
+      var on = sel.indexOf(c) !== -1;
+      return '<label class="'+(on?'on':'')+'"><input type="checkbox" value="'+escapeHtml(c)+'"'+(on?' checked':'')+'>'+escapeHtml(c)+'</label>';
+    }).join('');
+    box.querySelectorAll('input').forEach(function(i){ i.addEventListener('change', function(){ i.parentNode.classList.toggle('on', i.checked); }); });
+    document.getElementById('pvrVendeOtros').value = otros.join(', ');
+  }
+  function openProvReg(id){
+    state.editingProvRegId = id || null;
+    var p = id ? (state.proveedores.get(id) || {}) : {};
+    document.getElementById('pvrTitle').textContent = id ? (p.nombre || 'Proveedor') : 'Nuevo proveedor';
+    var set = function(k, v){ document.getElementById(k).value = v == null ? '' : v; };
+    set('pvrNombre', p.nombre); set('pvrNit', p.nit); set('pvrTipo', p.tipo); set('pvrCiudad', p.ciudad); set('pvrDireccion', p.direccion);
+    set('pvrContacto', p.contacto); set('pvrTelefono', p.telefono); set('pvrCorreo', p.correo); set('pvrWeb', p.web);
+    var vende = p.vende || [];
+    pvrChips(vende, vende.filter(function(t){ return !PROV_CATS[t]; }));
+    set('pvrMarcas', (p.marcas||[]).join(', ')); set('pvrPalabras', p.palabras);
+    set('pvrPago', p.pago); set('pvrEntrega', p.entrega); set('pvrEnvios', p.envios || ''); set('pvrFactura', p.facturaCenova || '');
+    set('pvrCalif', p.calificacion || ''); set('pvrNotas', p.notas);
+    document.getElementById('pvrActivo').checked = p.activo !== false;
+    document.getElementById('pvrDelete').style.display = id ? 'inline-flex' : 'none';
+    pvrPintarCots();
+    document.getElementById('provRegOverlay').classList.add('open');
+  }
+  function closeProvReg(){ document.getElementById('provRegOverlay').classList.remove('open'); state.editingProvRegId = null; }
+  function pvrPintarCots(){
+    var id = state.editingProvRegId, box = document.getElementById('pvrCots'), btn = document.getElementById('pvrCotNueva');
+    btn.style.display = id ? '' : 'none';
+    if(!id){ box.innerHTML = '<span class="no-file">Guarda el proveedor y luego sube sus cotizaciones aquí.</span>'; return; }
+    var cots = pvCotizacionesDe(id);
+    box.innerHTML = cots.length ? cots.map(function(c){
+      var proy = c.proyectoId ? state.proyectos.get(c.proyectoId) : null;
+      return '<div class="proj-inline" style="display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:6px;" data-id="'+c._id+'">'+
+        '<div><strong>'+escapeHtml(c.numero || 'Sin número')+'</strong>'+(c.fecha ? ' · '+fmtDate(c.fecha) : '')+(c.monto ? ' · '+fmtMoney.format(c.monto) : '')+
+        (proy ? '<div class="no-file" style="margin-top:2px;">'+escapeHtml((proy.cliente?proy.cliente+' — ':'')+proy.nombre)+'</div>' : '')+'</div>'+
+        '<div class="row-actions">'+(c.archivoDatos ? '<button type="button" class="btn sm pvr-ver">Ver archivo</button>' : '')+'<button type="button" class="btn sm pvr-abrir">Abrir</button></div></div>';
+    }).join('') : '<span class="no-file">Todavía no le has subido cotizaciones.</span>';
+    box.querySelectorAll('.pvr-ver').forEach(function(b){ b.addEventListener('click', function(){ viewStoredFile(state.cotizacionesProveedor.get(b.closest('[data-id]').dataset.id)); }); });
+    box.querySelectorAll('.pvr-abrir').forEach(function(b){ b.addEventListener('click', function(){ openProvModal(b.closest('[data-id]').dataset.id, {encima:true}); }); });
+  }
+  document.getElementById('pvrCotNueva').addEventListener('click', function(){ if(state.editingProvRegId) openProvModal(null, {proveedorId: state.editingProvRegId, encima:true}); });
+  document.getElementById('pvrClose').addEventListener('click', closeProvReg);
+  document.getElementById('pvrCancel').addEventListener('click', closeProvReg);
+  document.getElementById('provRegOverlay').addEventListener('click', function(e){ if(e.target === this) closeProvReg(); });
+  document.getElementById('pvrSave').addEventListener('click', function(){
+    var db = requireDb(); if(!db) return;
+    var v = function(k){ return document.getElementById(k).value.trim(); };
+    var nombre = v('pvrNombre');
+    if(!nombre){ toast('Escribe el nombre del proveedor.'); return; }
+    var otro = pvPorNombre(nombre);
+    if(otro && otro !== state.editingProvRegId){ toast('Ya hay un proveedor registrado con ese nombre.'); return; }
+    var vende = Array.from(document.querySelectorAll('#pvrVende input:checked')).map(function(i){ return i.value; });
+    pvLista(document.getElementById('pvrVendeOtros').value).forEach(function(t){ if(vende.indexOf(t) === -1) vende.push(t); });
+    var data = {
+      nombre: nombre, nit: v('pvrNit'), tipo: v('pvrTipo'), ciudad: v('pvrCiudad'), direccion: v('pvrDireccion'),
+      contacto: v('pvrContacto'), telefono: v('pvrTelefono'), correo: v('pvrCorreo'), web: v('pvrWeb'),
+      vende: vende, marcas: pvLista(document.getElementById('pvrMarcas').value), palabras: v('pvrPalabras'),
+      pago: v('pvrPago'), entrega: v('pvrEntrega'), envios: v('pvrEnvios'), facturaCenova: v('pvrFactura'),
+      calificacion: Number(v('pvrCalif')) || 0, notas: v('pvrNotas'), activo: document.getElementById('pvrActivo').checked
+    };
+    var id = state.editingProvRegId, p;
+    if(id){
+      var merged = Object.assign({}, state.proveedores.get(id) || {}, data);
+      p = db.collection('proveedores').doc(id).set(merged).then(function(){ state.proveedores.set(id, merged); });
+    } else {
+      data.creado = todayIso();
+      p = db.collection('proveedores').add(data).then(function(ref){ if(ref && ref.id) state.proveedores.set(ref.id, data); });
+    }
+    p.then(function(){
+      /* Si ya había cotizaciones guardadas con este nombre, quedan ligadas. */
+      var nid = id || pvPorNombre(nombre);
+      if(nid) state.cotizacionesProveedor.forEach(function(q, qid){
+        if(q.proveedorId === nid || !String(q.proveedor||'').trim() || pvNombreClave(q.proveedor) !== pvNombreClave(nombre) || q.proveedorId) return;
+        db.collection('cotizacionesProveedor').doc(qid).update({proveedorId: nid}).then(function(){ state.cotizacionesProveedor.set(qid, Object.assign({}, q, {proveedorId: nid})); renderAll(); });
+      });
+      toast('Proveedor guardado'); closeProvReg(); renderAll();
+    }).catch(function(err){ toast('No se pudo guardar: ' + (err && err.message ? err.message : 'error')); });
+  });
+  document.getElementById('pvrDelete').addEventListener('click', function(){
+    var db = requireDb(), id = state.editingProvRegId; if(!db || !id) return;
+    var n = pvCotizacionesDe(id).length;
+    confirmDialog('¿Eliminar este proveedor?' + (n ? ' Sus '+n+' cotización'+(n>1?'es':'')+' recibida'+(n>1?'s':'')+' se quedan guardadas, solo pierden la ficha.' : '')).then(function(ok){
+      if(!ok) return;
+      db.doc('proveedores/'+id).delete().then(function(){ state.proveedores.delete(id); toast('Proveedor eliminado'); closeProvReg(); renderAll(); })
+        .catch(function(err){ toast('No se pudo eliminar: ' + (err && err.message ? err.message : 'error')); });
+    });
+  });
+
+  /* Al guardar una cotización de proveedor: la liga a su ficha; si el proveedor no está registrado, ofrece registrarlo. */
+  function provResolverProveedor(nombre){
+    var pre = state.provPreset && state.provPreset.proveedorId;
+    if(pre && state.proveedores.has(pre) && pvNombreClave(state.proveedores.get(pre).nombre) === pvNombreClave(nombre)) return Promise.resolve(pre);
+    var id = pvPorNombre(nombre); if(id) return Promise.resolve(id);
+    return confirmDialog('«'+nombre+'» no está registrado como proveedor. ¿Lo registro ahora? (Si no, la cotización se guarda igual.)', 'Registrar').then(function(ok){
+      if(!ok) return '';
+      var db = requireDb(); if(!db) return '';
+      var data = {nombre: nombre, tipo:'', ciudad:'', vende:[], marcas:[], palabras:'', activo:true, creado: todayIso()};
+      return db.collection('proveedores').add(data).then(function(ref){
+        var nid = ref && ref.id;
+        if(nid){ state.proveedores.set(nid, data); toast('Registré a '+nombre+'. Completa sus datos en la pestaña Proveedores.', 5000); }
+        return nid || '';
+      }).catch(function(){ return ''; });
+    });
+  }
+
+  /* ---------- Sugerencia interna: a quién pedirle esta lista ---------- */
+  function pvDetectarCats(norm){
+    var out = [];
+    Object.keys(PROV_CATS).forEach(function(c){ if(PROV_CATS[c].some(function(k){ return pvTiene(norm, k); })) out.push(c); });
+    return out;
+  }
+  function pvTokens(s){
+    return pvNorm(s).trim().split(' ').map(function(t){ return t.length > 4 && /s$/.test(t) ? t.slice(0,-1) : t; })
+      .filter(function(t){ return t.length >= 3 && !PV_STOP[t] && !/^\d+$/.test(t); });
+  }
+  /* Lo que cada proveedor ya nos cotizó antes (para saber que sí lo consigue). */
+  function pvHistorial(){
+    var h = {};
+    state.cotizacionesProveedor.forEach(function(q){
+      var pid = pvDeCotizacion(q); if(!pid) return;
+      (q.items||[]).forEach(function(it){
+        var tk = pvTokens(it.descripcion); if(!tk.length) return;
+        (h[pid] = h[pid] || []).push({tk: tk, fecha: q.fecha || '', costo: Number(it.costoUnit)||0});
+      });
+    });
+    return h;
+  }
+  /* items: [{descripcion}] → proveedores que cubren cada ítem, con la razón. */
+  function pvEvaluar(items){
+    var provs = [];
+    state.proveedores.forEach(function(p, id){ if(p.activo !== false) provs.push({id: id, p: p, nombre: p.nombre || 'Proveedor', cubre: [], razones: {}, score: 0}); });
+    if(!provs.length) return [];
+    var hist = pvHistorial();
+    items.forEach(function(it, i){
+      var n = pvNorm(it.descripcion), cats = pvDetectarCats(n), tk = pvTokens(it.descripcion);
+      provs.forEach(function(r){
+        var pts = 0, why = [];
+        (r.p.marcas||[]).forEach(function(m){ if(pvTiene(n, m)){ pts += 3; why.push('marca '+m); } });
+        pvLista(r.p.palabras).forEach(function(k){ if(pvTiene(n, k)){ pts += 2; why.push('vende «'+k+'»'); } });
+        (r.p.vende||[]).forEach(function(t){
+          if(PROV_CATS[t]){ if(cats.indexOf(t) !== -1){ pts += 1.5; why.push('vende '+t.toLowerCase()); } }
+          else if(pvTiene(n, t)){ pts += 2; why.push('vende «'+t+'»'); }
+        });
+        var hs = hist[r.id] || [], mejor = null;
+        hs.forEach(function(h){
+          var comunes = tk.filter(function(t){ return h.tk.indexOf(t) !== -1; }).length;
+          if(tk.length && comunes >= Math.min(2, tk.length) && comunes / tk.length >= 0.6 && (!mejor || h.fecha > mejor.fecha)) mejor = h;
+        });
+        if(mejor){ pts += 2; why.push('ya lo cotizó'+(mejor.fecha ? ' ('+fmtShort(mejor.fecha)+')' : '')); }
+        if(pts >= 1.5){ r.cubre.push(i); r.razones[i] = why.slice(0,2); r.score += pts; }
+      });
+    });
+    return provs.filter(function(r){ return r.cubre.length; }).sort(function(a,b){ return b.cubre.length - a.cubre.length || b.score - a.score; });
+  }
+  /* Arma el plan: el menor número de proveedores (máx. 3) que cubre la lista. */
+  function pvPlan(items){
+    var total = items.length, res = pvEvaluar(items);
+    var restantes = {}; items.forEach(function(_, i){ restantes[i] = true; });
+    var plan = [], pool = res.slice();
+    while(Object.keys(restantes).length && plan.length < 3){
+      var best = null, bestN = 0;
+      pool.forEach(function(r){
+        var n = r.cubre.filter(function(i){ return restantes[i]; }).length;
+        if(n > bestN || (n === bestN && n > 0 && best && r.score > best.score)){ best = r; bestN = n; }
+      });
+      if(!best || !bestN) break;
+      var mios = best.cubre.filter(function(i){ return restantes[i]; });
+      mios.forEach(function(i){ delete restantes[i]; });
+      plan.push({r: best, idx: mios});
+      pool = pool.filter(function(x){ return x !== best; });
+    }
+    var enPlan = plan.map(function(x){ return x.r; });
+    var alternativas = res.filter(function(r){ return enPlan.indexOf(r) === -1 && r.cubre.length >= Math.max(1, Math.ceil(total * 0.5)); }).slice(0,3);
+    return {res: res, plan: plan, sinProveedor: Object.keys(restantes).map(Number), alternativas: alternativas, total: total};
+  }
+  function pvRazonResumen(r, idx){
+    var cuenta = {};
+    idx.forEach(function(i){ (r.razones[i]||[]).forEach(function(w){ cuenta[w] = (cuenta[w]||0) + 1; }); });
+    return Object.keys(cuenta).sort(function(a,b){ return cuenta[b]-cuenta[a]; }).slice(0,2).join(' · ');
+  }
+  /* Devuelve {html, texto}: el mensaje interno y su versión para las notas internas de la cotización. */
+  function pvSugerencia(items){
+    if(!items.length) return {html:'', texto:''};
+    if(!state.proveedores.size) return {html:'Aún no tienes proveedores registrados. Regístralos en <b>Cotizaciones → Proveedores</b> (dónde están y qué venden) y aquí te diré a cuál pedirle cada lista.', texto:''};
+    var pl = pvPlan(items), nom = function(x){ return x.r.nombre; };
+    if(!pl.plan.length) return {html:'Ningún proveedor registrado vende estos materiales todavía. Revisa en cada ficha «qué vende» y las marcas que distribuye.', texto:''};
+    var html = '', texto = '';
+    var desc = function(idx){ return idx.map(function(i){ return escapeHtml(items[i].descripcion); }).join('; '); };
+    var avisoFact = function(r){ return r.p.facturaCenova === 'no' ? ' <span class="prov-warn">(no factura a Cenova)</span>' : ''; };
+    if(pl.plan.length === 1){
+      var x = pl.plan[0], todo = pl.sinProveedor.length === 0;
+      html = todo
+        ? 'Esta lista conviene pedirla a <b>'+escapeHtml(nom(x))+'</b>'+avisoFact(x.r)+': vende los '+pl.total+' puntos'+(pvRazonResumen(x.r, x.idx) ? ' ('+escapeHtml(pvRazonResumen(x.r, x.idx))+')' : '')+'.'
+        : 'Conviene pedirla a <b>'+escapeHtml(nom(x))+'</b>'+avisoFact(x.r)+': cubre '+x.idx.length+' de '+pl.total+' puntos'+(pvRazonResumen(x.r, x.idx) ? ' ('+escapeHtml(pvRazonResumen(x.r, x.idx))+')' : '')+'.';
+      texto = 'Sugerencia de compra: '+nom(x)+' ('+x.idx.length+' de '+pl.total+' puntos)';
+    } else {
+      html = 'Conviene repartir la lista entre '+pl.plan.length+' proveedores:<ul>'+pl.plan.map(function(x){
+        return '<li><b>'+escapeHtml(nom(x))+'</b>'+avisoFact(x.r)+' → '+desc(x.idx)+(pvRazonResumen(x.r, x.idx) ? ' <span class="lista-donde">('+escapeHtml(pvRazonResumen(x.r, x.idx))+')</span>' : '')+'</li>';
+      }).join('')+'</ul>';
+      texto = 'Sugerencia de compra: ' + pl.plan.map(function(x){ return nom(x)+' ('+x.idx.map(function(i){ return items[i].descripcion; }).join(', ')+')'; }).join('; ');
+    }
+    if(pl.sinProveedor.length) html += '<div style="margin-top:6px;">Sin proveedor registrado para: '+desc(pl.sinProveedor)+'.</div>';
+    if(pl.alternativas.length) html += '<div style="margin-top:6px;" class="lista-donde">También venden varios de estos: '+pl.alternativas.map(function(r){ return escapeHtml(r.nombre)+' ('+r.cubre.length+' de '+pl.total+')'; }).join(', ')+'.</div>';
+    return {html: html, texto: texto, plan: pl};
+  }
+
+  /* ---------- Descargar la lista de materiales ---------- */
   function providerCatLabel(cat){
     var c = String(cat||'').trim();
     c = c.replace(/^Materiales\s*[—–-]\s*/i, '');
     return c || 'Materiales';
   }
+  /* Palabras del cliente y del proyecto que no deben salir en la lista que va al proveedor. */
+  function listaPalabrasSensibles(){
+    var pid = document.getElementById('cotProyecto').value, pr = pid ? state.proyectos.get(pid) : null;
+    var txt = [document.getElementById('cotCliente').value, document.getElementById('cotClienteContacto').value, pr && pr.nombre, pr && pr.cliente].join(' ');
+    var out = [];
+    pvNorm(txt).trim().split(' ').forEach(function(t){ if(t.length >= 3 && !PV_STOP[t] && !PV_GENERICAS[t] && !/^\d+$/.test(t) && out.indexOf(t) === -1) out.push(t); });
+    return out;
+  }
+  function listaTocaSensible(texto){
+    var n = pvNorm(texto);
+    return (state.lista ? state.lista.sensibles : []).filter(function(t){ return n.indexOf(' '+t+' ') !== -1; });
+  }
+  function listaVigentes(){ return state.lista.items.filter(function(it){ return !it.quitado; }); }
 
-  function buildProviderDocument(items, refTitle){
-    var groups = [];
-    var byCat = {};
-    items.forEach(function(it){
+  function openLista(){
+    var items = [];
+    state.items.forEach(function(it){
       var cat = String(it.categoria||'');
-      if(cat === 'Instalación' || /mano de obra/i.test(cat)) return; // la instalación/mano de obra no va al proveedor
-      var label = providerCatLabel(cat);
+      if(cat === 'Instalación' || /mano de obra/i.test(cat)) return;   /* la instalación no va al proveedor */
+      if(!String(it.descripcion||'').trim()) return;
+      items.push({descripcion: String(it.descripcion).trim(), cantidad: it.cantidad || 0, unidad: it.unidad || '', categoria: providerCatLabel(cat), quitado: false});
+    });
+    if(!items.length){ toast('Agrega primero los materiales de la cotización.'); return; }
+    state.lista = {items: items, sensibles: listaPalabrasSensibles()};
+    document.getElementById('listaObs').value = '';
+    var pr = pvPlan(items);
+    var sel = document.getElementById('listaPara');
+    var recom = pr.plan.map(function(x){ return x.r.id; });
+    var provs = Array.from(state.proveedores.entries()).filter(function(e){ return e[1].activo !== false; })
+      .sort(function(a,b){ return (recom.indexOf(b[0]) !== -1) - (recom.indexOf(a[0]) !== -1) || String(a[1].nombre||'').localeCompare(String(b[1].nombre||''), 'es'); });
+    sel.innerHTML = '<option value="">Sin destinatario (lista general)</option>' + provs.map(function(e){ return '<option value="'+e[0]+'">'+escapeHtml(e[1].nombre||'Proveedor')+(recom.indexOf(e[0]) !== -1 ? ' — sugerido' : '')+'</option>'; }).join('');
+    listaPintar();
+    document.getElementById('listaOverlay').classList.add('open');
+  }
+  function closeLista(){ document.getElementById('listaOverlay').classList.remove('open'); state.lista = null; }
+
+  function listaPintar(){
+    var L = state.lista, body = document.getElementById('listaBody');
+    body.innerHTML = L.items.map(function(it, i){
+      if(it.quitado) return '';
+      return '<tr data-i="'+i+'"><td class="col-idx lista-n"></td>'+
+        '<td><input type="text" class="lista-desc" value="'+escapeHtml(it.descripcion)+'"><div class="lista-sens"></div></td>'+
+        '<td class="col-num"><input type="number" class="lista-cant" min="0" step="any" value="'+escapeHtml(String(it.cantidad))+'"></td>'+
+        '<td class="col-unit"><input type="text" class="lista-und" value="'+escapeHtml(it.unidad)+'"></td>'+
+        '<td class="lista-donde lista-dnd"></td>'+
+        '<td class="col-rm"><button type="button" class="icon-btn lista-rm" title="Quitar de la lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td></tr>';
+    }).join('');
+    body.querySelectorAll('tr').forEach(function(tr){
+      var i = Number(tr.dataset.i), it = L.items[i];
+      tr.querySelector('.lista-desc').addEventListener('input', function(e){ it.descripcion = e.target.value; listaActualizar(); });
+      tr.querySelector('.lista-cant').addEventListener('input', function(e){ it.cantidad = e.target.value; });
+      tr.querySelector('.lista-und').addEventListener('input', function(e){ it.unidad = e.target.value; });
+      tr.querySelector('.lista-rm').addEventListener('click', function(){ it.quitado = true; listaPintar(); });
+    });
+    listaActualizar();
+  }
+  /* Recalcula, sin repintar las filas (para no perder el cursor): numeración, avisos de datos del cliente,
+     nota interna, dónde comprar cada punto y el texto del botón. */
+  function listaActualizar(){
+    var L = state.lista; if(!L) return;
+    var vig = listaVigentes(), quitados = L.items.length - vig.length;
+    var plan = pvSugerencia(vig.filter(function(it){ return String(it.descripcion).trim(); }));
+    var donde = {};
+    if(plan.plan){
+      var vv = vig.filter(function(it){ return String(it.descripcion).trim(); });
+      vv.forEach(function(it, k){
+        var ps = plan.plan.res.filter(function(r){ return r.cubre.indexOf(k) !== -1; }).slice(0,3).map(function(r){ return r.nombre; });
+        donde[vig.indexOf(it)] = ps.length ? '→ '+ps.join(', ') : 'sin proveedor registrado';
+      });
+    }
+    var n = 0, hayS = 0;
+    document.querySelectorAll('#listaBody tr').forEach(function(tr){
+      var it = L.items[Number(tr.dataset.i)]; n++;
+      tr.querySelector('.lista-n').textContent = n;
+      var s = listaTocaSensible(it.descripcion);
+      tr.classList.toggle('sens', s.length > 0); if(s.length) hayS++;
+      tr.querySelector('.lista-sens').textContent = s.length ? 'Menciona «'+s.join('», «')+'» (dato del cliente o del proyecto). Cámbialo o quita el punto.' : '';
+      var d = donde[vig.indexOf(it)]; tr.querySelector('.lista-dnd').textContent = d || '';
+    });
+    var nota = document.getElementById('listaNota');
+    nota.innerHTML = plan.html ? '<div class="nota-interna"><div class="ni-tit">Nota interna · no sale en el PDF</div>'+plan.html+'</div>' : '';
+    document.getElementById('listaGuardarNota').style.display = plan.texto ? '' : 'none';
+    L.texto = plan.texto || '';
+    document.getElementById('listaQuitados').innerHTML = quitados ? 'Quitaste '+quitados+' punto'+(quitados>1?'s':'')+' de esta lista (siguen en la cotización). <button type="button" class="btn sm" id="listaRestaurar">Volver a ponerlos</button>' : '';
+    var rb = document.getElementById('listaRestaurar'); if(rb) rb.addEventListener('click', function(){ L.items.forEach(function(it){ it.quitado = false; }); listaPintar(); });
+    var btn = document.getElementById('listaDescargar');
+    btn.textContent = quitados ? 'Descargar ('+vig.length+' punto'+(vig.length!==1?'s':'')+')' : 'Descargar todo ('+vig.length+')';
+    btn.disabled = !vig.length;
+    document.getElementById('listaAvisoSens').textContent = hayS ? hayS+' punto'+(hayS>1?'s mencionan':' menciona')+' datos del cliente o del proyecto.' : '';
+  }
+
+  document.getElementById('listaClose').addEventListener('click', closeLista);
+  document.getElementById('listaCancel').addEventListener('click', closeLista);
+  document.getElementById('listaOverlay').addEventListener('click', function(e){ if(e.target === this) closeLista(); });
+  document.getElementById('listaGuardarNota').addEventListener('click', function(){
+    var L = state.lista; if(!L || !L.texto) return;
+    var ta = document.getElementById('cotNotas');
+    ta.value = (ta.value ? ta.value.replace(/\s+$/,'') + '\n' : '') + '[' + fmtDate(todayIso()) + '] ' + L.texto + '.';
+    autoGrowTextarea(ta);
+    toast('Quedó en las notas internas. Se guarda cuando guardes la cotización.', 4500);
+  });
+  document.getElementById('listaDescargar').addEventListener('click', function(){
+    var L = state.lista; if(!L) return;
+    var rows = listaVigentes().filter(function(it){ return String(it.descripcion).trim(); });
+    if(!rows.length){ toast('No quedan puntos en la lista.'); return; }
+    var obs = document.getElementById('listaObs').value.trim();
+    var sens = rows.filter(function(it){ return listaTocaSensible(it.descripcion).length; }).length + (listaTocaSensible(obs).length ? 1 : 0);
+    var paraId = document.getElementById('listaPara').value, para = paraId && state.proveedores.get(paraId) ? state.proveedores.get(paraId).nombre : '';
+    var numero = document.getElementById('cotNumero').value.trim();
+    var filename = 'Materiales-' + slugFile(numero || 'Cenova') + (para ? '-' + slugFile(para) : '') + '.pdf';
+    var btn = document.getElementById('listaDescargar');
+    var ir = function(){
+      offerPdfDownload(filename, buildProviderDocument(rows, {ref: numero, para: para, obs: obs}), 'Lista de materiales descargada: formato Cenova, sin precios ni datos del cliente.', btn);
+      closeLista();
+    };
+    if(sens) confirmDialog('Hay '+sens+' punto'+(sens>1?'s que mencionan':' que menciona')+' datos del cliente o del proyecto. ¿Descargar de todos modos?', 'Descargar igual').then(function(ok){ if(ok) ir(); });
+    else ir();
+  });
+  document.getElementById('cotProviderViewBtn').addEventListener('click', openLista);
+
+  /* PDF de la lista: formato Cenova (logo, NIT, contacto), sin precios ni datos del cliente. */
+  function buildProviderDocument(rows, opts){
+    opts = opts || {};
+    var groups = [], byCat = {};
+    rows.forEach(function(it){
+      var label = it.categoria || 'Materiales';
       if(!byCat[label]){ byCat[label] = []; groups.push(label); }
       byCat[label].push(it);
     });
-
     var n = 0;
     var rowsHtml = groups.map(function(label){
-      var rows = byCat[label].map(function(it){
+      return '<tr class="cat-row"><td colspan="4">'+escapeHtml(label)+'</td></tr>' + byCat[label].map(function(it){
         n++;
-        return '<tr><td class="num">'+n+'</td><td>'+escapeHtml(it.descripcion||'')+'</td><td class="num">'+(it.cantidad||0)+'</td><td>'+escapeHtml(it.unidad||'')+'</td></tr>';
+        return '<tr><td class="num">'+n+'</td><td>'+escapeHtml(it.descripcion||'')+'</td><td class="num">'+escapeHtml(String(it.cantidad||0))+'</td><td>'+escapeHtml(it.unidad||'')+'</td></tr>';
       }).join('');
-      return '<tr class="cat-row"><td colspan="4">'+escapeHtml(label)+'</td></tr>'+rows;
     }).join('');
-
-    if(!n){
-      rowsHtml = '<tr><td colspan="4" style="text-align:center; color:#8090a3;">No hay materiales agregados todavía.</td></tr>';
-    }
-
-    var html = '<!doctype html><html lang="es"><head><meta charset="utf-8">'+
+    var info = '<div class="di-row"><span>Fecha</span><span>'+fmtDate(todayIso())+'</span></div>'+
+      (opts.ref ? '<div class="di-row"><span>Ref.</span><span>'+escapeHtml(opts.ref)+'</span></div>' : '')+
+      (opts.para ? '<div class="di-row"><span>Para</span><span>'+escapeHtml(opts.para)+'</span></div>' : '')+
+      '<div class="di-row"><span>Puntos</span><span>'+n+'</span></div>';
+    return '<!doctype html><html lang="es"><head><meta charset="utf-8">'+
       '<meta name="viewport" content="width=device-width, initial-scale=1">'+
       '<title>Lista de materiales a cotizar</title>'+
       '<style>'+
         '*{box-sizing:border-box; -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; color-adjust:exact !important;} body{margin:0; background:#e7ebf2; font-family:ui-sans-serif, system-ui, "Segoe UI", sans-serif; color:#16233a;}'+
-        '.doc{background:#fff; max-width:760px; margin:18px auto; padding:30px 32px; box-shadow:0 1px 2px rgba(20,32,52,.06), 0 10px 28px -14px rgba(20,32,52,.22); border-radius:8px;}'+
-        'h1{font-size:19px; margin:0 0 4px; color:#173a73;} .sub{font-size:12px; color:#5b6b80; margin:0 0 20px;}'+
+        '.doc{background:#fff; max-width:760px; margin:18px auto; box-shadow:0 1px 2px rgba(20,32,52,.06), 0 10px 28px -14px rgba(20,32,52,.22); border-radius:8px; overflow:hidden; position:relative; font-size:12.8px;}'+
+        '.preview-head{position:relative; padding:26px 28px 4px; display:flex; justify-content:space-between; align-items:flex-start; overflow:hidden;}'+
+        '.corner-ribbon{position:absolute; top:0; right:0; width:190px; height:130px; overflow:hidden; z-index:0;}'+
+        '.corner-ribbon i{position:absolute; display:block; height:24px; width:280px; right:-70px; transform:rotate(35deg); opacity:.95;}'+
+        '.corner-ribbon i:nth-child(1){top:-26px; background:#bcd3f2;} .corner-ribbon i:nth-child(2){top:0; background:#6f9fe8;} .corner-ribbon i:nth-child(3){top:26px; background:#2456a6;}'+
+        '.pv-brand{display:flex; align-items:center; gap:10px; position:relative; z-index:1;}'+
+        '.pv-mark{width:44px; height:44px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; overflow:hidden;} .pv-mark img{width:100%; height:100%; object-fit:contain; display:block;}'+
+        '.pv-brandname{font-size:18px; font-weight:800; color:#173a73; letter-spacing:.02em; line-height:1.1;} .pv-sub{font-size:9px; color:#5b6b80; letter-spacing:.09em; text-transform:uppercase; margin-top:1px;}'+
+        '.doc-info-box{position:relative; z-index:1; border:1px solid #cfe0f5; border-radius:6px; overflow:hidden; min-width:190px; background:#fff; margin-right:36px;}'+
+        '.di-row{display:flex; justify-content:space-between; gap:14px; padding:5px 11px; font-size:10.8px;} .di-row:nth-child(odd){background:#eef4fc;} .di-row span:first-child{color:#5b6b80;} .di-row span:last-child{font-weight:700; color:#173a73;}'+
+        '.title-row{padding:14px 28px 0;} .title-row h2{margin:0; font-size:21px; font-weight:800; color:#173a73;}'+
+        '.subtitle-bar{background:#eaf1fb; color:#173a73; font-weight:700; font-size:12.5px; padding:9px 14px; border-radius:6px; margin:12px 28px 0;}'+
+        '.body{padding:16px 28px 8px;}'+
         'table{width:100%; border-collapse:collapse; font-size:13px;}'+
         'th{background:#173a73; color:#fff; text-align:left; padding:8px 10px; font-size:10.5px; text-transform:uppercase; letter-spacing:.03em;}'+
-        'td{padding:7px 10px; border-bottom:1px solid #e4e9f1;}'+
-        'tr:nth-child(even) td{background:#f6f9fd;}'+
+        'td{padding:7px 10px; border-bottom:1px solid #e4e9f1;} tr:nth-child(even) td{background:#f6f9fd;}'+
         '.cat-row td{background:#173a73 !important; color:#fff; font-weight:700; padding:6px 10px; font-size:10.5px; letter-spacing:.03em; text-transform:uppercase;}'+
         '.num{font-variant-numeric:tabular-nums; white-space:nowrap;}'+
+        '.notes{margin:14px 0 0; padding:10px 12px; background:#f6f9fd; border:1px solid #e1e8f3; border-radius:6px; font-size:11.8px; line-height:1.55; color:#34455e;} .notes b{color:#173a73;}'+
+        '.foot{margin:16px 28px 0; padding:11px 0 18px; border-top:2px solid #173a73; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font-size:10.5px; color:#5b6b80;} .foot b{color:#173a73;}'+
         '.print-bar{position:sticky; top:0; display:flex; align-items:center; justify-content:center; gap:12px; background:#173a73; color:#fff; padding:10px 16px; font-size:12.5px; z-index:5;}'+
         '.print-bar button{background:#fff; color:#173a73; border:none; border-radius:7px; padding:7px 16px; font-weight:700; font-size:12.5px; cursor:pointer;}'+
         '@media print{ .print-bar{display:none !important;} body{background:#fff !important;} .doc{box-shadow:none !important; margin:0 !important; max-width:100% !important;} }'+
       '</style>'+
       '</head><body>'+
-      '<div class="print-bar">Vista para proveedor — sin precios ni datos internos. <button id="printNowBtn2" type="button">Imprimir / Guardar PDF</button></div>'+
+      '<div class="print-bar">Vista para proveedor — sin precios ni datos del cliente. <button id="printNowBtn2" type="button">Imprimir / Guardar PDF</button></div>'+
       '<div class="doc">'+
-        '<h1>Lista de materiales a cotizar</h1>'+
-        (refTitle ? '<p class="sub">'+escapeHtml(refTitle)+'</p>' : '')+
-        '<table><thead><tr><th style="width:26px;">Ítem</th><th>Descripción / referencia</th><th>Cant.</th><th>Unidad</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+        '<div class="preview-head"><div class="corner-ribbon"><i></i><i></i><i></i></div>'+
+          '<div class="pv-brand"><div class="pv-mark"><img src="'+CENOVA_LOGO_B64+'" alt="Cenova"></div><div><div class="pv-brandname">CENOVA</div><div class="pv-sub">Tecnología que transforma</div></div></div>'+
+          '<div class="doc-info-box">'+info+'</div></div>'+
+        '<div class="title-row"><h2>Lista de materiales a cotizar</h2></div>'+
+        '<div class="subtitle-bar">Solicitud de cotización · Cenova S.A.S. · NIT '+escapeHtml(EMPRESA.nit)+'</div>'+
+        '<div class="body"><table><thead><tr><th style="width:34px;">Ítem</th><th>Descripción / referencia</th><th>Cant.</th><th>Unidad</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>'+
+          '<div class="notes"><b>Por favor indicar en su cotización:</b> precio unitario (aclarando si incluye IVA), disponibilidad y tiempo de entrega. Facturar a nombre de <b>Cenova S.A.S.</b>, NIT '+escapeHtml(EMPRESA.nit)+'.'+
+            (opts.obs ? '<br><br><b>Observaciones:</b> '+escapeHtml(opts.obs) : '')+'</div></div>'+
+        '<div class="foot"><span><b>Cenova S.A.S.</b> · '+escapeHtml(EMPRESA.web)+'</span><span>cotizaciones@cenovasas.com · +57 320 717 4937</span></div>'+
       '</div>'+
       '<scr'+'ipt>document.getElementById("printNowBtn2").addEventListener("click", function(){ window.print(); });</scr'+'ipt>'+
       '</body></html>';
-    return html;
   }
 
   function slugFile(s){ return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/[^a-z0-9\-_. ]+/gi,'').replace(/\s+/g,'-'); }
@@ -6130,13 +6753,6 @@
     }
   }
 
-  document.getElementById('cotProviderViewBtn').addEventListener('click', function(){
-    if(!state.items.length){ toast('Agrega primero los materiales del ítem.'); return; }
-    var desc = document.getElementById('cotDescripcion').value.trim();
-    var numero = document.getElementById('cotNumero').value.trim();
-    var filename = 'Materiales-' + slugFile(numero || desc || 'Cenova') + '.pdf';
-    offerPdfDownload(filename, buildProviderDocument(state.items, desc), 'Lista de materiales descargada en PDF (sin precios, para el proveedor).', document.getElementById('cotProviderViewBtn'));
-  });
 
   /* Filas de ítems y cuadro de totales de un documento (cotización o prefactura). */
   function cotTablaTotales(c){
@@ -11148,6 +11764,11 @@
 
       db.collection('cotizacionesProveedor').onSnapshot(function(snap){
         state.cotizacionesProveedor = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
+        renderAll();
+      }, function(err){ setSync(false, 'Error de sincronización'); });
+
+      db.collection('proveedores').onSnapshot(function(snap){
+        state.proveedores = new Map(snap.docs.map(function(d){ return [d.id, d.data()]; }));
         renderAll();
       }, function(err){ setSync(false, 'Error de sincronización'); });
 

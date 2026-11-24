@@ -10,7 +10,7 @@
 
 import { calcularAlertas } from './alertas.js';
 
-const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos', 'ajustes'];
+const COLECCIONES = ['cotizaciones', 'proyectos', 'eventos', 'cotizacionesProveedor', 'proveedores', 'clientes', 'ordenesCompra', 'prefacturas', 'finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones', 'precios', 'inventario', 'documentos', 'soportes', 'docsEmpresa', 'fragmentos', 'ajustes'];
 // Finanzas: solo administración puede leerlas o escribirlas. Al resto del equipo ni siquiera se le envían.
 const COLECCIONES_ADMIN = ['finMovimientos', 'finGastosFijos', 'finAjustes', 'finConciliaciones'];
 const soloAdmin = (col) => COLECCIONES_ADMIN.indexOf(col) !== -1;
